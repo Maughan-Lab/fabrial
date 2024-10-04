@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QGroupBox, QGridLayout
 from helper_widgets.label import Label  # ../helper_widgets
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from instruments import InstrumentSet  # ../instruments.py
 
 
@@ -18,9 +18,13 @@ class PassiveMonitoringWidget(QGroupBox):
         self.create_widgets(layout)
         self.update()
 
-        self.setFixedSize(self.sizeHint())
+        # timer to update the oven temperature and setpoint every few seconds
+        update_timer = QTimer()
+        update_timer.setInterval(1000)  # 1 second
+        update_timer.timeout.connect(self.update)
+        update_timer.start()
 
-        # TODO: add a clock that calls update() every X seconds
+        self.setFixedSize(self.sizeHint())  # make sure expanding the window behaves correctly
 
     def create_widgets(self, layout: QGridLayout):
         """Create subwidgets."""
@@ -33,7 +37,7 @@ class PassiveMonitoringWidget(QGroupBox):
         layout.addWidget(self.setpoint_label, 1, 1)
 
     def update(self):
-        """Update the state of all contained widgets."""
+        """Update the state of dynamic widgets."""
         temperature = self.instruments.oven.read_temp()
         self.temperature_label.setText(str(temperature) if temperature is not None else "-----")
         setpoint = self.instruments.oven.get_setpoint()

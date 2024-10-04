@@ -1,7 +1,6 @@
 from main_window import MainWindow
 from PyQt6.QtWidgets import QApplication
-from temperature_sensor import Oven
-from instruments import InstrumentSet
+from instruments import Oven, InstrumentSet
 
 import sys
 
