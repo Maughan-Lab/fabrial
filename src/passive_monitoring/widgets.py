@@ -1,7 +1,8 @@
 from PyQt6.QtWidgets import QGroupBox, QGridLayout
-from helper_widgets.label import Label  # ../helper_widgets
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt
+from custom_widgets.label import Label  # ../custom_widgets
 from instruments import InstrumentSet  # ../instruments.py
+from helper_functions.new_timer import new_timer  # ../helper_functions
 
 
 class PassiveMonitoringWidget(QGroupBox):
@@ -19,10 +20,7 @@ class PassiveMonitoringWidget(QGroupBox):
         self.update()
 
         # timer to update the oven temperature and setpoint every few seconds
-        update_timer = QTimer()
-        update_timer.setInterval(1000)  # 1 second
-        update_timer.timeout.connect(self.update)
-        update_timer.start()
+        self.update_timer = new_timer(1000, self.update)
 
         self.setFixedSize(self.sizeHint())  # make sure expanding the window behaves correctly
 

@@ -1,8 +1,9 @@
-from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QWidget
-from PyQt6.QtCore import QTimer
-from helper_widgets.label import Label  # ../helper_widgets
-from helper_widgets.combo_box import ComboBox  # ../helper_widgets
+from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout
+from custom_widgets.label import Label  # ../custom_widgets
+from custom_widgets.combo_box import ComboBox  # ../custom_widgets
 from instruments import InstrumentSet  # ../instruments.py
+from helper_functions.add_sublayout import add_sublayout  # ../helper_functions
+from helper_functions.new_timer import new_timer  # ../helper_functions
 
 MAX_COMBOBOX_ITEMS = 500
 
@@ -23,10 +24,7 @@ class InstrumentConnectionWidget(QGroupBox):
         self.update()
 
         # timer to check the connection of the instruments every few seconds
-        update_timer = QTimer()
-        update_timer.setInterval(3000)  # 3 seconds
-        update_timer.timeout.connect(self.update)
-        update_timer.start()
+        self.update_timer = new_timer(3000, self.update)
 
         self.setFixedSize(self.sizeHint())  # make sure expanding the window behaves correctly
 
@@ -40,19 +38,11 @@ class InstrumentConnectionWidget(QGroupBox):
         self.oven_connection_label = Label()
 
         # this could probably be put in a for loop if more instruments are added
-        inner_layout = QVBoxLayout()
-        container = QWidget()
-        container.setLayout(inner_layout)
-        layout.addWidget(container)
-        # the top label
-        inner_layout.addWidget(Label("Oven Port"))
-        # the combobox
-        inner_layout.addWidget(self.oven_combobox)
+        inner_layout: QVBoxLayout = add_sublayout(layout, QVBoxLayout)
+        inner_layout.addWidget(Label("Oven Port"))  # the top label
+        inner_layout.addWidget(self.oven_combobox)  # the combobox
         # the two bottom labels with the connection status
-        label_layout = QHBoxLayout()
-        label_container = QWidget()
-        label_container.setLayout(label_layout)
-        inner_layout.addWidget(label_container)
+        label_layout: QHBoxLayout = add_sublayout(inner_layout, QHBoxLayout)
         label_layout.addWidget(Label("Status:"))
         label_layout.addWidget(self.oven_connection_label)
 

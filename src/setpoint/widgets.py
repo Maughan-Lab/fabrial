@@ -1,8 +1,8 @@
 from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QPushButton
-from PyQt6.QtCore import QTimer
-from helper_widgets.spin_box import TemperatureSpinBox  # ../helper_widgets
-from helper_widgets.label import Label  # ../helper_widgets
+from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
+from custom_widgets.label import Label  # ../custom_widgets
 from instruments import InstrumentSet  # ../instruments.py
+from helper_functions.new_timer import new_timer  # ../helper_functions
 
 
 class SetpointWidget(QGroupBox):
@@ -18,11 +18,9 @@ class SetpointWidget(QGroupBox):
         self.instruments = instruments
         self.create_widgets(layout)
         self.connect_widgets()
+        self.update()
 
-        # timer to update the widgets
-        update_timer = QTimer()  # default interval is 0 seconds, so as often as possible
-        update_timer.timeout.connect(self.update)
-        update_timer.start()
+        self.update_timer = new_timer(0, self.update)  # timer to update the widgets
 
         self.setFixedSize(self.sizeHint())  # make sure expanding the window behaves correctly
 
@@ -45,4 +43,4 @@ class SetpointWidget(QGroupBox):
     def update(self):
         """Update the state of dynamic widgets."""
         # disable the setpoint button if the oven is disconnected
-        self.button.setDisabled(True if self.instruments.oven.connected else False)
+        self.button.setDisabled(True if not self.instruments.oven.connected else False)
