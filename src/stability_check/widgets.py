@@ -1,14 +1,19 @@
-from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton
+from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QGridLayout, QPushButton
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.label import Label  # ../custom_widgets
 from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.add_sublayout import add_sublayout  # ../helper_functions
 from helper_functions.new_timer import new_timer  # ../helper_functions
-from .stability_check import test
+
+# from .stability_check import test
 
 
 class StabilityCheckWidget(QGroupBox):
-    """Widget for checking whether the temperature is stable."""
+    """
+    Widget for checking whether the temperature is stable.
+
+    :param instruments: Container for instruments.
+    """
 
     def __init__(self, instruments: InstrumentSet):
         super().__init__()
@@ -27,12 +32,16 @@ class StabilityCheckWidget(QGroupBox):
 
         self.setFixedSize(self.sizeHint())  # make sure expanding the window behaves correctly
 
+        # variables
+        self.running = False
+        self.cancel = False
+
     def create_widgets(self, layout: QVBoxLayout):
         """Create subwidgets."""
         self.stability_check_button = QPushButton("Check Stability")
         self.detect_setpoint_button = QPushButton("Detect Setpoint")
         self.setpoint_spinbox = TemperatureSpinBox()
-        self.stability_status_label = Label("--------")
+        self.stability_status_label = Label("-----------")
 
         # layout for the label, detect_setpoint_button, and setpoint_spinbox
         inner_layout: QGridLayout = add_sublayout(layout, QGridLayout)
@@ -41,10 +50,6 @@ class StabilityCheckWidget(QGroupBox):
         inner_layout.addWidget(self.detect_setpoint_button, 1, 1)
 
         layout.addWidget(self.stability_check_button)  # add the button that checks oven stability
-        # layout for the labels at the bottom
-        label_layout: QHBoxLayout = add_sublayout(layout, QHBoxLayout)
-        label_layout.addWidget(Label("Oven Status:"))
-        label_layout.addWidget(self.stability_status_label)
 
         # NOTE: the actual backend logic for this widget should be in another file.
         # TODO: fix the spacing for the nested layouts
@@ -56,17 +61,26 @@ class StabilityCheckWidget(QGroupBox):
 
     def update(self):
         """Update the state of dynamic widgets."""
-        # disable the buttons if the oven is disconnected
-        for button in (self.detect_setpoint_button, self.stability_check_button):
-            button.setDisabled(True if not self.instruments.oven.connected else False)
+        # disable the button if the oven is disconnected or a stability check is running
+        if not self.instruments.oven.connected or self.running:
+            self.detect_setpoint_button.setDisabled(True)
+            self.stability_check_button.setDisabled(True)
+        else:
+            self.detect_setpoint_button.setDisabled(False)
+            # enable the Stability Check button only if the oven is unlocked
+            self.stability_check_button.setDisabled(
+                False if self.instruments.oven.unlocked else True
+            )
 
     def detect_setpoint(self):
-        """Autofill the setpoint box with the oven's current setpoint."""
+        """
+        Autofill the setpoint box with the oven's current setpoint. Returns True if the
+        detection was successful, False otherwise.
+        """
         setpoint = self.instruments.oven.get_setpoint()
         if setpoint is not None:
             self.setpoint_spinbox.setValue(setpoint)
+            return True
         else:
             self.setpoint_spinbox.clear()  # clear the spinbox if the oven is disconnected
-
-    def test(self):
-        test(self)
+        return False

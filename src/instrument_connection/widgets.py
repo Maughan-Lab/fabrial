@@ -9,7 +9,11 @@ MAX_COMBOBOX_ITEMS = 500
 
 
 class InstrumentConnectionWidget(QGroupBox):
-    """Widget for changing the instrument connection ports."""
+    """
+    Widget for changing the instrument connection ports.
+
+    :param instruments: Container for instruments.
+    """
 
     def __init__(self, instruments: InstrumentSet):
         super().__init__()

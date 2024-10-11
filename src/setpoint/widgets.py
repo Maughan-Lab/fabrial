@@ -6,7 +6,11 @@ from helper_functions.new_timer import new_timer  # ../helper_functions
 
 
 class SetpointWidget(QGroupBox):
-    """Widget for changing the setpoint."""
+    """
+    Widget for changing the setpoint.
+
+    :param instruments: Container for instruments.
+    """
 
     def __init__(self, instruments: InstrumentSet):
         super().__init__()
@@ -42,5 +46,7 @@ class SetpointWidget(QGroupBox):
 
     def update(self):
         """Update the state of dynamic widgets."""
-        # disable the setpoint button if the oven is disconnected
-        self.button.setDisabled(True if not self.instruments.oven.connected else False)
+        # disable the setpoint button if the oven is disconnected or something else is using it
+        self.button.setDisabled(
+            False if self.instruments.oven.connected and self.instruments.oven.unlocked else True
+        )
