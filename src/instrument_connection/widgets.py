@@ -25,11 +25,11 @@ class InstrumentConnectionWidget(QGroupBox):
         self.instruments = instruments
         self.create_widgets(layout)
         self.connect_widgets()
-        self.update()
 
         # timer to check the connection of the instruments every few seconds
         self.update_timer = new_timer(3000, self.update)
 
+        self.update()
         self.setFixedSize(self.sizeHint())  # make sure expanding the window behaves correctly
 
     def create_widgets(self, layout: QHBoxLayout):
@@ -53,6 +53,7 @@ class InstrumentConnectionWidget(QGroupBox):
         # TODO: fix the spacing on the bottom label
 
         # NOTE: when adding additional instruments, make sure they can never use the same port
+        # TODO: actually check the instrument connectivity in this widget
 
     def connect_widgets(self):
         """Give widgets logic."""

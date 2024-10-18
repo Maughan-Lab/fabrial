@@ -19,6 +19,10 @@ class Instrument:
 
 
 class Status(Enum):
+    """
+    Enum to represent the different instrument stability states.
+    """
+
     STABLE = 0
     UNSTABLE = 1
     ERROR = 2

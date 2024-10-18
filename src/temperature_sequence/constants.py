@@ -1,0 +1,6 @@
+CYCLE_COLUMN = "Cycle"
+TEMPERATURE_COLUMN = "Temp"
+BUFFER_HOURS_COLUMN = "Buffer Hours"
+BUFFER_MINUTES_COLUMN = "Buffer Minutes"
+HOLD_HOURS_COLUMN = "Hold Hours"
+HOLD_MINUTES_COLUMN = "Hold Minutes"

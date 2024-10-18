@@ -22,10 +22,10 @@ class SetpointWidget(QGroupBox):
         self.instruments = instruments
         self.create_widgets(layout)
         self.connect_widgets()
-        self.update()
 
         self.update_timer = new_timer(0, self.update)  # timer to update the widgets
 
+        self.update()
         self.setFixedSize(self.sizeHint())  # make sure expanding the window behaves correctly
 
     def create_widgets(self, layout: QVBoxLayout):

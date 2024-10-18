@@ -21,11 +21,11 @@ class PassiveMonitoringWidget(QGroupBox):
 
         self.instruments = instruments
         self.create_widgets(layout)
-        self.update()
 
         # timer to update the oven temperature, setpoint, and status every second
         self.update_timer = new_timer(1000, self.update)
 
+        self.update()
         self.setFixedSize(self.sizeHint())  # make sure expanding the window behaves correctly
 
     def create_widgets(self, layout: QGridLayout):

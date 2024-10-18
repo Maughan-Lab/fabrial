@@ -26,15 +26,15 @@ class StabilityCheckWidget(QGroupBox):
         self.instruments = instruments
         self.create_widgets(layout)
         self.connect_widgets()
-        self.update()
-
-        self.update_timer = new_timer(0, self.update)  # timer to update the widgets
-
-        self.setFixedSize(self.sizeHint())  # make sure expanding the window behaves correctly
 
         # variables
         self.running = False
         self.cancel = False
+
+        self.update_timer = new_timer(0, self.update)  # timer to update the widgets
+
+        self.update()
+        self.setFixedSize(self.sizeHint())  # make sure expanding the window behaves correctly
 
     def create_widgets(self, layout: QVBoxLayout):
         """Create subwidgets."""
@@ -69,7 +69,7 @@ class StabilityCheckWidget(QGroupBox):
             self.detect_setpoint_button.setDisabled(False)
             # enable the Stability Check button only if the oven is unlocked
             self.stability_check_button.setDisabled(
-                False if self.instruments.oven.unlocked else True
+                True if not self.instruments.oven.unlocked else False
             )
 
     def detect_setpoint(self):
