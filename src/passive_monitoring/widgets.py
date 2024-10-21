@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QGroupBox, QGridLayout
 from PyQt6.QtCore import Qt
-from custom_widgets.label import Label  # ../custom_widgets
+from custom_widgets.label import Label, FixedLabel  # ../custom_widgets
 from instruments import InstrumentSet, Status  # ../instruments.py
 from helper_functions.new_timer import new_timer  # ../helper_functions
 
@@ -41,7 +41,7 @@ class PassiveMonitoringWidget(QGroupBox):
         self.add_widget_row(layout, "Status", 2, self.status_label)
 
     def add_widget_row(self, layout: QGridLayout, text: str, row: int, label_widget: Label):
-        layout.addWidget(Label("Oven " + text + ":"), row, 0, Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(FixedLabel("Oven " + text + ":"), row, 0, Qt.AlignmentFlag.AlignRight)
         layout.addWidget(label_widget, row, 1)
 
     def update(self):

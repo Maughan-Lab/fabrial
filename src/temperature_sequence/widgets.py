@@ -1,14 +1,20 @@
-from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QPushButton, QTableView
+from PyQt6.QtWidgets import (
+    QGroupBox,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QHeaderView,
+)
 from PyQt6.QtCore import Qt
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
-from custom_widgets.label import Label  # ../custom_widgets
+from custom_widgets.label import Label, FixedLabel  # ../custom_widgets
 from custom_widgets.combo_box import ComboBox  # ../custom_widgets
 from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.add_sublayout import add_sublayout  # ../helper_functions
 from helper_functions.new_timer import new_timer  # ../helper_functions
 from polars import col
 import polars as pl
-from .TableModel import TableModel
+from .TableModel import TableModel, TableView
 from .constants import (
     CYCLE_COLUMN,
     TEMPERATURE_COLUMN,
@@ -34,12 +40,12 @@ class SequenceWidget(QGroupBox):
         self.sequence_data = pl.DataFrame(
             # converts a dictionary into a Polars DataFrame
             {
-                CYCLE_COLUMN: [],
-                TEMPERATURE_COLUMN: [],
-                BUFFER_HOURS_COLUMN: [],
-                BUFFER_MINUTES_COLUMN: [],
-                HOLD_HOURS_COLUMN: [],
-                HOLD_MINUTES_COLUMN: [],
+                CYCLE_COLUMN: [i for i in range(10)],
+                TEMPERATURE_COLUMN: [float(i) for i in range(10)],
+                BUFFER_HOURS_COLUMN: [i for i in range(10)],
+                BUFFER_MINUTES_COLUMN: [i for i in range(10)],
+                HOLD_HOURS_COLUMN: [i for i in range(10)],
+                HOLD_MINUTES_COLUMN: [i for i in range(10)],
             }
         )
 
@@ -64,15 +70,16 @@ class SequenceWidget(QGroupBox):
 
     def create_widgets(self, layout: QVBoxLayout):
         """Create subwidgets."""
-        layout.addWidget(Label("Cycle Count"))
+        layout.addWidget(FixedLabel("Cycle Count"))
         self.cycle_combobox = ComboBox()
         self.cycle_combobox.addItems([str(i) for i in range(1, 501)])  # add entries 1-500
         layout.addWidget(self.cycle_combobox)
 
         # TODO: add DataFrame widgets
         # tabular widgets
-        self.paremeter_table = QTableView()
+        self.paremeter_table = TableView()
         self.paremeter_table.setModel(TableModel(self.sequence_data))
+        self.paremeter_table.updateSize()
         layout.addWidget(self.paremeter_table)
 
         self.start_button = QPushButton("Start Sequence")
@@ -86,16 +93,11 @@ class SequenceWidget(QGroupBox):
         layout.addWidget(self.unpause_button)
 
         label_layout: QHBoxLayout = add_sublayout(layout, QHBoxLayout)
-        temporary_label = Label("Cycle:")
-        temporary_label.setFixedSize(temporary_label.sizeHint())
-        label_layout.addWidget(temporary_label)
+        label_layout.addWidget(FixedLabel("Cycle:"))
         self.cycle_label = Label("---")
-        self.cycle_label.setStyleSheet("background-color: red")
         label_layout.addWidget(self.cycle_label)
-        # NOTE: the labels are stretching to fill available space in the layout. Find a way to stop this
 
         # NOTE: the actual backend logic for this widget should be in another file.
-        # TODO: fix the spacing for the nested layouts
 
     def connect_widgets(self):
         """Give widgets logic."""
@@ -108,6 +110,8 @@ class SequenceWidget(QGroupBox):
         # update label text
         self.cycle_label.setText(str(self.cycle_number) if self.running else "---")
 
+        self.paremeter_table.resizeColumnsToContents()
+
         # update button states
         if not self.instruments.oven.connected:
             for button in (self.start_button, self.pause_button, self.unpause_button):
@@ -115,3 +119,5 @@ class SequenceWidget(QGroupBox):
         else:
             for button in (self.start_button, self.pause_button, self.unpause_button):
                 button.setDisabled(False)
+
+# TODO: need to resize the frame when the table is resized

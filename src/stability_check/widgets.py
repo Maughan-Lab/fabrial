@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QGridLayout, QPushButton
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
-from custom_widgets.label import Label  # ../custom_widgets
+from custom_widgets.label import Label, FixedLabel  # ../custom_widgets
 from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.add_sublayout import add_sublayout  # ../helper_functions
 from helper_functions.new_timer import new_timer  # ../helper_functions
@@ -45,7 +45,7 @@ class StabilityCheckWidget(QGroupBox):
 
         # layout for the label, detect_setpoint_button, and setpoint_spinbox
         inner_layout: QGridLayout = add_sublayout(layout, QGridLayout)
-        inner_layout.addWidget(Label("Setpoint"), 0, 0)
+        inner_layout.addWidget(FixedLabel("Setpoint"), 0, 0)
         inner_layout.addWidget(self.setpoint_spinbox, 1, 0)
         inner_layout.addWidget(self.detect_setpoint_button, 1, 1)
 
