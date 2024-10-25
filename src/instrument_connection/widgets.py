@@ -1,8 +1,8 @@
-from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout
+from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QSizePolicy
 from custom_widgets.label import Label, FixedLabel  # ../custom_widgets
 from custom_widgets.combo_box import ComboBox  # ../custom_widgets
 from instruments import InstrumentSet  # ../instruments.py
-from helper_functions.add_sublayout import add_sublayout  # ../helper_functions
+from helper_functions.layouts import add_sublayout, add_to_layout  # ../helper_functions
 from helper_functions.new_timer import new_timer  # ../helper_functions
 
 MAX_COMBOBOX_ITEMS = 500
@@ -19,6 +19,7 @@ class InstrumentConnectionWidget(QGroupBox):
         super().__init__()
         self.setTitle("Instrument Connections")
         # manage the layout
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         layout = QHBoxLayout()
         self.setLayout(layout)
 
@@ -30,7 +31,6 @@ class InstrumentConnectionWidget(QGroupBox):
         self.update_timer = new_timer(3000, self.update)
 
         self.update()
-        self.setFixedSize(self.sizeHint())  # make sure expanding the window behaves correctly
 
     def create_widgets(self, layout: QHBoxLayout):
         """Create subwidgets."""
@@ -43,12 +43,11 @@ class InstrumentConnectionWidget(QGroupBox):
 
         # this could probably be put in a for loop if more instruments are added
         inner_layout: QVBoxLayout = add_sublayout(layout, QVBoxLayout)
-        inner_layout.addWidget(FixedLabel("Oven Port"))  # the top label
-        inner_layout.addWidget(self.oven_combobox)  # the combobox
+        # the top label and combobox
+        add_to_layout(inner_layout, FixedLabel("Oven Port"), self.oven_combobox)
         # the two bottom labels with the connection status
         label_layout: QHBoxLayout = add_sublayout(inner_layout, QHBoxLayout)
-        label_layout.addWidget(FixedLabel("Status:"))
-        label_layout.addWidget(self.oven_connection_label)
+        add_to_layout(label_layout, FixedLabel("Status:"), self.oven_connection_label)
 
         # NOTE: when adding additional instruments, make sure they can never use the same port
         # TODO: actually check the instrument connectivity in this widget
@@ -62,9 +61,12 @@ class InstrumentConnectionWidget(QGroupBox):
 
     def update(self):
         """Update the state of dynamic widgets."""
+        # update the oven label
         if self.instruments.oven.connected:
-            self.oven_connection_label.setText("CONNECTED")
-            self.oven_connection_label.setStyleSheet("color: green")  # this is HTML syntax
+            text = "CONNECTED"
+            color = "green"
         else:
-            self.oven_connection_label.setText("DISCONNECTED")
-            self.oven_connection_label.setStyleSheet("color: red")
+            text = "DISCONNECTED"
+            color = "red"
+        self.oven_connection_label.setText(text)
+        self.oven_connection_label.setStyleSheet("color: " + color)  # this is HTML syntax

@@ -1,8 +1,8 @@
-from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QGridLayout, QPushButton
+from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QGridLayout, QPushButton, QSizePolicy
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.label import Label, FixedLabel  # ../custom_widgets
 from instruments import InstrumentSet  # ../instruments.py
-from helper_functions.add_sublayout import add_sublayout  # ../helper_functions
+from helper_functions.layouts import add_sublayout, add_to_layout_grid  # ../helper_functions
 from helper_functions.new_timer import new_timer  # ../helper_functions
 
 # from .stability_check import test
@@ -20,6 +20,7 @@ class StabilityCheckWidget(QGroupBox):
         self.setTitle("Temperature Stability Check")
 
         # manage the layout
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         layout = QVBoxLayout()
         self.setLayout(layout)
 
@@ -34,7 +35,6 @@ class StabilityCheckWidget(QGroupBox):
         self.update_timer = new_timer(0, self.update)  # timer to update the widgets
 
         self.update()
-        self.setFixedSize(self.sizeHint())  # make sure expanding the window behaves correctly
 
     def create_widgets(self, layout: QVBoxLayout):
         """Create subwidgets."""
@@ -42,12 +42,14 @@ class StabilityCheckWidget(QGroupBox):
         self.detect_setpoint_button = QPushButton("Detect Setpoint")
         self.setpoint_spinbox = TemperatureSpinBox()
         self.stability_status_label = Label("-----------")
-
         # layout for the label, detect_setpoint_button, and setpoint_spinbox
         inner_layout: QGridLayout = add_sublayout(layout, QGridLayout)
-        inner_layout.addWidget(FixedLabel("Setpoint"), 0, 0)
-        inner_layout.addWidget(self.setpoint_spinbox, 1, 0)
-        inner_layout.addWidget(self.detect_setpoint_button, 1, 1)
+        add_to_layout_grid(
+            inner_layout,
+            (FixedLabel("Setpoint"), 0, 0),
+            (self.setpoint_spinbox, 1, 0),
+            (self.detect_setpoint_button, 1, 1),
+        )
 
         layout.addWidget(self.stability_check_button)  # add the button that checks oven stability
 

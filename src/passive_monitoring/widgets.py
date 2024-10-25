@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QGroupBox, QGridLayout
+from PyQt6.QtWidgets import QGroupBox, QGridLayout, QSizePolicy
 from PyQt6.QtCore import Qt
 from custom_widgets.label import Label, FixedLabel  # ../custom_widgets
 from instruments import InstrumentSet, Status  # ../instruments.py
@@ -16,6 +16,7 @@ class PassiveMonitoringWidget(QGroupBox):
         super().__init__()
         self.setTitle("Measurements")
         # manage the layout
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         layout = QGridLayout()
         self.setLayout(layout)
 
@@ -26,19 +27,15 @@ class PassiveMonitoringWidget(QGroupBox):
         self.update_timer = new_timer(1000, self.update)
 
         self.update()
-        self.setFixedSize(self.sizeHint())  # make sure expanding the window behaves correctly
 
     def create_widgets(self, layout: QGridLayout):
         """Create subwidgets."""
         self.temperature_label = Label()
         self.setpoint_label = Label()
         self.status_label = Label()
-        # oven temperature
-        self.add_widget_row(layout, "Temperature", 0, self.temperature_label)
-        # oven setpoint
-        self.add_widget_row(layout, "Setpoint", 1, self.setpoint_label)
-        # oven stability status
-        self.add_widget_row(layout, "Status", 2, self.status_label)
+        self.add_widget_row(layout, "Temperature", 0, self.temperature_label)  # oven temperature
+        self.add_widget_row(layout, "Setpoint", 1, self.setpoint_label)  # oven setpoint
+        self.add_widget_row(layout, "Status", 2, self.status_label)  # oven stability status
 
     def add_widget_row(self, layout: QGridLayout, text: str, row: int, label_widget: Label):
         layout.addWidget(FixedLabel("Oven " + text + ":"), row, 0, Qt.AlignmentFlag.AlignRight)

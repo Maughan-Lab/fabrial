@@ -1,16 +1,15 @@
 from PyQt6.QtWidgets import (
     QGroupBox,
+    QPushButton,
     QVBoxLayout,
     QHBoxLayout,
-    QPushButton,
-    QHeaderView,
+    QStackedLayout,
+    QSizePolicy,
 )
-from PyQt6.QtCore import Qt
-from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.label import Label, FixedLabel  # ../custom_widgets
 from custom_widgets.combo_box import ComboBox  # ../custom_widgets
 from instruments import InstrumentSet  # ../instruments.py
-from helper_functions.add_sublayout import add_sublayout  # ../helper_functions
+from helper_functions.layouts import add_sublayout, add_to_layout  # ../helper_functions
 from helper_functions.new_timer import new_timer  # ../helper_functions
 from polars import col
 import polars as pl
@@ -37,6 +36,7 @@ class SequenceWidget(QGroupBox):
         self.setTitle("Temperature Sequence")
 
         # data
+        # TODO: remove the testing data
         self.sequence_data = pl.DataFrame(
             # converts a dictionary into a Polars DataFrame
             {
@@ -50,6 +50,7 @@ class SequenceWidget(QGroupBox):
         )
 
         # manage the layout
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         layout = QVBoxLayout()
         self.setLayout(layout)
 
@@ -66,36 +67,28 @@ class SequenceWidget(QGroupBox):
         self.update_timer = new_timer(0, self.update)  # timer to update the widgets
 
         self.update()
-        self.setFixedSize(self.sizeHint())  # make sure expanding the window behaves correctly
 
     def create_widgets(self, layout: QVBoxLayout):
         """Create subwidgets."""
-        layout.addWidget(FixedLabel("Cycle Count"))
+        # combobox
         self.cycle_combobox = ComboBox()
         self.cycle_combobox.addItems([str(i) for i in range(1, 501)])  # add entries 1-500
-        layout.addWidget(self.cycle_combobox)
-
-        # TODO: add DataFrame widgets
         # tabular widgets
-        self.paremeter_table = TableView()
-        self.paremeter_table.setModel(TableModel(self.sequence_data))
-        self.paremeter_table.updateSize()
-        layout.addWidget(self.paremeter_table)
-
+        self.parameter_table = TableView()
+        self.parameter_table.setModel(TableModel(self.sequence_data))
+        self.parameter_table.updateSize()
+        # add the widgets
+        add_to_layout(layout, FixedLabel("Cycle Count"), self.cycle_combobox, self.parameter_table)
+        # buttons
+        self.button_layout: QStackedLayout = add_sublayout(layout, QStackedLayout)
         self.start_button = QPushButton("Start Sequence")
         self.pause_button = QPushButton("Pause Sequence")
         self.unpause_button = QPushButton("Unpause Sequence")
-        # default state is to show the start button
-        self.pause_button.hide()
-        self.unpause_button.hide()
-        layout.addWidget(self.start_button)
-        layout.addWidget(self.pause_button)
-        layout.addWidget(self.unpause_button)
-
+        add_to_layout(self.button_layout, self.start_button, self.pause_button, self.unpause_button)
+        # cycle labels
         label_layout: QHBoxLayout = add_sublayout(layout, QHBoxLayout)
-        label_layout.addWidget(FixedLabel("Cycle:"))
         self.cycle_label = Label("---")
-        label_layout.addWidget(self.cycle_label)
+        add_to_layout(label_layout, FixedLabel("Cycle:"), self.cycle_label)
 
         # NOTE: the actual backend logic for this widget should be in another file.
 
@@ -110,8 +103,6 @@ class SequenceWidget(QGroupBox):
         # update label text
         self.cycle_label.setText(str(self.cycle_number) if self.running else "---")
 
-        self.paremeter_table.resizeColumnsToContents()
-
         # update button states
         if not self.instruments.oven.connected:
             for button in (self.start_button, self.pause_button, self.unpause_button):
@@ -119,5 +110,6 @@ class SequenceWidget(QGroupBox):
         else:
             for button in (self.start_button, self.pause_button, self.unpause_button):
                 button.setDisabled(False)
+
 
 # TODO: need to resize the frame when the table is resized

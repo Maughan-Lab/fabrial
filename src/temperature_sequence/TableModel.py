@@ -1,5 +1,5 @@
 from PyQt6.QtCore import Qt, QAbstractTableModel, QSize
-from PyQt6.QtWidgets import QTableView, QHeaderView
+from PyQt6.QtWidgets import QTableView, QHeaderView, QSizePolicy, QAbstractScrollArea
 from polars import col
 import polars as pl
 from .constants import (
@@ -83,7 +83,7 @@ class TableModel(QAbstractTableModel):
                 except Exception:
                     return False
                 self.parameters[index.row(), index.column()] = new_value
-                self.dataChanged.emit(index, index, [Qt.ItemDataRole.EditRole])
+                self.dataChanged.emit(index, index, [role])
                 return True
 
 
@@ -103,6 +103,7 @@ class TableView(QTableView):
         self.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
         # hide the horizontal scrollbar (we don't need it)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
     def getCurrentWidth(self) -> int:
         """
@@ -120,11 +121,9 @@ class TableView(QTableView):
         """
         Get the maximum height, dictated by **MAX_VISIBLE_ROWS**.
         """
-        height = (
-            self.frameWidth() * 2
-            + self.horizontalHeader().sizeHint().height()
-            + self.rowHeight(0) * self.MAX_VISIBLE_ROWS
-        )
+        height = self.frameWidth() * 2 + self.horizontalHeader().sizeHint().height()
+        for i in range(self.MAX_VISIBLE_ROWS):
+            height += self.rowHeight(i)
         return height
 
     def getCurrentHeight(self) -> int:
@@ -141,10 +140,10 @@ class TableView(QTableView):
         Update the table size to show either **MAX_VISIBLE_ROWS** rows or the current number of
         rows, whichever is smaller.
         """
-        self.setFixedSize(
+        self.setMinimumSize(
             QSize(self.getCurrentWidth(), min(self.getCurrentHeight(), self.getMaxHeight()))
         )
 
     def dataChanged(self, topLeft, bottomRight, roles):
         self.resizeColumnsToContents()
-        # TODO: figure out if this is even necessary
+        self.updateSize()

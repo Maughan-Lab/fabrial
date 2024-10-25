@@ -1,8 +1,9 @@
-from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QPushButton
+from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QPushButton, QSizePolicy
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
-from custom_widgets.label import Label  # ../custom_widgets
+from custom_widgets.label import FixedLabel  # ../custom_widgets
 from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.new_timer import new_timer  # ../helper_functions
+from helper_functions.layouts import add_to_layout
 
 
 class SetpointWidget(QGroupBox):
@@ -16,6 +17,7 @@ class SetpointWidget(QGroupBox):
         super().__init__()
         self.setTitle("Setpoint")  # set the frame's title
         # manage the layout
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         layout = QVBoxLayout()
         self.setLayout(layout)
 
@@ -26,17 +28,12 @@ class SetpointWidget(QGroupBox):
         self.update_timer = new_timer(0, self.update)  # timer to update the widgets
 
         self.update()
-        self.setFixedSize(self.sizeHint())  # make sure expanding the window behaves correctly
 
     def create_widgets(self, layout: QVBoxLayout):
         """Create subwidgets."""
-        layout.addWidget(Label("Setpoint"))
-
         self.setpoint_spinbox = TemperatureSpinBox()
-        layout.addWidget(self.setpoint_spinbox)
-
         self.button = QPushButton("Change Setpoint")
-        layout.addWidget(self.button)
+        add_to_layout(layout, FixedLabel("Setpoint"), self.setpoint_spinbox, self.button)
 
     def connect_widgets(self):
         """Give widgets logic."""
