@@ -1,6 +1,7 @@
-from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QGridLayout, QPushButton, QSizePolicy
+from PyQt6.QtWidgets import QVBoxLayout, QGridLayout, QPushButton
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.label import Label, FixedLabel  # ../custom_widgets
+from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.layouts import add_sublayout, add_to_layout_grid  # ../helper_functions
 from helper_functions.new_timer import new_timer  # ../helper_functions
@@ -8,7 +9,7 @@ from helper_functions.new_timer import new_timer  # ../helper_functions
 # from .stability_check import test
 
 
-class StabilityCheckWidget(QGroupBox):
+class StabilityCheckWidget(GroupBox):
     """
     Widget for checking whether the temperature is stable.
 
@@ -16,16 +17,9 @@ class StabilityCheckWidget(QGroupBox):
     """
 
     def __init__(self, instruments: InstrumentSet):
-        super().__init__()
-        self.setTitle("Temperature Stability Check")
+        super().__init__("Temperature Stability Check", QVBoxLayout, instruments)
 
-        # manage the layout
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-
-        self.instruments = instruments
-        self.create_widgets(layout)
+        self.create_widgets()
         self.connect_widgets()
 
         # variables
@@ -36,14 +30,16 @@ class StabilityCheckWidget(QGroupBox):
 
         self.update()
 
-    def create_widgets(self, layout: QVBoxLayout):
+    def create_widgets(self):
         """Create subwidgets."""
+        layout = self.layout()
+
         self.stability_check_button = QPushButton("Check Stability")
         self.detect_setpoint_button = QPushButton("Detect Setpoint")
         self.setpoint_spinbox = TemperatureSpinBox()
         self.stability_status_label = Label("-----------")
         # layout for the label, detect_setpoint_button, and setpoint_spinbox
-        inner_layout: QGridLayout = add_sublayout(layout, QGridLayout)
+        inner_layout = add_sublayout(layout, QGridLayout)
         add_to_layout_grid(
             inner_layout,
             (FixedLabel("Setpoint"), 0, 0),

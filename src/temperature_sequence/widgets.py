@@ -1,13 +1,7 @@
-from PyQt6.QtWidgets import (
-    QGroupBox,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QStackedLayout,
-    QSizePolicy,
-)
+from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QHBoxLayout, QStackedLayout
 from custom_widgets.label import Label, FixedLabel  # ../custom_widgets
 from custom_widgets.combo_box import ComboBox  # ../custom_widgets
+from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.layouts import add_sublayout, add_to_layout  # ../helper_functions
 from helper_functions.new_timer import new_timer  # ../helper_functions
@@ -24,7 +18,7 @@ from .constants import (
 )
 
 
-class SequenceWidget(QGroupBox):
+class SequenceWidget(GroupBox):
     """
     Widget for running temperature sequences.
 
@@ -32,8 +26,7 @@ class SequenceWidget(QGroupBox):
     """
 
     def __init__(self, instruments: InstrumentSet):
-        super().__init__()
-        self.setTitle("Temperature Sequence")
+        super().__init__("Temperature Sequence", QVBoxLayout, instruments)
 
         # data
         # TODO: remove the testing data
@@ -48,28 +41,22 @@ class SequenceWidget(QGroupBox):
                 HOLD_MINUTES_COLUMN: [i for i in range(10)],
             }
         )
-
-        # manage the layout
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-
-        self.instruments = instruments
-        self.create_widgets(layout)
-        self.connect_widgets()
-
         # variables
         self.running = False
         self.pause = False
         self.cancel = False
         self.cycle_number = 0
 
-        self.update_timer = new_timer(0, self.update)  # timer to update the widgets
+        self.create_widgets()
+        self.connect_widgets()
 
+        self.update_timer = new_timer(0, self.update)  # timer to update the widgets
         self.update()
 
-    def create_widgets(self, layout: QVBoxLayout):
+    def create_widgets(self):
         """Create subwidgets."""
+        layout = self.layout()
+
         # combobox
         self.cycle_combobox = ComboBox()
         self.cycle_combobox.addItems([str(i) for i in range(1, 501)])  # add entries 1-500
@@ -80,13 +67,13 @@ class SequenceWidget(QGroupBox):
         # add the widgets
         add_to_layout(layout, FixedLabel("Cycle Count"), self.cycle_combobox, self.parameter_table)
         # buttons
-        self.button_layout: QStackedLayout = add_sublayout(layout, QStackedLayout)
+        self.button_layout = add_sublayout(layout, QStackedLayout)
         self.start_button = QPushButton("Start Sequence")
         self.pause_button = QPushButton("Pause Sequence")
         self.unpause_button = QPushButton("Unpause Sequence")
         add_to_layout(self.button_layout, self.start_button, self.pause_button, self.unpause_button)
         # cycle labels
-        label_layout: QHBoxLayout = add_sublayout(layout, QHBoxLayout)
+        label_layout = add_sublayout(layout, QHBoxLayout)
         self.cycle_label = Label("---")
         add_to_layout(label_layout, FixedLabel("Cycle:"), self.cycle_label)
 
@@ -110,6 +97,3 @@ class SequenceWidget(QGroupBox):
         else:
             for button in (self.start_button, self.pause_button, self.unpause_button):
                 button.setDisabled(False)
-
-
-# TODO: need to resize the frame when the table is resized

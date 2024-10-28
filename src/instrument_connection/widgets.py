@@ -1,6 +1,7 @@
-from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QSizePolicy
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout
 from custom_widgets.label import Label, FixedLabel  # ../custom_widgets
 from custom_widgets.combo_box import ComboBox  # ../custom_widgets
+from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.layouts import add_sublayout, add_to_layout  # ../helper_functions
 from helper_functions.new_timer import new_timer  # ../helper_functions
@@ -8,7 +9,7 @@ from helper_functions.new_timer import new_timer  # ../helper_functions
 MAX_COMBOBOX_ITEMS = 500
 
 
-class InstrumentConnectionWidget(QGroupBox):
+class InstrumentConnectionWidget(GroupBox):
     """
     Widget for changing the instrument connection ports.
 
@@ -16,15 +17,9 @@ class InstrumentConnectionWidget(QGroupBox):
     """
 
     def __init__(self, instruments: InstrumentSet):
-        super().__init__()
-        self.setTitle("Instrument Connections")
-        # manage the layout
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        layout = QHBoxLayout()
-        self.setLayout(layout)
+        super().__init__("Instrument Connections", QHBoxLayout, instruments)
 
-        self.instruments = instruments
-        self.create_widgets(layout)
+        self.create_widgets()
         self.connect_widgets()
 
         # timer to check the connection of the instruments every few seconds
@@ -32,8 +27,10 @@ class InstrumentConnectionWidget(QGroupBox):
 
         self.update()
 
-    def create_widgets(self, layout: QHBoxLayout):
+    def create_widgets(self):
         """Create subwidgets."""
+        layout = self.layout()
+
         self.oven_combobox = ComboBox()
         # add "COM1" through "COM500" to the combobox
         self.oven_combobox.addItems(
@@ -42,11 +39,11 @@ class InstrumentConnectionWidget(QGroupBox):
         self.oven_connection_label = Label()
 
         # this could probably be put in a for loop if more instruments are added
-        inner_layout: QVBoxLayout = add_sublayout(layout, QVBoxLayout)
+        inner_layout = add_sublayout(layout, QVBoxLayout)
         # the top label and combobox
         add_to_layout(inner_layout, FixedLabel("Oven Port"), self.oven_combobox)
         # the two bottom labels with the connection status
-        label_layout: QHBoxLayout = add_sublayout(inner_layout, QHBoxLayout)
+        label_layout = add_sublayout(inner_layout, QHBoxLayout)
         add_to_layout(label_layout, FixedLabel("Status:"), self.oven_connection_label)
 
         # NOTE: when adding additional instruments, make sure they can never use the same port

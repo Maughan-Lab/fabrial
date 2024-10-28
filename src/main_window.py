@@ -4,7 +4,9 @@ from passive_monitoring.widgets import PassiveMonitoringWidget
 from instrument_connection.widgets import InstrumentConnectionWidget
 from stability_check.widgets import StabilityCheckWidget
 from temperature_sequence.widgets import SequenceWidget
+from graph.widgets import GraphWidget
 from instruments import InstrumentSet
+from helper_functions.layouts import add_to_layout_grid
 
 
 class MainWindow(QMainWindow):
@@ -13,18 +15,23 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Quincy")
 
         layout = QGridLayout()
-
         central_widget = QWidget()
         central_widget.setLayout(layout)
-
-        layout.addWidget(SetpointWidget(instruments))
-        self.passive_monitoring_widget = PassiveMonitoringWidget(instruments)
-        layout.addWidget(self.passive_monitoring_widget)
-        self.instrument_connection_widget = InstrumentConnectionWidget(instruments)
-        layout.addWidget(self.instrument_connection_widget)
-        self.stability_check_widget = StabilityCheckWidget(instruments)
-        layout.addWidget(self.stability_check_widget)
-        self.sequence_widget = SequenceWidget(instruments)
-        layout.addWidget(self.sequence_widget)
-
         self.setCentralWidget(central_widget)
+
+        self.setpoint_widget = SetpointWidget(instruments)
+        self.passive_monitoring_widget = PassiveMonitoringWidget(instruments)
+        self.instrument_connection_widget = InstrumentConnectionWidget(instruments)
+        self.stability_check_widget = StabilityCheckWidget(instruments)
+        self.sequence_widget = SequenceWidget(instruments)
+        self.graph_widget = GraphWidget(instruments, self.sequence_widget.sequence_data)
+
+        add_to_layout_grid(
+            layout,
+            (self.setpoint_widget, 0, 0),
+            (self.stability_check_widget, 1, 0),
+            (self.passive_monitoring_widget, 0, 1),
+            (self.instrument_connection_widget, 0, 2),
+            (self.sequence_widget, 2, 0),
+        )
+        layout.addWidget(self.graph_widget, 1, 1, 2, 2)
