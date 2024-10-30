@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QVBoxLayout, QPushButton
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
-from custom_widgets.label import FixedLabel  # ../custom_widgets
+from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.new_timer import new_timer  # ../helper_functions
@@ -30,7 +30,7 @@ class SetpointWidget(GroupBox):
 
         self.setpoint_spinbox = TemperatureSpinBox()
         self.button = QPushButton("Change Setpoint")
-        add_to_layout(layout, FixedLabel("Setpoint"), self.setpoint_spinbox, self.button)
+        add_to_layout(layout, Label("Setpoint"), self.setpoint_spinbox, self.button)
 
     def connect_widgets(self):
         """Give widgets logic."""

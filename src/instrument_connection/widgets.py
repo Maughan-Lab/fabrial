@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout
-from custom_widgets.label import Label, FixedLabel  # ../custom_widgets
+from custom_widgets.label import Label # ../custom_widgets
 from custom_widgets.combo_box import ComboBox  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet  # ../instruments.py
@@ -41,10 +41,10 @@ class InstrumentConnectionWidget(GroupBox):
         # this could probably be put in a for loop if more instruments are added
         inner_layout = add_sublayout(layout, QVBoxLayout)
         # the top label and combobox
-        add_to_layout(inner_layout, FixedLabel("Oven Port"), self.oven_combobox)
+        add_to_layout(inner_layout, Label("Oven Port"), self.oven_combobox)
         # the two bottom labels with the connection status
         label_layout = add_sublayout(inner_layout, QHBoxLayout)
-        add_to_layout(label_layout, FixedLabel("Status:"), self.oven_connection_label)
+        add_to_layout(label_layout, Label("Status:"), self.oven_connection_label)
 
         # NOTE: when adding additional instruments, make sure they can never use the same port
         # TODO: actually check the instrument connectivity in this widget

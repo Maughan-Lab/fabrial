@@ -1,6 +1,6 @@
 import matplotlib
-from matplotlib.backends.backend_qt5 import (
-    FigureCanvasQT as Canvas,
+from matplotlib.backends.backend_qtagg import (
+    FigureCanvasQTAgg as Canvas,
     NavigationToolbar2QT as Toolbar,
 )
 from matplotlib.figure import Figure
@@ -10,7 +10,7 @@ from instruments import InstrumentSet  # ../instruments.py
 from custom_widgets.groupbox import GroupBox  # ../custom_widgets
 from helper_functions.layouts import add_to_layout
 
-matplotlib.use("QtAgg")
+matplotlib.use("qtagg")
 
 
 class GraphWidget(GroupBox):
@@ -29,7 +29,10 @@ class GraphWidget(GroupBox):
         layout = self.layout()
 
         # figure
-        self.canvas = Canvas(Figure(figsize=(4, 3), dpi=100))
+        self.canvas = Canvas(Figure(figsize=(5, 4), dpi=100))
+        axes = self.canvas.figure.add_subplot(111)
+        axes.plot([2, 3], [1, 2])
+        self.canvas.figure.tight_layout()
         add_to_layout(layout, self.canvas, Toolbar(self.canvas, self))
 
         # TODO: fix this it's super broken

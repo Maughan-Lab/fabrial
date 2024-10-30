@@ -1,5 +1,14 @@
-from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QHBoxLayout, QStackedLayout
-from custom_widgets.label import Label, FixedLabel  # ../custom_widgets
+from PyQt6.QtWidgets import (
+    QPushButton,
+    QVBoxLayout,
+    QHBoxLayout,
+    QStackedLayout,
+    QFrame,
+    QSizePolicy,
+)
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
+from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.combo_box import ComboBox  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet  # ../instruments.py
@@ -65,7 +74,7 @@ class SequenceWidget(GroupBox):
         self.parameter_table.setModel(TableModel(self.sequence_data))
         self.parameter_table.updateSize()
         # add the widgets
-        add_to_layout(layout, FixedLabel("Cycle Count"), self.cycle_combobox, self.parameter_table)
+        add_to_layout(layout, Label("Cycle Count"), self.cycle_combobox, self.parameter_table)
         # buttons
         self.button_layout = add_sublayout(layout, QStackedLayout)
         self.start_button = QPushButton("Start Sequence")
@@ -73,9 +82,24 @@ class SequenceWidget(GroupBox):
         self.unpause_button = QPushButton("Unpause Sequence")
         add_to_layout(self.button_layout, self.start_button, self.pause_button, self.unpause_button)
         # cycle labels
-        label_layout = add_sublayout(layout, QHBoxLayout)
+        label_layout = add_sublayout(layout, QHBoxLayout, QSizePolicy.Policy.Fixed)
         self.cycle_label = Label("---")
-        add_to_layout(label_layout, FixedLabel("Cycle:"), self.cycle_label)
+        add_to_layout(label_layout, Label("Cycle:"), self.cycle_label)
+        # label to indicate if a sequence is active
+
+        # ------------------------------------------------------------------------------------------
+        # TODO: put this in a function and then re-style the whole application
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.HLine)
+        separator.setLineWidth(1)
+        separator.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding)
+        separator.setStyleSheet("color: #383B3E")
+        layout.addWidget(separator)
+        # ------------------------------------------------------------------------------------------
+
+        self.status_label = Label("Inactive")
+        self.status_label.setFont(QFont("Arial", 16))
+        layout.addWidget(self.status_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # NOTE: the actual backend logic for this widget should be in another file.
 
@@ -86,9 +110,18 @@ class SequenceWidget(GroupBox):
 
     def update(self):
         """Update the state of dynamic widgets."""
-        # TODO: make sure buttons are properly enabled/disabled
         # update label text
-        self.cycle_label.setText(str(self.cycle_number) if self.running else "---")
+        if self.running:
+            cycle_text = str(self.cycle_number + 1)
+            status_text = "Active"
+            status_color = "green"
+        else:
+            cycle_text = "---"
+            status_text = "Inactive"
+            status_color = "gray"
+        self.cycle_label.setText(cycle_text)
+        self.status_label.setText(status_text)
+        self.status_label.setStyleSheet("color: " + status_color)
 
         # update button states
         if not self.instruments.oven.connected:

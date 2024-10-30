@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QGridLayout
 from PyQt6.QtCore import Qt
-from custom_widgets.label import Label, FixedLabel  # ../custom_widgets
+from PyQt6.QtGui import QFont
+from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet, Status  # ../instruments.py
 from helper_functions.new_timer import new_timer  # ../helper_functions
@@ -30,12 +31,19 @@ class PassiveMonitoringWidget(GroupBox):
         self.temperature_label = Label()
         self.setpoint_label = Label()
         self.status_label = Label()
+
         self.add_widget_row(layout, "Temperature", 0, self.temperature_label)  # oven temperature
         self.add_widget_row(layout, "Setpoint", 1, self.setpoint_label)  # oven setpoint
         self.add_widget_row(layout, "Status", 2, self.status_label)  # oven stability status
 
     def add_widget_row(self, layout: QGridLayout, text: str, row: int, label_widget: Label):
-        layout.addWidget(FixedLabel("Oven " + text + ":"), row, 0, Qt.AlignmentFlag.AlignRight)
+        category_label = Label("Oven " + text + ":")
+
+        font = QFont("Arial", 16)
+        # category_label.setFont(font)
+        label_widget.setFont(font)
+
+        layout.addWidget(category_label, row, 0, Qt.AlignmentFlag.AlignRight)
         layout.addWidget(label_widget, row, 1)
 
     def update(self):
