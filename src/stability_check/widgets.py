@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QVBoxLayout, QGridLayout, QPushButton
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
-from custom_widgets.label import Label # ../custom_widgets
+from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.layouts import add_sublayout, add_to_layout_grid  # ../helper_functions
@@ -10,13 +10,10 @@ from helper_functions.new_timer import new_timer  # ../helper_functions
 
 
 class StabilityCheckWidget(GroupBox):
-    """
-    Widget for checking whether the temperature is stable.
-
-    :param instruments: Container for instruments.
-    """
+    """Widget for checking whether the temperature is stable."""
 
     def __init__(self, instruments: InstrumentSet):
+        """:param instruments: Container for instruments."""
         super().__init__("Temperature Stability Check", QVBoxLayout, instruments)
 
         self.create_widgets()

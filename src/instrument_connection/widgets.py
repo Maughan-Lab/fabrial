@@ -1,29 +1,28 @@
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout
-from custom_widgets.label import Label # ../custom_widgets
+from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.combo_box import ComboBox  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.layouts import add_sublayout, add_to_layout  # ../helper_functions
 from helper_functions.new_timer import new_timer  # ../helper_functions
 
-MAX_COMBOBOX_ITEMS = 500
-
 
 class InstrumentConnectionWidget(GroupBox):
-    """
-    Widget for changing the instrument connection ports.
+    MAX_COMBOBOX_ITEMS = 500
 
-    :param instruments: Container for instruments.
-    """
+    """Widget for changing the instrument connection ports."""
 
     def __init__(self, instruments: InstrumentSet):
+        """:param instruments: Container for instruments."""
         super().__init__("Instrument Connections", QHBoxLayout, instruments)
 
         self.create_widgets()
         self.connect_widgets()
 
-        # timer to check the connection of the instruments every few seconds
-        self.update_timer = new_timer(3000, self.update)
+        # update dynamic widgets as often as possible
+        self.update_timer = new_timer(0, self.update)
+        # check the oven's connection as often as possible
+        self.connection_timer = new_timer(0, lambda: self.instruments.oven.connect())
 
         self.update()
 
@@ -34,7 +33,7 @@ class InstrumentConnectionWidget(GroupBox):
         self.oven_combobox = ComboBox()
         # add "COM1" through "COM500" to the combobox
         self.oven_combobox.addItems(
-            ["COM" + str(number) for number in range(MAX_COMBOBOX_ITEMS + 1)]
+            ["COM" + str(number) for number in range(self.MAX_COMBOBOX_ITEMS + 1)]
         )
         self.oven_connection_label = Label()
 

@@ -8,13 +8,10 @@ from helper_functions.new_timer import new_timer  # ../helper_functions
 
 
 class PassiveMonitoringWidget(GroupBox):
-    """
-    Widget for monitoring the oven.
-
-    :param instruments: Container for instruments.
-    """
+    """Widget for monitoring the oven."""
 
     def __init__(self, instruments: InstrumentSet):
+        """:param instruments: Container for instruments."""
         super().__init__("Measurements", QGridLayout, instruments)
 
         self.create_widgets()

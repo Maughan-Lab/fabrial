@@ -6,11 +6,12 @@ from PyQt6.QtWidgets import (
     QFrame,
     QSizePolicy,
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.combo_box import ComboBox  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
+from custom_widgets.separator import HSeparator
 from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.layouts import add_sublayout, add_to_layout  # ../helper_functions
 from helper_functions.new_timer import new_timer  # ../helper_functions
@@ -24,17 +25,24 @@ from .constants import (
     BUFFER_MINUTES_COLUMN,
     HOLD_HOURS_COLUMN,
     HOLD_MINUTES_COLUMN,
+    TIME_DATA_COLUMN,
+    TEMPERATURE_DATA_COLUMN,
 )
 
 
 class SequenceWidget(GroupBox):
-    """
-    Widget for running temperature sequences.
+    """Widget for running temperature sequences."""
 
-    :param instruments: Container for instruments.
-    """
+    # custom signals for this class
+    newDataAquired = pyqtSignal(float, float)
+    cycleNumberChanged = pyqtSignal(int)
 
     def __init__(self, instruments: InstrumentSet):
+        """
+        :param instruments: Container for instruments.
+
+        :param graph_widget: A **GraphWidget** to connect to this **SequenceWidget**.
+        """
         super().__init__("Temperature Sequence", QVBoxLayout, instruments)
 
         # data
@@ -50,6 +58,13 @@ class SequenceWidget(GroupBox):
                 HOLD_MINUTES_COLUMN: [i for i in range(10)],
             }
         )
+        self.temperature_data = pl.DataFrame(
+            {
+                TIME_DATA_COLUMN: [],
+                TEMPERATURE_DATA_COLUMN: [],
+            }
+        )
+
         # variables
         self.running = False
         self.pause = False
@@ -69,36 +84,33 @@ class SequenceWidget(GroupBox):
         # combobox
         self.cycle_combobox = ComboBox()
         self.cycle_combobox.addItems([str(i) for i in range(1, 501)])  # add entries 1-500
+
         # tabular widgets
         self.parameter_table = TableView()
         self.parameter_table.setModel(TableModel(self.sequence_data))
         self.parameter_table.updateSize()
+
         # add the widgets
         add_to_layout(layout, Label("Cycle Count"), self.cycle_combobox, self.parameter_table)
+
         # buttons
         self.button_layout = add_sublayout(layout, QStackedLayout)
         self.start_button = QPushButton("Start Sequence")
         self.pause_button = QPushButton("Pause Sequence")
         self.unpause_button = QPushButton("Unpause Sequence")
         add_to_layout(self.button_layout, self.start_button, self.pause_button, self.unpause_button)
+
         # cycle labels
         label_layout = add_sublayout(layout, QHBoxLayout, QSizePolicy.Policy.Fixed)
         self.cycle_label = Label("---")
         add_to_layout(label_layout, Label("Cycle:"), self.cycle_label)
+
+        # separator
+        layout.addWidget(HSeparator())
+
         # label to indicate if a sequence is active
-
-        # ------------------------------------------------------------------------------------------
-        # TODO: put this in a function and then re-style the whole application
-        separator = QFrame()
-        separator.setFrameShape(QFrame.Shape.HLine)
-        separator.setLineWidth(1)
-        separator.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding)
-        separator.setStyleSheet("color: #383B3E")
-        layout.addWidget(separator)
-        # ------------------------------------------------------------------------------------------
-
         self.status_label = Label("Inactive")
-        self.status_label.setFont(QFont("Arial", 16))
+        self.status_label.setFont(QFont("Arial", 16))  # default font is Arial
         layout.addWidget(self.status_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # NOTE: the actual backend logic for this widget should be in another file.

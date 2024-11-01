@@ -8,13 +8,10 @@ from helper_functions.layouts import add_to_layout
 
 
 class SetpointWidget(GroupBox):
-    """
-    Widget for changing the setpoint.
-
-    :param instruments: Container for instruments.
-    """
+    """Widget for changing the setpoint."""
 
     def __init__(self, instruments: InstrumentSet):
+        """:param instruments: Container for instruments."""
         super().__init__("Setpoint", QVBoxLayout, instruments)
 
         self.create_widgets()
