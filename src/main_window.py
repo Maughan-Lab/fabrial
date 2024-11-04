@@ -26,8 +26,10 @@ class MainWindow(QMainWindow):
         self.sequence_widget = SequenceWidget(instruments)
         self.graph_widget = GraphWidget(instruments)
 
+        # connect the sequence and graph widgets
         self.sequence_widget.newDataAquired.connect(self.graph_widget.add_point)
         self.sequence_widget.cycleNumberChanged.connect(self.graph_widget.move_to_next_cycle)
+        self.sequence_widget.statusChanged.connect(self.graph_widget.handle_status_change)
 
         add_to_layout_grid(
             layout,

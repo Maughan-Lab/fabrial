@@ -3,7 +3,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QStackedLayout,
-    QFrame,
     QSizePolicy,
 )
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -15,9 +14,10 @@ from custom_widgets.separator import HSeparator
 from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.layouts import add_sublayout, add_to_layout  # ../helper_functions
 from helper_functions.new_timer import new_timer  # ../helper_functions
+from enums.stability_check_status import StabilityCheckStatus  # ../enums
 from polars import col
 import polars as pl
-from .TableModel import TableModel, TableView
+from .table_model import TableModel, TableView
 from .constants import (
     CYCLE_COLUMN,
     TEMPERATURE_COLUMN,
@@ -36,6 +36,7 @@ class SequenceWidget(GroupBox):
     # custom signals for this class
     newDataAquired = pyqtSignal(float, float)
     cycleNumberChanged = pyqtSignal(int)
+    statusChanged = pyqtSignal(StabilityCheckStatus)
 
     def __init__(self, instruments: InstrumentSet):
         """
@@ -58,17 +59,10 @@ class SequenceWidget(GroupBox):
                 HOLD_MINUTES_COLUMN: [i for i in range(10)],
             }
         )
-        self.temperature_data = pl.DataFrame(
-            {
-                TIME_DATA_COLUMN: [],
-                TEMPERATURE_DATA_COLUMN: [],
-            }
-        )
+        self.temperature_data: list[float] = []
 
         # variables
         self.running = False
-        self.pause = False
-        self.cancel = False
         self.cycle_number = 0
 
         self.create_widgets()
