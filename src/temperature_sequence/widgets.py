@@ -25,18 +25,19 @@ from .constants import (
     BUFFER_MINUTES_COLUMN,
     HOLD_HOURS_COLUMN,
     HOLD_MINUTES_COLUMN,
-    TIME_DATA_COLUMN,
-    TEMPERATURE_DATA_COLUMN,
 )
 
 
 class SequenceWidget(GroupBox):
     """Widget for running temperature sequences."""
 
+    # TODO: make use of these signals for things like updating the Active/Inactive label
+
     # custom signals for this class
     newDataAquired = pyqtSignal(float, float)
     cycleNumberChanged = pyqtSignal(int)
-    statusChanged = pyqtSignal(StabilityCheckStatus)
+    stabilityStatusChanged = pyqtSignal(StabilityCheckStatus)
+    sequenceStatusChanged = pyqtSignal(bool)
 
     def __init__(self, instruments: InstrumentSet):
         """
@@ -46,27 +47,12 @@ class SequenceWidget(GroupBox):
         """
         super().__init__("Temperature Sequence", QVBoxLayout, instruments)
 
-        # data
-        # TODO: remove the testing data
-        self.sequence_data = pl.DataFrame(
-            # converts a dictionary into a Polars DataFrame
-            {
-                CYCLE_COLUMN: [i for i in range(10)],
-                TEMPERATURE_COLUMN: [float(i) for i in range(10)],
-                BUFFER_HOURS_COLUMN: [i for i in range(10)],
-                BUFFER_MINUTES_COLUMN: [i for i in range(10)],
-                HOLD_HOURS_COLUMN: [i for i in range(10)],
-                HOLD_MINUTES_COLUMN: [i for i in range(10)],
-            }
-        )
-        self.temperature_data: list[float] = []
-
         # variables
         self.running = False
         self.cycle_number = 0
 
         self.create_widgets()
-        self.connect_widgets()
+        self.connect_signals()
 
         self.update_timer = new_timer(0, self.update)  # timer to update the widgets
         self.update()
@@ -80,9 +66,8 @@ class SequenceWidget(GroupBox):
         self.cycle_combobox.addItems([str(i) for i in range(1, 501)])  # add entries 1-500
 
         # tabular widgets
-        self.parameter_table = TableView()
-        self.parameter_table.setModel(TableModel(self.sequence_data))
-        self.parameter_table.updateSize()
+        self.model = TableModel()
+        self.parameter_table = TableView(self.model)
 
         # add the widgets
         add_to_layout(layout, Label("Cycle Count"), self.cycle_combobox, self.parameter_table)
@@ -109,10 +94,32 @@ class SequenceWidget(GroupBox):
 
         # NOTE: the actual backend logic for this widget should be in another file.
 
-    def connect_widgets(self):
+    def connect_signals(self):
         """Give widgets logic."""
         # TODO: connect the sequence buttons, start, pause, and unpause
-        pass
+        # changing the combobox will update the parameter table
+        self.cycle_combobox.currentTextChanged.connect(self.update_parameter_table)
+        # the running status of the sequence automatically updates the status label
+        self.sequenceStatusChanged.connect(self.update_sequence_status_label)
+
+    def update_cycle_number(self, cycle_number: int):
+        self.cycle_label.setText(str(cycle_number))
+        self.cycleNumberChanged.emit(cycle_number)
+        # TODO: any time you update a variable connected to a signal, emit that signal
+
+    def update_parameter_table(self, new_row_count: str):
+        self.model.resize(int(new_row_count))
+
+    def update_sequence_status_label(self, running: bool):
+        # update label text
+        if running:
+            status_text = "Active"
+            status_color = "green"
+        else:
+            status_text = "Inactive"
+            status_color = "gray"
+        self.status_label.setText(status_text)
+        self.status_label.setStyleSheet("color: " + status_color)
 
     def update(self):
         """Update the state of dynamic widgets."""

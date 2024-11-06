@@ -36,8 +36,8 @@ class Status(Enum):
 class Oven(Instrument):
     """Class to represent the physical oven Quincy controls."""
 
-    MINIMUM_TEMPERATURE = 0
-    MAXIMUM_TEMPERATURE = 232
+    MINIMUM_TEMPERATURE = 0.0
+    MAXIMUM_TEMPERATURE = 232.0
 
     def __init__(self, oven_port: str):
         super().__init__()

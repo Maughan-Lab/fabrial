@@ -1,10 +1,7 @@
-from polars import DataFrame
-import numpy as np
 from PyQt6.QtWidgets import QVBoxLayout
 from instruments import InstrumentSet  # ../instruments.py
 from custom_widgets.groupbox import GroupBox  # ../custom_widgets
 from custom_widgets.plot import PlotWidget  # ../custom_widgets
-from helper_functions.layouts import add_to_layout
 from enums.stability_check_status import StabilityCheckStatus
 
 
