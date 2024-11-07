@@ -14,18 +14,8 @@ from custom_widgets.separator import HSeparator
 from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.layouts import add_sublayout, add_to_layout  # ../helper_functions
 from helper_functions.new_timer import new_timer  # ../helper_functions
-from enums.stability_check_status import StabilityCheckStatus  # ../enums
-from polars import col
-import polars as pl
+from enums.status import StabilityStatus, SequenceStatus  # ../enums
 from .table_model import TableModel, TableView
-from .constants import (
-    CYCLE_COLUMN,
-    TEMPERATURE_COLUMN,
-    BUFFER_HOURS_COLUMN,
-    BUFFER_MINUTES_COLUMN,
-    HOLD_HOURS_COLUMN,
-    HOLD_MINUTES_COLUMN,
-)
 
 
 class SequenceWidget(GroupBox):
@@ -36,8 +26,14 @@ class SequenceWidget(GroupBox):
     # custom signals for this class
     newDataAquired = pyqtSignal(float, float)
     cycleNumberChanged = pyqtSignal(int)
-    stabilityStatusChanged = pyqtSignal(StabilityCheckStatus)
-    sequenceStatusChanged = pyqtSignal(bool)
+    stabilityStatusChanged = pyqtSignal(StabilityStatus)
+    sequenceStatusChanged = pyqtSignal(SequenceStatus)
+    # this widget receives the first signal and sends back the second signal
+    skipBuffer = pyqtSignal()
+    bufferSkipped = pyqtSignal()
+    skipCycle = pyqtSignal()
+    cycleSkipped = pyqtSignal()
+    cancelSequence = pyqtSignal()
 
     def __init__(self, instruments: InstrumentSet):
         """
@@ -49,7 +45,6 @@ class SequenceWidget(GroupBox):
 
         # variables
         self.running = False
-        self.cycle_number = 0
 
         self.create_widgets()
         self.connect_signals()
@@ -80,14 +75,18 @@ class SequenceWidget(GroupBox):
         add_to_layout(self.button_layout, self.start_button, self.pause_button, self.unpause_button)
 
         # cycle labels
-        label_layout = add_sublayout(layout, QHBoxLayout, QSizePolicy.Policy.Fixed)
+        cycle_label_layout = add_sublayout(layout, QHBoxLayout, QSizePolicy.Policy.Fixed)
         self.cycle_label = Label("---")
-        add_to_layout(label_layout, Label("Cycle:"), self.cycle_label)
+        add_to_layout(cycle_label_layout, Label("Cycle:"), self.cycle_label)
+        # sequence status labels
+        stability_label_layout = add_sublayout(layout, QHBoxLayout, QSizePolicy.Policy.Fixed)
+        self.stability_label = Label("-----------")
+        add_to_layout(stability_label_layout, Label("Stability Status:"), self.stability_label)
 
         # separator
         layout.addWidget(HSeparator())
 
-        # label to indicate if a sequence is active
+        # label to indicate the status of the sequence
         self.status_label = Label("Inactive")
         self.status_label.setFont(QFont("Arial", 16))  # default font is Arial
         layout.addWidget(self.status_label, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -99,29 +98,36 @@ class SequenceWidget(GroupBox):
         # TODO: connect the sequence buttons, start, pause, and unpause
         # changing the combobox will update the parameter table
         self.cycle_combobox.currentTextChanged.connect(self.update_parameter_table)
-        # the running status of the sequence automatically updates the status label
-        self.sequenceStatusChanged.connect(self.update_sequence_status_label)
+
+        # cycleNumberChanged
+        self.cycleNumberChanged.connect(self.handle_cycle_number_change)
+
+    # ----------------------------------------------------------------------------------------------
+
+    def handle_cycle_number_change(self, cycle_number: int):
+        self.update_cycle_number(cycle_number)
+        self.limit_parameters(cycle_number)
 
     def update_cycle_number(self, cycle_number: int):
         self.cycle_label.setText(str(cycle_number))
-        self.cycleNumberChanged.emit(cycle_number)
         # TODO: any time you update a variable connected to a signal, emit that signal
+
+    def limit_parameters(self, cycle_number):
+        # TODO: limit the combobox options and disable parts of the model view
+        pass
+
+    # ----------------------------------------------------------------------------------------------
 
     def update_parameter_table(self, new_row_count: str):
         self.model.resize(int(new_row_count))
 
-    def update_sequence_status_label(self, running: bool):
+    def update_status_label(self, text: str, color: str):
         # update label text
-        if running:
-            status_text = "Active"
-            status_color = "green"
-        else:
-            status_text = "Inactive"
-            status_color = "gray"
-        self.status_label.setText(status_text)
-        self.status_label.setStyleSheet("color: " + status_color)
+        self.status_label.setText(text)
+        self.status_label.setStyleSheet("color: " + color)
 
     def update(self):
+        # TODO: remove this function and replace it with signals
         """Update the state of dynamic widgets."""
         # update label text
         if self.running:

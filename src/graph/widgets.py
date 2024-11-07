@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QVBoxLayout
 from instruments import InstrumentSet  # ../instruments.py
 from custom_widgets.groupbox import GroupBox  # ../custom_widgets
 from custom_widgets.plot import PlotWidget  # ../custom_widgets
-from enums.stability_check_status import StabilityCheckStatus
+from enums.status import StabilityStatus
 
 
 class GraphWidget(GroupBox):
@@ -52,16 +52,16 @@ class GraphWidget(GroupBox):
         # TODO: remove this
         print("Cycle moved, YIPPEE")
 
-    def handle_status_change(self, status: StabilityCheckStatus):
+    def handle_status_change(self, status: StabilityStatus):
         # TODO: add the actual colors for point_color
         match status:
-            case StabilityCheckStatus.CHECKING:
+            case StabilityStatus.CHECKING:
                 line_index = 0
                 point_color = ""
-            case StabilityCheckStatus.BUFFERING:
+            case StabilityStatus.BUFFERING:
                 line_index = 1
                 point_color = ""
-            case StabilityCheckStatus.STABLE:
+            case StabilityStatus.STABLE:
                 line_index = 2
                 point_color = ""
             case _:
