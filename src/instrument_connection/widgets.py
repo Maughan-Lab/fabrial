@@ -17,14 +17,11 @@ class InstrumentConnectionWidget(GroupBox):
         super().__init__("Instrument Connections", QHBoxLayout, instruments)
 
         self.create_widgets()
-        self.connect_widgets()
+        self.connect_signals()
 
-        # update dynamic widgets as often as possible
-        self.update_timer = new_timer(0, self.update)
-        # check the oven's connection as often as possible
-        self.connection_timer = new_timer(0, lambda: self.instruments.oven.connect())
-
-        self.update()
+        # check the oven's connection on an interval
+        self.connection_timer = new_timer(1000, self.check_instrument_connection)
+        self.check_instrument_connection()
 
     def create_widgets(self):
         """Create subwidgets."""
@@ -46,19 +43,17 @@ class InstrumentConnectionWidget(GroupBox):
         add_to_layout(label_layout, Label("Status:"), self.oven_connection_label)
 
         # NOTE: when adding additional instruments, make sure they can never use the same port
-        # TODO: actually check the instrument connectivity in this widget
 
-    def connect_widgets(self):
+    def connect_signals(self):
         """Give widgets logic."""
         # changing the oven combobox updates the oven port instantly
         self.oven_combobox.currentTextChanged.connect(
             lambda new_port: self.instruments.oven.update_port(new_port)
         )
+        self.instruments.oven.connectionChanged.connect(self.update_connection_label)
 
-    def update(self):
-        """Update the state of dynamic widgets."""
-        # update the oven label
-        if self.instruments.oven.connected:
+    def update_connection_label(self, connected: bool):
+        if connected:
             text = "CONNECTED"
             color = "green"
         else:
@@ -66,3 +61,6 @@ class InstrumentConnectionWidget(GroupBox):
             color = "red"
         self.oven_connection_label.setText(text)
         self.oven_connection_label.setStyleSheet("color: " + color)  # this is HTML syntax
+
+    def check_instrument_connection(self):
+        self.instruments.oven.connect()

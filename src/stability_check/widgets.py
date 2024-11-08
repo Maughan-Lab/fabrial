@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QGridLayout, QPushButton
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
-from instruments import InstrumentSet  # ../instruments.py
+from instruments import InstrumentSet, ConnectionStatus  # ../instruments.py
 from helper_functions.layouts import add_sublayout, add_to_layout_grid  # ../helper_functions
 from helper_functions.new_timer import new_timer  # ../helper_functions
 
@@ -17,7 +17,7 @@ class StabilityCheckWidget(GroupBox):
         super().__init__("Temperature Stability Check", QVBoxLayout, instruments)
 
         self.create_widgets()
-        self.connect_widgets()
+        self.connect_signals()
 
         # variables
         self.running = False
@@ -46,10 +46,7 @@ class StabilityCheckWidget(GroupBox):
 
         layout.addWidget(self.stability_check_button)  # add the button that checks oven stability
 
-        # NOTE: the actual backend logic for this widget should be in another file.
-        # TODO: fix the spacing for the nested layouts
-
-    def connect_widgets(self):
+    def connect_signals(self):
         """Give widgets logic."""
         # self.stability_check_button.pressed.connect()  # TODO: connect this
         self.detect_setpoint_button.pressed.connect(self.detect_setpoint)
@@ -57,7 +54,7 @@ class StabilityCheckWidget(GroupBox):
     def update(self):
         """Update the state of dynamic widgets."""
         # disable the button if the oven is disconnected or a stability check is running
-        if not self.instruments.oven.connected or self.running:
+        if self.instruments.oven.connection_status != ConnectionStatus.CONNECTED or self.running:
             self.detect_setpoint_button.setDisabled(True)
             self.stability_check_button.setDisabled(True)
         else:
@@ -69,13 +66,10 @@ class StabilityCheckWidget(GroupBox):
 
     def detect_setpoint(self):
         """
-        Autofill the setpoint box with the oven's current setpoint. Returns True if the
-        detection was successful, False otherwise.
+        Attempt to autofill the setpoint box with the oven's current setpoint.
         """
         setpoint = self.instruments.oven.get_setpoint()
         if setpoint is not None:
             self.setpoint_spinbox.setValue(setpoint)
-            return True
         else:
             self.setpoint_spinbox.clear()  # clear the spinbox if the oven is disconnected
-        return False

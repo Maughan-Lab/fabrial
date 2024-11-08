@@ -1,34 +1,33 @@
 from dataclasses import dataclass
 from enum import Enum
+from PyQt6.QtCore import pyqtSignal, QObject
 
 
-class Instrument:
+class ConnectionStatus(Enum):
+    DISCONNECTED = 0
+    CONNECTED = 1
+    NULL = 2
+
+
+class Instrument(QObject):
     """Abstract class to represent instruments."""
 
+    # signals
+    connectionChanged = pyqtSignal(bool)  # True if connected False if disconnected
+
     def __init__(self):
+        super().__init__()
+        self.connection_status = ConnectionStatus.NULL
         # you should only ever read this value, never set it manually
         self.unlocked = True
 
     def release(self):
-        """Make the instrument available for other functions."""
+        """Make the instrument mutable for other process."""
         self.unlocked = True
 
     def aquire(self):
-        """Make the instrument useable by only one function."""
+        """Make the instrument mutable for only one process."""
         self.unlocked = False
-
-
-class Status(Enum):
-    """
-    Enum to represent the different instrument stability states.
-    """
-
-    STABLE = 0
-    UNSTABLE = 1
-    ERROR = 2
-    CANCELED = 3
-    CHECKING = 4
-    NULL = 5
 
 
 # TODO: implement temperature sensor reading with PySerial
@@ -42,12 +41,10 @@ class Oven(Instrument):
     def __init__(self, oven_port: str):
         super().__init__()
         self.port = oven_port
-        self.connected = self.connect()
-        self.status = Status.NULL
 
     def read_temp(self) -> float | None:
         """Returns the oven's temperature if the oven is connected, None otherwise."""
-        if self.connected:
+        if self.connection_status == ConnectionStatus.CONNECTED:
             return 1  # TODO: implement actually reading the temperature
         else:
             return None
@@ -58,7 +55,7 @@ class Oven(Instrument):
 
     def get_setpoint(self) -> float | None:
         """Returns the oven's setpoint if the oven is connected, None otherwise."""
-        if self.connected:
+        if self.connection_status == ConnectionStatus.CONNECTED:
             return 1  # TODO: implement actually reading the setpoint
         else:
             return None
@@ -66,7 +63,11 @@ class Oven(Instrument):
     def connect(self):
         """Attempts to connect to the oven. A failed attempt will set `connected` to False."""
         # TODO: implement the connection
-        self.connected = False
+        new_connection_status = ConnectionStatus.DISCONNECTED
+
+        if self.connection_status != new_connection_status:
+            self.connection_status = new_connection_status
+            self.connectionChanged.emit(self.connection_status == ConnectionStatus.CONNECTED)
 
     def update_port(self, port: str):
         """Updates the oven's connection port."""

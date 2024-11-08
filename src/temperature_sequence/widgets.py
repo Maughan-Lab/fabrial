@@ -11,7 +11,7 @@ from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.combo_box import ComboBox  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from custom_widgets.separator import HSeparator
-from instruments import InstrumentSet  # ../instruments.py
+from instruments import InstrumentSet, ConnectionStatus  # ../instruments.py
 from helper_functions.layouts import add_sublayout, add_to_layout  # ../helper_functions
 from helper_functions.new_timer import new_timer  # ../helper_functions
 from enums.status import StabilityStatus, SequenceStatus  # ../enums
@@ -23,7 +23,7 @@ class SequenceWidget(GroupBox):
 
     # TODO: make use of these signals for things like updating the Active/Inactive label
 
-    # custom signals for this class
+    # custom signals
     newDataAquired = pyqtSignal(float, float)
     cycleNumberChanged = pyqtSignal(int)
     stabilityStatusChanged = pyqtSignal(StabilityStatus)
@@ -97,34 +97,81 @@ class SequenceWidget(GroupBox):
         """Give widgets logic."""
         # TODO: connect the sequence buttons, start, pause, and unpause
         # changing the combobox will update the parameter table
-        self.cycle_combobox.currentTextChanged.connect(self.update_parameter_table)
+        self.cycle_combobox.currentTextChanged.connect(
+            lambda new_row_count: self.model.resize(int(new_row_count))
+        )
 
         # cycleNumberChanged
         self.cycleNumberChanged.connect(self.handle_cycle_number_change)
 
     # ----------------------------------------------------------------------------------------------
-
     def handle_cycle_number_change(self, cycle_number: int):
         self.update_cycle_number(cycle_number)
         self.limit_parameters(cycle_number)
 
     def update_cycle_number(self, cycle_number: int):
         self.cycle_label.setText(str(cycle_number))
-        # TODO: any time you update a variable connected to a signal, emit that signal
 
     def limit_parameters(self, cycle_number):
-        # TODO: limit the combobox options and disable parts of the model view
+        self.cycle_combobox.model().item(cycle_number - 2).setEnabled(False)
+        self.model.disable_rows(cycle_number)
         pass
 
     # ----------------------------------------------------------------------------------------------
+    def handle_sequence_status_change(self, status: SequenceStatus):
+        match status:
+            case SequenceStatus.ACTIVE:
+                text = "Active"
+                color = "green"
+            case SequenceStatus.COMPLETED:
+                text = "Completed"
+                color = "gray"
+            case SequenceStatus.CANCELED:
+                text = "Canceled"
+                color = "gray"
+            case SequenceStatus.PAUSED:
+                text = "Paused"
+                color = "blue"
+            case _:  # this should never run
+                pass
 
-    def update_parameter_table(self, new_row_count: str):
-        self.model.resize(int(new_row_count))
+        self.update_label(self.status_label, text, color)
 
-    def update_status_label(self, text: str, color: str):
-        # update label text
-        self.status_label.setText(text)
-        self.status_label.setStyleSheet("color: " + color)
+    # ----------------------------------------------------------------------------------------------
+    def handle_stability_status_change(self, status: StabilityStatus):
+        match status:
+            case StabilityStatus.STABLE:
+                text = "Stable"
+                color = "green"
+            case StabilityStatus.BUFFERING:
+                text = "Buffering"
+                color = "blue"
+            case StabilityStatus.CHECKING:
+                text = "Checking..."
+                color = "orange"
+            case StabilityStatus.ERROR:
+                text = "Error"
+                color = "red"
+            case _:  # this should never run
+                pass
+
+        self.update_label(self.stability_label, text, color)
+
+    # ----------------------------------------------------------------------------------------------
+    def handle_sequence_completion(self):
+        pass
+
+    def unlimit_parameters(self):
+        cycle_combobox_model = self.cycle_combobox.model()
+        for i in range(self.cycle_combobox.count()):
+            cycle_combobox_model.item(i).setEnabled(True)
+
+        self.model.enable_all_rows()
+
+    # ----------------------------------------------------------------------------------------------
+    def update_label(self, label: Label, text: str, color: str):
+        label.setText(text)
+        label.setStyleSheet("color: " + color)
 
     def update(self):
         # TODO: remove this function and replace it with signals
@@ -143,7 +190,7 @@ class SequenceWidget(GroupBox):
         self.status_label.setStyleSheet("color: " + status_color)
 
         # update button states
-        if not self.instruments.oven.connected:
+        if not self.instruments.oven.connection_status == ConnectionStatus.CONNECTED:
             for button in (self.start_button, self.pause_button, self.unpause_button):
                 button.setDisabled(True)
         else:

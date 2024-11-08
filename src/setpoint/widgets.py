@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QPushButton
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
-from instruments import InstrumentSet  # ../instruments.py
+from instruments import InstrumentSet, ConnectionStatus  # ../instruments.py
 from helper_functions.new_timer import new_timer  # ../helper_functions
 from helper_functions.layouts import add_to_layout
 
@@ -39,5 +39,8 @@ class SetpointWidget(GroupBox):
         """Update the state of dynamic widgets."""
         # disable the setpoint button if the oven is disconnected or something else is using it
         self.button.setDisabled(
-            False if self.instruments.oven.connected and self.instruments.oven.unlocked else True
+            False
+            if self.instruments.oven.connection_status == ConnectionStatus.CONNECTED
+            and self.instruments.oven.unlocked
+            else True
         )
