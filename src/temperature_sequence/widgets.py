@@ -13,27 +13,33 @@ from custom_widgets.groupbox import GroupBox
 from custom_widgets.separator import HSeparator
 from instruments import InstrumentSet, ConnectionStatus  # ../instruments.py
 from helper_functions.layouts import add_sublayout, add_to_layout  # ../helper_functions
-from helper_functions.new_timer import new_timer  # ../helper_functions
-from enums.status import StabilityStatus, SequenceStatus  # ../enums
+from enums.status import (
+    StabilityStatus,
+    SequenceStatus,
+    STABILITY_TEXT_KEY,
+    SEQUENCE_TEXT_KEY,
+    STABILITY_COLOR_KEY,
+    SEQUENCE_COLOR_KEY,
+)  # ../enums
 from .table_model import TableModel, TableView
 
 
 class SequenceWidget(GroupBox):
     """Widget for running temperature sequences."""
 
-    # TODO: make use of these signals for things like updating the Active/Inactive label
-
-    # custom signals
+    # signals
     newDataAquired = pyqtSignal(float, float)
     cycleNumberChanged = pyqtSignal(int)
-    stabilityStatusChanged = pyqtSignal(StabilityStatus)
-    sequenceStatusChanged = pyqtSignal(SequenceStatus)
+    stabilityChanged = pyqtSignal(StabilityStatus)
+    statusChanged = pyqtSignal(SequenceStatus)
     # this widget receives the first signal and sends back the second signal
     skipBuffer = pyqtSignal()
     bufferSkipped = pyqtSignal()
     skipCycle = pyqtSignal()
     cycleSkipped = pyqtSignal()
+
     cancelSequence = pyqtSignal()
+    sequenceStatusChanged = pyqtSignal(bool)  # True if running else False
 
     def __init__(self, instruments: InstrumentSet):
         """
@@ -47,10 +53,10 @@ class SequenceWidget(GroupBox):
         self.running = False
 
         self.create_widgets()
+        self.connect_widgets()
         self.connect_signals()
 
-        self.update_timer = new_timer(0, self.update)  # timer to update the widgets
-        self.update()
+        self.statusChanged.emit(SequenceStatus.INACTIVE)
 
     def create_widgets(self):
         """Create subwidgets."""
@@ -80,31 +86,49 @@ class SequenceWidget(GroupBox):
         add_to_layout(cycle_label_layout, Label("Cycle:"), self.cycle_label)
         # sequence status labels
         stability_label_layout = add_sublayout(layout, QHBoxLayout, QSizePolicy.Policy.Fixed)
-        self.stability_label = Label("-----------")
+        self.stability_label = Label(STABILITY_TEXT_KEY[StabilityStatus.NULL])
         add_to_layout(stability_label_layout, Label("Stability Status:"), self.stability_label)
 
         # separator
         layout.addWidget(HSeparator())
 
         # label to indicate the status of the sequence
-        self.status_label = Label("Inactive")
+        self.status_label = Label()
         self.status_label.setFont(QFont("Arial", 16))  # default font is Arial
         layout.addWidget(self.status_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # NOTE: the actual backend logic for this widget should be in another file.
 
-    def connect_signals(self):
-        """Give widgets logic."""
-        # TODO: connect the sequence buttons, start, pause, and unpause
+    def connect_widgets(self):
+        """Connect internal widget signals."""
         # changing the combobox will update the parameter table
         self.cycle_combobox.currentTextChanged.connect(
             lambda new_row_count: self.model.resize(int(new_row_count))
         )
+        # TODO: connect the sequence buttons, start, pause, and unpause
 
+    def connect_signals(self):
+        """Connect external signals."""
         # cycleNumberChanged
         self.cycleNumberChanged.connect(self.handle_cycle_number_change)
+        # statusChanged
+        self.statusChanged.connect(self.handle_sequence_status_change)
+        # stabilityChanged
+        self.stabilityChanged.connect(self.handle_stability_status_change)
+
+        # oven connection
+        self.instruments.oven.connectionChanged.connect(
+            lambda connected: self.update_button_states(connected, self.instruments.oven.unlocked)
+        )
+        # oven lock
+        self.instruments.oven.lockChanged.connect(
+            lambda unlocked: self.update_button_states(
+                self.instruments.oven.connection_status == ConnectionStatus.CONNECTED, unlocked
+            )
+        )
 
     # ----------------------------------------------------------------------------------------------
+    # cycleNumberChanged
     def handle_cycle_number_change(self, cycle_number: int):
         self.update_cycle_number(cycle_number)
         self.limit_parameters(cycle_number)
@@ -115,50 +139,34 @@ class SequenceWidget(GroupBox):
     def limit_parameters(self, cycle_number):
         self.cycle_combobox.model().item(cycle_number - 2).setEnabled(False)
         self.model.disable_rows(cycle_number)
-        pass
 
     # ----------------------------------------------------------------------------------------------
+    # statusChanged
     def handle_sequence_status_change(self, status: SequenceStatus):
         match status:
             case SequenceStatus.ACTIVE:
-                text = "Active"
-                color = "green"
-            case SequenceStatus.COMPLETED:
-                text = "Completed"
-                color = "gray"
-            case SequenceStatus.CANCELED:
-                text = "Canceled"
-                color = "gray"
-            case SequenceStatus.PAUSED:
-                text = "Paused"
-                color = "blue"
-            case _:  # this should never run
+                # tell the rest of the program the sequence started
+                pass
+            case SequenceStatus.COMPLETED | SequenceStatus.CANCELED | SequenceStatus.INACTIVE:
+                # tell the rest of the program the sequence ended
+                pass
+            case _:
                 pass
 
-        self.update_label(self.status_label, text, color)
+        self.update_label(self.status_label, SEQUENCE_TEXT_KEY[status], SEQUENCE_COLOR_KEY[status])
 
     # ----------------------------------------------------------------------------------------------
+    # stabilityChanged
     def handle_stability_status_change(self, status: StabilityStatus):
-        match status:
-            case StabilityStatus.STABLE:
-                text = "Stable"
-                color = "green"
-            case StabilityStatus.BUFFERING:
-                text = "Buffering"
-                color = "blue"
-            case StabilityStatus.CHECKING:
-                text = "Checking..."
-                color = "orange"
-            case StabilityStatus.ERROR:
-                text = "Error"
-                color = "red"
-            case _:  # this should never run
-                pass
-
-        self.update_label(self.stability_label, text, color)
+        self.update_label(
+            self.stability_label, STABILITY_TEXT_KEY[status], STABILITY_COLOR_KEY[status]
+        )
 
     # ----------------------------------------------------------------------------------------------
+    # statusChanged for SequenceStatus.Completed
     def handle_sequence_completion(self):
+        self.unlimit_parameters()
+        # TODO: finish this
         pass
 
     def unlimit_parameters(self):
@@ -173,26 +181,7 @@ class SequenceWidget(GroupBox):
         label.setText(text)
         label.setStyleSheet("color: " + color)
 
-    def update(self):
-        # TODO: remove this function and replace it with signals
-        """Update the state of dynamic widgets."""
-        # update label text
-        if self.running:
-            cycle_text = str(self.cycle_number + 1)
-            status_text = "Active"
-            status_color = "green"
-        else:
-            cycle_text = "---"
-            status_text = "Inactive"
-            status_color = "gray"
-        self.cycle_label.setText(cycle_text)
-        self.status_label.setText(status_text)
-        self.status_label.setStyleSheet("color: " + status_color)
-
-        # update button states
-        if not self.instruments.oven.connection_status == ConnectionStatus.CONNECTED:
-            for button in (self.start_button, self.pause_button, self.unpause_button):
-                button.setDisabled(True)
-        else:
-            for button in (self.start_button, self.pause_button, self.unpause_button):
-                button.setDisabled(False)
+    def update_button_states(self, connected: bool, unlocked: bool):
+        """Update the states of buttons."""
+        self.start_button.setEnabled(connected and unlocked)
+        self.unpause_button.setEnabled(connected)

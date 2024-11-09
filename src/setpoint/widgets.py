@@ -3,7 +3,6 @@ from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet, ConnectionStatus  # ../instruments.py
-from helper_functions.new_timer import new_timer  # ../helper_functions
 from helper_functions.layouts import add_to_layout
 
 
@@ -16,10 +15,7 @@ class SetpointWidget(GroupBox):
 
         self.create_widgets()
         self.connect_widgets()
-
-        self.update_timer = new_timer(0, self.update)  # timer to update the widgets
-
-        self.update()
+        self.connect_signals()
 
     def create_widgets(self):
         """Create subwidgets."""
@@ -30,17 +26,29 @@ class SetpointWidget(GroupBox):
         add_to_layout(layout, Label("Setpoint"), self.setpoint_spinbox, self.button)
 
     def connect_widgets(self):
-        """Give widgets logic."""
-        self.button.pressed.connect(
-            lambda: self.instruments.oven.change_setpoint(self.setpoint_spinbox.value())
+        """Connect internal widget signals."""
+        self.button.pressed.connect(self.change_setpoint)
+
+    def connect_signals(self):
+        """Connect external signals."""
+        # oven connection
+        self.instruments.oven.connectionChanged.connect(
+            lambda connected: self.update_button_states(connected, self.instruments.oven.unlocked)
+        )
+        # oven lock
+        self.instruments.oven.lockChanged.connect(
+            lambda unlocked: self.update_button_states(
+                self.instruments.oven.connection_status == ConnectionStatus.CONNECTED, unlocked
+            )
         )
 
-    def update(self):
-        """Update the state of dynamic widgets."""
-        # disable the setpoint button if the oven is disconnected or something else is using it
-        self.button.setDisabled(
-            False
-            if self.instruments.oven.connection_status == ConnectionStatus.CONNECTED
-            and self.instruments.oven.unlocked
-            else True
-        )
+    def update_button_states(self, connected: bool, unlocked: bool):
+        """Update the states of buttons."""
+        # enable the button if the oven is connected and unlocked
+        self.button.setEnabled(connected and unlocked)
+
+    def change_setpoint(self):
+        """Change the oven's setpoint."""
+        self.instruments.oven.aquire()
+        self.instruments.oven.change_setpoint(self.setpoint_spinbox.value())
+        self.instruments.oven.release()

@@ -20,16 +20,20 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         self.setpoint_widget = SetpointWidget(instruments)
-        self.passive_monitoring_widget = PassiveMonitoringWidget(instruments)
-        self.instrument_connection_widget = InstrumentConnectionWidget(instruments)
         self.stability_check_widget = StabilityCheckWidget(instruments)
         self.sequence_widget = SequenceWidget(instruments)
         self.graph_widget = GraphWidget(instruments)
 
+        # do not move these two above the other ones
+        self.passive_monitoring_widget = PassiveMonitoringWidget(instruments)
+        self.instrument_connection_widget = InstrumentConnectionWidget(instruments)
+
         # connect the sequence and graph widgets
         self.sequence_widget.newDataAquired.connect(self.graph_widget.add_point)
         self.sequence_widget.cycleNumberChanged.connect(self.graph_widget.move_to_next_cycle)
-        self.sequence_widget.stabilityStatusChanged.connect(self.graph_widget.handle_status_change)
+        self.sequence_widget.stabilityChanged.connect(
+            self.graph_widget.handle_stability_status_change
+        )
 
         add_to_layout_grid(
             layout,

@@ -1,8 +1,9 @@
 from PyQt6.QtWidgets import QVBoxLayout
+from matplotlib.patches import Patch
 from instruments import InstrumentSet  # ../instruments.py
 from custom_widgets.groupbox import GroupBox  # ../custom_widgets
 from custom_widgets.plot import PlotWidget  # ../custom_widgets
-from enums.status import StabilityStatus
+from enums.status import StabilityStatus, STABILITY_COLOR_KEY
 
 
 class GraphWidget(GroupBox):
@@ -28,12 +29,21 @@ class GraphWidget(GroupBox):
         self.axes = self.plot.axes  # shortcut
         self.axes.set_xlabel("Time (seconds)")
         self.axes.set_ylabel("Temperature ($\degree$C)")
+
+        self.legend()
+
         self.plot.figure.tight_layout()
 
         layout.addWidget(self.plot)
 
-    def update(self):
-        pass
+    def legend(self):
+        self.axes.legend(
+            handles=(
+                Patch(label="Pre-Stable", color=STABILITY_COLOR_KEY[StabilityStatus.CHECKING]),
+                Patch(label="Buffer", color=STABILITY_COLOR_KEY[StabilityStatus.BUFFERING]),
+                Patch(label="Stable", color=STABILITY_COLOR_KEY[StabilityStatus.STABLE]),
+            )
+        )
 
     def add_point(self, time: float, temperature: float):
         self.xdata.append(time)
@@ -52,20 +62,20 @@ class GraphWidget(GroupBox):
         # TODO: remove this
         print("Cycle moved, YIPPEE")
 
-    def handle_status_change(self, status: StabilityStatus):
+    def handle_stability_status_change(self, status: StabilityStatus):
         # TODO: add the actual colors for point_color
         match status:
             case StabilityStatus.CHECKING:
                 line_index = 0
-                point_color = ""
             case StabilityStatus.BUFFERING:
                 line_index = 1
-                point_color = ""
             case StabilityStatus.STABLE:
                 line_index = 2
-                point_color = ""
             case _:
-                pass  # protect against race conditions
+                pass  # protect against irrelevant StabilityStatus
+
+        point_color = STABILITY_COLOR_KEY[status]
+
         if len(self.axes.lines) <= line_index:
             self.line = self.axes.plot([], [], color=point_color, linestyle="none")[line_index]
 

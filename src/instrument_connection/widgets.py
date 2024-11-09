@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.combo_box import ComboBox  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
-from instruments import InstrumentSet  # ../instruments.py
+from instruments import InstrumentSet, ConnectionStatus, CONNECTION_COLOR_KEY  # ../instruments.py
 from helper_functions.layouts import add_sublayout, add_to_layout  # ../helper_functions
 from helper_functions.new_timer import new_timer  # ../helper_functions
 
@@ -55,10 +55,10 @@ class InstrumentConnectionWidget(GroupBox):
     def update_connection_label(self, connected: bool):
         if connected:
             text = "CONNECTED"
-            color = "green"
+            color = CONNECTION_COLOR_KEY[ConnectionStatus.CONNECTED]
         else:
             text = "DISCONNECTED"
-            color = "red"
+            color = CONNECTION_COLOR_KEY[ConnectionStatus.DISCONNECTED]
         self.oven_connection_label.setText(text)
         self.oven_connection_label.setStyleSheet("color: " + color)  # this is HTML syntax
 

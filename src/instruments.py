@@ -9,11 +9,19 @@ class ConnectionStatus(Enum):
     NULL = 2
 
 
+CONNECTION_COLOR_KEY = {
+    ConnectionStatus.DISCONNECTED: "red",
+    ConnectionStatus.CONNECTED: "green",
+    ConnectionStatus.NULL: "gray",
+}
+
+
 class Instrument(QObject):
     """Abstract class to represent instruments."""
 
     # signals
     connectionChanged = pyqtSignal(bool)  # True if connected False if disconnected
+    lockChanged = pyqtSignal(bool)  # True if unlocked False if locked
 
     def __init__(self):
         super().__init__()
