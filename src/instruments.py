@@ -32,10 +32,16 @@ class Instrument(QObject):
     def release(self):
         """Make the instrument mutable for other process."""
         self.unlocked = True
+        self.lockChanged.emit(self.unlocked)
 
     def aquire(self):
         """Make the instrument mutable for only one process."""
         self.unlocked = False
+        self.lockChanged.emit(self.unlocked)
+
+    def is_connected(self) -> bool:
+        """Get the connection status of this instrument as a bool."""
+        return self.connection_status == ConnectionStatus.CONNECTED
 
 
 # TODO: implement temperature sensor reading with PySerial
@@ -75,7 +81,7 @@ class Oven(Instrument):
 
         if self.connection_status != new_connection_status:
             self.connection_status = new_connection_status
-            self.connectionChanged.emit(self.connection_status == ConnectionStatus.CONNECTED)
+            self.connectionChanged.emit(self.is_connected())
 
     def update_port(self, port: str):
         """Updates the oven's connection port."""
@@ -85,7 +91,7 @@ class Oven(Instrument):
 
 @dataclass
 class InstrumentSet:
-    """Container for instruments (the oven, potentiostats, etc.)"""
+    """Container for instruments (ovens, potentiostats, etc.)"""
 
     oven: Oven
     potentiostat: None

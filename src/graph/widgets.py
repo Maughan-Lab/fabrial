@@ -42,7 +42,8 @@ class GraphWidget(GroupBox):
                 Patch(label="Pre-Stable", color=STABILITY_COLOR_KEY[StabilityStatus.CHECKING]),
                 Patch(label="Buffer", color=STABILITY_COLOR_KEY[StabilityStatus.BUFFERING]),
                 Patch(label="Stable", color=STABILITY_COLOR_KEY[StabilityStatus.STABLE]),
-            )
+            ),
+            fontsize="small",
         )
 
     def add_point(self, time: float, temperature: float):

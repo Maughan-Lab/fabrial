@@ -1,24 +1,24 @@
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QGridLayout, QPushButton, QSizePolicy
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSignal, QThreadPool
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
-from instruments import InstrumentSet, ConnectionStatus  # ../instruments.py
+from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.layouts import (
     add_sublayout,
     add_to_layout,
     add_to_layout_grid,
 )  # ../helper_functions
 from enums.status import StabilityStatus, STABILITY_TEXT_KEY, STABILITY_COLOR_KEY  # ../enums
+from .stability_check import StabilityCheckThread
 
 
 class StabilityCheckWidget(GroupBox):
     """Widget for checking whether the temperature is stable."""
 
     # signals
-    stabilityChanged = pyqtSignal(StabilityStatus)
     statusChanged = pyqtSignal(bool)
-    cancelSequence = pyqtSignal()
+    cancelStabilityCheck = pyqtSignal()
 
     def __init__(self, instruments: InstrumentSet):
         """:param instruments: Container for instruments."""
@@ -30,7 +30,8 @@ class StabilityCheckWidget(GroupBox):
 
         # variables
         # TODO: replace this with checking to see if any StabilityCheckThreads exist
-        self.running = False
+        self.threadpool = QThreadPool()
+        self.start_stability_check()
 
     def create_widgets(self):
         """Create subwidgets."""
@@ -56,17 +57,15 @@ class StabilityCheckWidget(GroupBox):
 
     def connect_widgets(self):
         """Connect internal widget signals."""
-        # self.stability_check_button.pressed.connect()  # TODO: connect this
+        self.stability_check_button.pressed.connect(self.start_stability_check)
         self.detect_setpoint_button.pressed.connect(self.detect_setpoint)
 
     def connect_signals(self):
         """Connect external signals."""
-        # stabilityChanged
-        self.stabilityChanged.connect(self.handle_stability_change)
         # statusChanged
         self.statusChanged.connect(
             lambda running: self.update_button_states(
-                self.instruments.oven.connection_status == ConnectionStatus.CONNECTED,
+                self.instruments.oven.is_connected(),
                 self.instruments.oven.unlocked,
                 running,
             )
@@ -74,15 +73,15 @@ class StabilityCheckWidget(GroupBox):
         # oven connection
         self.instruments.oven.connectionChanged.connect(
             lambda connected: self.update_button_states(
-                connected, self.instruments.oven.unlocked, self.running
+                connected, self.instruments.oven.unlocked, self.is_running()
             )
         )
         # oven lock
         self.instruments.oven.lockChanged.connect(
             lambda unlocked: self.update_button_states(
-                self.instruments.oven.connection_status == ConnectionStatus.CONNECTED,
+                self.instruments.oven.is_connected(),
                 unlocked,
-                self.running,
+                self.is_running(),
             )
         )
         # TODO: add and connect a signal for the stability status, like in the SequenceWidget
@@ -95,15 +94,28 @@ class StabilityCheckWidget(GroupBox):
         """Update the states of buttons."""
         # enable the button if the oven is connected and a check isn't running
         self.detect_setpoint_button.setEnabled(connected and not running)
+
         # enable the button if the oven is connected and unlocked, and a check isn't running
         self.stability_check_button.setEnabled(connected and unlocked and not running)
 
     def detect_setpoint(self):
-        """
-        Attempt to autofill the setpoint box with the oven's current setpoint.
-        """
+        """Attempt to autofill the setpoint box with the oven's current setpoint."""
         setpoint = self.instruments.oven.get_setpoint()
         if setpoint is not None:
             self.setpoint_spinbox.setValue(setpoint)
         else:
-            self.setpoint_spinbox.clear()  # clear the spinbox if the oven is disconnected
+            self.setpoint_spinbox.setValue(0.0)  # clear the spinbox if the oven is disconnected
+
+    # ----------------------------------------------------------------------------------------------
+    # stability check
+    def start_stability_check(self):
+        thread = StabilityCheckThread(self.instruments, self.setpoint_spinbox.value())
+        thread.signals.statusChanged.connect(self.statusChanged.emit)
+        thread.signals.stabilityChanged.connect(self.handle_stability_change)
+        self.cancelStabilityCheck.connect(thread.cancel_stability_check)
+
+        self.threadpool.start(thread)
+
+    def is_running(self):
+        """Determine if any StabilityCheckThreads are active."""
+        return self.threadpool.activeThreadCount() != 0

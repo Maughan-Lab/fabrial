@@ -6,12 +6,11 @@ from PyQt6.QtWidgets import (
     QSizePolicy,
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.combo_box import ComboBox  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from custom_widgets.separator import HSeparator
-from instruments import InstrumentSet, ConnectionStatus  # ../instruments.py
+from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.layouts import add_sublayout, add_to_layout  # ../helper_functions
 from enums.status import (
     StabilityStatus,
@@ -94,7 +93,9 @@ class SequenceWidget(GroupBox):
 
         # label to indicate the status of the sequence
         self.status_label = Label()
-        self.status_label.setFont(QFont("Arial", 16))  # default font is Arial
+        font = self.status_label.font()
+        font.setPointSize(16)
+        self.status_label.setFont(font)  # default font is Arial
         layout.addWidget(self.status_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # NOTE: the actual backend logic for this widget should be in another file.
@@ -123,7 +124,7 @@ class SequenceWidget(GroupBox):
         # oven lock
         self.instruments.oven.lockChanged.connect(
             lambda unlocked: self.update_button_states(
-                self.instruments.oven.connection_status == ConnectionStatus.CONNECTED, unlocked
+                self.instruments.oven.is_connected(), unlocked
             )
         )
 

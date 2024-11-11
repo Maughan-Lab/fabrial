@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QPushButton
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
-from instruments import InstrumentSet, ConnectionStatus  # ../instruments.py
+from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.layouts import add_to_layout
 
 
@@ -38,7 +38,7 @@ class SetpointWidget(GroupBox):
         # oven lock
         self.instruments.oven.lockChanged.connect(
             lambda unlocked: self.update_button_states(
-                self.instruments.oven.connection_status == ConnectionStatus.CONNECTED, unlocked
+                self.instruments.oven.is_connected(), unlocked
             )
         )
 
