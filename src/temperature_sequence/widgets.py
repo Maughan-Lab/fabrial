@@ -186,3 +186,11 @@ class SequenceWidget(GroupBox):
         """Update the states of buttons."""
         self.start_button.setEnabled(connected and unlocked)
         self.unpause_button.setEnabled(connected)
+
+    # ----------------------------------------------------------------------------------------------
+    # sequence
+    def start_sequence(self):
+        pass
+
+    def is_running(self) -> bool:
+        return False

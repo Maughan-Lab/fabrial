@@ -1,12 +1,15 @@
 from PyQt6.QtWidgets import QMainWindow, QGridLayout, QWidget
+from PyQt6.QtGui import QCloseEvent
 from setpoint.widgets import SetpointWidget
 from passive_monitoring.widgets import PassiveMonitoringWidget
 from instrument_connection.widgets import InstrumentConnectionWidget
 from stability_check.widgets import StabilityCheckWidget
 from temperature_sequence.widgets import SequenceWidget
 from graph.widgets import GraphWidget
+from custom_widgets.dialog import YesCancelDialog
 from instruments import InstrumentSet
 from helper_functions.layouts import add_to_layout_grid
+from menu import MenuBar
 
 
 class MainWindow(QMainWindow):
@@ -14,6 +17,13 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Quincy")
 
+        self.create_widgets(instruments)
+        self.connect_signals()
+        self.create_menu()
+
+    def create_widgets(self, instruments):
+        """Create subwidgets."""
+        # create the layout
         layout = QGridLayout()
         central_widget = QWidget()
         central_widget.setLayout(layout)
@@ -23,18 +33,10 @@ class MainWindow(QMainWindow):
         self.stability_check_widget = StabilityCheckWidget(instruments)
         self.sequence_widget = SequenceWidget(instruments)
         self.graph_widget = GraphWidget(instruments)
-
         # do not move these two above the other ones
         self.passive_monitoring_widget = PassiveMonitoringWidget(instruments)
         self.instrument_connection_widget = InstrumentConnectionWidget(instruments)
-
-        # connect the sequence and graph widgets
-        self.sequence_widget.newDataAquired.connect(self.graph_widget.add_point)
-        self.sequence_widget.cycleNumberChanged.connect(self.graph_widget.move_to_next_cycle)
-        self.sequence_widget.stabilityChanged.connect(
-            self.graph_widget.handle_stability_status_change
-        )
-
+        # add the widgets
         add_to_layout_grid(
             layout,
             (self.setpoint_widget, 0, 0),
@@ -44,3 +46,36 @@ class MainWindow(QMainWindow):
             (self.sequence_widget, 2, 0),
         )
         layout.addWidget(self.graph_widget, 1, 1, 2, 2)
+
+    def connect_signals(self):
+        """Connect widget signals."""
+        self.sequence_widget.newDataAquired.connect(self.graph_widget.add_point)
+        self.sequence_widget.cycleNumberChanged.connect(self.graph_widget.move_to_next_cycle)
+        self.sequence_widget.stabilityChanged.connect(
+            self.graph_widget.handle_stability_status_change
+        )
+
+    def create_menu(self):
+        self.setMenuBar(MenuBar(self))
+
+    # ----------------------------------------------------------------------------------------------
+    # closing the window
+    def closeEvent(self, event: QCloseEvent | None):  # overridden method
+        """Prevent the window from closing if a sequence or stability check are running."""
+        event.accept() if self.allowed_to_close() else event.ignore()
+
+    def allowed_to_close(self) -> bool:
+        """Determine if the window should close."""
+        if self.stability_check_widget.is_running():
+            message = "A stability check is currently running."
+            signal = self.stability_check_widget.cancelStabilityCheck
+        elif self.sequence_widget.is_running():
+            message = "A sequence is currently running."
+            signal = self.sequence_widget.cancelSequence
+        else:
+            return True  # we can close
+        # this will run if either of the first two conditions triggered
+        if YesCancelDialog("Are you sure you want to exit?", message).run():
+            signal.emit()
+            return True
+        return False

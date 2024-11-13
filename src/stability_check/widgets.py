@@ -3,6 +3,7 @@ from PyQt6.QtCore import pyqtSignal, QThreadPool
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
+from custom_widgets.dialog import OkDialog
 from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.layouts import (
     add_sublayout,
@@ -28,10 +29,7 @@ class StabilityCheckWidget(GroupBox):
         self.connect_widgets()
         self.connect_signals()
 
-        # variables
-        # TODO: replace this with checking to see if any StabilityCheckThreads exist
         self.threadpool = QThreadPool()
-        self.start_stability_check()
 
     def create_widgets(self):
         """Create subwidgets."""
@@ -109,13 +107,19 @@ class StabilityCheckWidget(GroupBox):
     # ----------------------------------------------------------------------------------------------
     # stability check
     def start_stability_check(self):
-        thread = StabilityCheckThread(self.instruments, self.setpoint_spinbox.value())
-        thread.signals.statusChanged.connect(self.statusChanged.emit)
-        thread.signals.stabilityChanged.connect(self.handle_stability_change)
-        self.cancelStabilityCheck.connect(thread.cancel_stability_check)
+        if not self.is_running():
+            thread = StabilityCheckThread(self.instruments, self.setpoint_spinbox.value())
+            thread.signals.statusChanged.connect(self.statusChanged.emit)
+            thread.signals.stabilityChanged.connect(self.handle_stability_change)
+            self.cancelStabilityCheck.connect(thread.cancel_stability_check)
 
-        self.threadpool.start(thread)
+            self.threadpool.start(thread)
+        else:
+            # this should never run
+            OkDialog(
+                "Error!", "A stability check is already running. This is a bug, please report it."
+            ).exec()
 
-    def is_running(self):
+    def is_running(self) -> bool:
         """Determine if any StabilityCheckThreads are active."""
         return self.threadpool.activeThreadCount() != 0
