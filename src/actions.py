@@ -10,12 +10,22 @@ class Action(QAction):
         self,
         parent: QObject,
         name: str,
-        action: Callable[[], Any],
+        action: Callable[[], Any] | None = None,
         status_tip: str | None = None,
-        shortcut: QKeySequence | None = None,
+        shortcut: str | None = None,
     ):
+        """
+        Creates a QAction tied to **parent**.
+
+        :param parent: The QObject to tie this action to.
+        :param name: The displayed name of this action in a QMenuBar.
+        :param action: The function this action calls.
+        :param status_tip: Optional text that is shown when a user hovers over the action.
+        :param shortcut: An optional keyboard shortcut in the form of "Ctrl+A".
+        """
         super().__init__(name, parent)
-        self.triggered.connect(action)
+        if action is not None:
+            self.triggered.connect(action)
         self.setStatusTip(status_tip)
         if shortcut is not None:
-            self.setShortcut(shortcut)
+            self.setShortcut(QKeySequence(shortcut))

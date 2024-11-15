@@ -4,12 +4,12 @@ from setpoint.widgets import SetpointWidget
 from passive_monitoring.widgets import PassiveMonitoringWidget
 from instrument_connection.widgets import InstrumentConnectionWidget
 from stability_check.widgets import StabilityCheckWidget
-from temperature_sequence.widgets import SequenceWidget
+from sequence.widgets import SequenceWidget
 from graph.widgets import GraphWidget
 from custom_widgets.dialog import YesCancelDialog
 from instruments import InstrumentSet
 from helper_functions.layouts import add_to_layout_grid
-from menu import MenuBar
+from menu.menu_bar import MenuBar
 
 
 class MainWindow(QMainWindow):
@@ -56,7 +56,8 @@ class MainWindow(QMainWindow):
         )
 
     def create_menu(self):
-        self.setMenuBar(MenuBar(self))
+        self.menu_bar = MenuBar(self)
+        self.setMenuBar(self.menu_bar)
 
     # ----------------------------------------------------------------------------------------------
     # closing the window
