@@ -1,8 +1,11 @@
 from PyQt6.QtWidgets import QMenu, QMenuBar, QApplication
+from sequence.constants import DATA_FILES_LOCATION  # ../sequence
 from actions import Action
 from custom_widgets.dialog import OkCancelDialog
+from showinfm import show_in_file_manager  # TODO: find a better file manager solution
 
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from main_window import MainWindow
 
@@ -18,9 +21,13 @@ class FileMenu(QMenu):
 
         self.addSeparator()
         # TODO: implement this
-        self.addAction(Action(parent, "Show Data Files", lambda: print("NOT IMPLEMENTED")))
+        self.addAction(
+            Action(
+                parent, "Show Data Files", lambda: show_in_file_manager(DATA_FILES_LOCATION, True)
+            )
+        )
 
         self.addSeparator()
 
-        self.addAction(Action(parent, "Close Window", main_window.close))
+        self.addAction(Action(parent, "Close Window", main_window.close, shortcut="Alt+F4"))
         self.addAction(Action(parent, "Exit", QApplication.closeAllWindows))

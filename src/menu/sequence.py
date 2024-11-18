@@ -9,7 +9,7 @@ class SequenceMenu(QMenu):
     def __init__(self, parent: QMenuBar, widget: SequenceWidget):
         super().__init__("&Sequence", parent)
         self.create_actions(parent, widget)
-        self.connect_signals()
+        self.connect_signals(widget)
 
         self.addAction(Action(parent, "Save Settings", lambda: print("NOT IMPLEMENTED")))
         self.addAction(self.load_settings)
@@ -25,10 +25,13 @@ class SequenceMenu(QMenu):
         self.addAction(self.cancel_sequence)
 
     def create_actions(self, parent: QMenuBar, widget: SequenceWidget):
-        self.load_settings = Action(parent, "Load Settings", lambda: print("NOT IMPLEMENTED"))
+        self.load_settings = Action(parent, "Load Settings", self.load_saved_settings)
         self.skip_current_cycle = Action(parent, "Skip Current Cycle", widget.skipCycle.emit)
         self.skip_current_buffer = Action(parent, "Skip Current Buffer", widget.skipBuffer.emit)
         self.cancel_sequence = Action(parent, "Cancel Sequence", widget.cancelSequence.emit)
+        # disable these initially
+        for action in (self.skip_current_cycle, self.skip_current_buffer, self.cancel_sequence):
+            action.setEnabled(False)
 
     def connect_actions(self):
         """Connect internal action signals."""
@@ -49,3 +52,7 @@ class SequenceMenu(QMenu):
         self.cancel_sequence.setEnabled(running)
         self.skip_current_cycle.setEnabled(running)
         self.skip_current_buffer.setEnabled(running)
+
+    def load_saved_settings(self):
+        print("NOT IMPLEMENTED")
+        pass
