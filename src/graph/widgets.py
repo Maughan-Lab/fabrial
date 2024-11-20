@@ -1,9 +1,11 @@
-from PyQt6.QtWidgets import QVBoxLayout
+from PyQt6.QtWidgets import QVBoxLayout, QMainWindow
+from PyQt6.QtGui import QCloseEvent
 from matplotlib.patches import Patch
 from instruments import InstrumentSet  # ../instruments.py
 from custom_widgets.groupbox import GroupBox  # ../custom_widgets
 from custom_widgets.plot import PlotWidget  # ../custom_widgets
 from enums.status import StabilityStatus, STABILITY_COLOR_KEY
+from actions import Shortcut  # ../actions.py
 
 
 class GraphWidget(GroupBox):
@@ -86,3 +88,36 @@ class GraphWidget(GroupBox):
         self.ydata.clear()
         self.axes.clear()
         print("Graph cleared. MONKAW")
+
+
+class PoppedGraph(QMainWindow):
+    """Secondary window for holding popped graphs."""
+
+    def __init__(self, graph_widget: GraphWidget):
+        super().__init__()
+        self.setWindowTitle("Quincy - Popped Graph")
+        self.take_ownership(graph_widget.plot, graph_widget)
+
+        self.create_shortcuts(graph_widget.plot)
+
+        self.handle_perishing = lambda: self.return_ownership(graph_widget.plot, graph_widget)
+
+    def create_shortcuts(self, plot: PlotWidget):
+        self.close_shortcut = Shortcut(self, "Ctrl+G", self.close)
+        self.save_shortcut = Shortcut(self, "Ctrl+S", plot.toolbar.save_figure)
+
+    def closeEvent(self, event: QCloseEvent | None):  # overridden method
+        self.handle_perishing()
+        self.destroyed.emit()
+        event.accept()
+
+    def take_ownership(self, widget: PlotWidget, parent: GraphWidget):
+        parent.hide()
+        widget.setParent(self)
+        self.setCentralWidget(widget)
+
+    def return_ownership(self, widget: PlotWidget, parent: GraphWidget):
+        widget.setParent(parent)
+        parent.layout().addWidget(widget)  # layout() will always return a QLayout type here
+        parent.show()
+        widget.figure.tight_layout()  # necessary to return to the proper size

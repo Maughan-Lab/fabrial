@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QObject
-from PyQt6.QtGui import QAction, QKeySequence
+from PyQt6.QtGui import QAction, QKeySequence, QShortcut
 from typing import Callable, Any
 
 
@@ -29,3 +29,18 @@ class Action(QAction):
         self.setStatusTip(status_tip)
         if shortcut is not None:
             self.setShortcut(QKeySequence(shortcut))
+
+
+class Shortcut(QShortcut):
+    """Easy QShortcut class."""
+
+    def __init__(self, parent: QObject, key: str, action: Callable[[None], None]):
+        """
+        Creates a QShortcut tied to **parent**.
+
+        :param parent: The QObject to tie this shortcut to.
+        :param key: A keyboard shortcut in the form of "Ctrl+A".
+        :param action: The function this shortcut executes.
+        """
+        super().__init__(QKeySequence(key), parent)
+        self.activated.connect(action)

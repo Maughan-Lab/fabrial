@@ -16,6 +16,7 @@ class MainWindow(QMainWindow):
     def __init__(self, instruments: InstrumentSet):
         super().__init__()
         self.setWindowTitle("Quincy")
+        self.secondary_windows: list[QMainWindow] = []
 
         self.create_widgets(instruments)
         self.connect_signals()
@@ -58,6 +59,11 @@ class MainWindow(QMainWindow):
     def create_menu(self):
         self.menu_bar = MenuBar(self)
         self.setMenuBar(self.menu_bar)
+
+    def new_window(self, new_window: QMainWindow):
+        new_window.show()
+        self.secondary_windows.append(new_window)
+        new_window.destroyed.connect(lambda: self.secondary_windows.remove(new_window))
 
     # ----------------------------------------------------------------------------------------------
     # closing the window

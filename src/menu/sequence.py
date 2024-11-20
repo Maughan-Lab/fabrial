@@ -11,12 +11,18 @@ class SequenceMenu(QMenu):
         self.create_actions(parent, widget)
         self.connect_signals(widget)
 
-        self.addAction(Action(parent, "Save Settings", lambda: print("NOT IMPLEMENTED")))
+        self.addAction(
+            Action(parent, "Save Settings", lambda: print("NOT IMPLEMENTED"), shortcut="Ctrl+S")
+        )
         self.addAction(self.load_settings)
 
         self.addSeparator()
 
-        self.addAction(Action(parent, "Generate Graph", lambda: print("NOT IMPLEMENTED")))
+        self.addAction(
+            Action(
+                parent, "Generate Graph", lambda: print("NOT IMPLEMENTED"), shortcut="Ctrl+Shift+G"
+            )
+        )
 
         self.addSeparator()
 
@@ -25,7 +31,9 @@ class SequenceMenu(QMenu):
         self.addAction(self.cancel_sequence)
 
     def create_actions(self, parent: QMenuBar, widget: SequenceWidget):
-        self.load_settings = Action(parent, "Load Settings", self.load_saved_settings)
+        self.load_settings = Action(
+            parent, "Load Settings", self.load_saved_settings, shortcut="Ctrl+Shift+L"
+        )
         self.skip_current_cycle = Action(parent, "Skip Current Cycle", widget.skipCycle.emit)
         self.skip_current_buffer = Action(parent, "Skip Current Buffer", widget.skipBuffer.emit)
         self.cancel_sequence = Action(parent, "Cancel Sequence", widget.cancelSequence.emit)
