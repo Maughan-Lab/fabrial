@@ -2,21 +2,20 @@ from PyQt6.QtWidgets import QVBoxLayout, QMainWindow
 from PyQt6.QtGui import QCloseEvent
 from matplotlib.patches import Patch
 from instruments import InstrumentSet  # ../instruments.py
-from custom_widgets.groupbox import GroupBox  # ../custom_widgets
 from custom_widgets.plot import PlotWidget  # ../custom_widgets
+from custom_widgets.frame import Frame
 from enums.status import StabilityStatus, STABILITY_COLOR_KEY
 from actions import Shortcut  # ../actions.py
 
 
-class GraphWidget(GroupBox):
+class GraphWidget(Frame):
     """Graph window that displays information from the temperature sequence."""
 
     def __init__(self, instruments: InstrumentSet):
-        """
-        :param instruments: Container for instruments.
-        """
+        """:param instruments: Container for instruments."""
 
-        super().__init__("Sequence Graph", QVBoxLayout, instruments)
+        super().__init__(QVBoxLayout, 0)
+        self.layout().setSpacing(0)
 
         self.xdata: list[float] = []
         self.ydata: list[float] = []

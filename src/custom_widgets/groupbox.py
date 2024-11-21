@@ -9,10 +9,8 @@ class GroupBox(QGroupBox):
     def __init__(self, title: str, layout_fn: Callable[[], QLayout], instruments: InstrumentSet):
         """
         :param title: The window's title.
-
         :param layout_fn: A function that returns a QLayout (i.e. **QVBoxLayout**, \
         not **QVBoxLayout()**)
-
         :param instruments: The instruments used by the widget.
         """
         super().__init__()
