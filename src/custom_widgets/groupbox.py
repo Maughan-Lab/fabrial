@@ -6,7 +6,9 @@ from typing import Callable
 class GroupBox(QGroupBox):
     """QGroupBox with that automatically sets the SizePolicy and title and assigns instruments."""
 
-    def __init__(self, title: str, layout_fn: Callable[[], QLayout], instruments: InstrumentSet):
+    def __init__(
+        self, title: str | None, layout_fn: Callable[[], QLayout], instruments: InstrumentSet
+    ):
         """
         :param title: The window's title.
         :param layout_fn: A function that returns a QLayout (i.e. **QVBoxLayout**, \

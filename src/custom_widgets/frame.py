@@ -1,8 +1,8 @@
-from PyQt6.QtWidgets import QFrame, QSizePolicy, QLayout
+from PyQt6.QtWidgets import QGroupBox, QSizePolicy, QLayout
 from typing import Callable
 
 
-class Frame(QFrame):
+class Frame(QGroupBox):
     """QFrame that automatically sets the size policy and layout."""
 
     def __init__(self, layout_fn: Callable[[], QLayout], padding: int):
@@ -12,8 +12,6 @@ class Frame(QFrame):
         :param padding: The number of pixels to pad on each side.
         """
         super().__init__()
-
-        self.setFrameStyle(QFrame.Shape.Box)
 
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
