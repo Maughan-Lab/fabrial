@@ -5,7 +5,7 @@ from passive_monitoring.widgets import PassiveMonitoringWidget
 from instrument_connection.widgets import InstrumentConnectionWidget
 from stability_check.widgets import StabilityCheckWidget
 from sequence.widgets import SequenceWidget
-from graph.widgets import GraphWidget
+from graph.widgets import GraphWidget, PoppedGraph
 from custom_widgets.dialog import YesCancelDialog
 from instruments import InstrumentSet
 from helper_functions.layouts import add_to_layout_grid
@@ -50,10 +50,15 @@ class MainWindow(QMainWindow):
 
     def connect_signals(self):
         """Connect widget signals."""
+        # connect the graph
         self.sequence_widget.newDataAquired.connect(self.graph_widget.add_point)
         self.sequence_widget.cycleNumberChanged.connect(self.graph_widget.move_to_next_cycle)
         self.sequence_widget.stabilityChanged.connect(
             self.graph_widget.handle_stability_status_change
+        )
+        # connect the stability check
+        self.sequence_widget.statusChanged.connect(
+            lambda running: self.stability_check_widget.reset() if running else None
         )
 
     def create_menu(self):
@@ -66,10 +71,31 @@ class MainWindow(QMainWindow):
         new_window.destroyed.connect(lambda: self.secondary_windows.remove(new_window))
 
     # ----------------------------------------------------------------------------------------------
+    # resizing
+    def toggle_fullscreen(self):
+        if self.isFullScreen():
+            self.showNormal()
+        else:
+            self.showFullScreen()
+
+    def shrink(self):
+        if self.isFullScreen():
+            self.showNormal()
+        self.resize(self.minimumSize())
+
+    # ----------------------------------------------------------------------------------------------
+    # pop the graph
+    def pop_graph(self):
+        popped_graph = PoppedGraph(self.graph_widget)
+        popped_graph.destroyed.connect(self.menu_bar.view.poppedGraphDestroyed.emit)
+        self.new_window(popped_graph)
+
+    # ----------------------------------------------------------------------------------------------
     # closing the window
     def closeEvent(self, event: QCloseEvent | None):  # overridden method
         """Prevent the window from closing if a sequence or stability check are running."""
-        event.accept() if self.allowed_to_close() else event.ignore()
+        if event is not None:
+            event.accept() if self.allowed_to_close() else event.ignore()
 
     def allowed_to_close(self) -> bool:
         """Determine if the window should close."""

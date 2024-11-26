@@ -1,5 +1,6 @@
-from PyQt6.QtCore import Qt, QAbstractTableModel, QSize
 from PyQt6.QtWidgets import QTableView, QHeaderView, QSizePolicy
+from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, pyqtSignal
+from custom_widgets.dialog import OkDialog
 from polars import col
 import polars as pl
 from enum import Enum
@@ -10,6 +11,7 @@ from .constants import (
     BUFFER_MINUTES_COLUMN,
     HOLD_HOURS_COLUMN,
     HOLD_MINUTES_COLUMN,
+    SAVED_SETTINGS_FILE,
 )
 from instruments import Oven  # ../instruments.py
 
@@ -26,10 +28,27 @@ class Column(Enum):
 class TableModel(QAbstractTableModel):
     """Concrete version of a QAbstractTableModel for working with **Polars** **DataFrame**s."""
 
+    # signals
+    dataLoaded = pyqtSignal(int)
+
     def __init__(self):
         super().__init__()
         self.parameter_data = self.generate_new_rows(1, 1)
         self.disabled_row_index = 0  # rows before this index are disabled
+
+    def save_data(self):
+        """Write the sequence settings to a file."""
+        self.parameter_data.write_csv(SAVED_SETTINGS_FILE)
+
+    def load_data(self):
+        """Attempt to load previously saved sequency settings, showing a dialog on failure."""
+        try:
+            self.parameter_data = pl.scan_csv(SAVED_SETTINGS_FILE).collect()
+        except Exception:
+            OkDialog("Error", "Unable to load saved settings.").exec()
+            return
+        self.dataLoaded.emit(self.rowCount())
+        self.layoutChanged.emit()
 
     def resize(self, new_row_count: int):
         """
@@ -49,6 +68,12 @@ class TableModel(QAbstractTableModel):
         self.layoutChanged.emit()
 
     def generate_new_rows(self, starting_cycle_number: int, row_count: int) -> pl.DataFrame:
+        """
+        Generates and returns **row_count** new rows.
+
+        :param starting_cycle_number: The number the row cycle numbers will start at.
+        :param row_count: The number of rows to generate.
+        """
         cycles = [i for i in range(starting_cycle_number, starting_cycle_number + row_count)]
         times = [0 for i in range(row_count)]
         temperatures = [Oven.MINIMUM_TEMPERATURE for i in range(row_count)]
@@ -74,12 +99,15 @@ class TableModel(QAbstractTableModel):
         self.disabled_row_index = disable_rows_at_and_before
 
     def enable_all_rows(self):
+        """Enable all rows in the model."""
         self.disabled_row_index = 0
 
-    def rowCount(self, index):
+    # ----------------------------------------------------------------------------------------------
+    # overridden methods
+    def rowCount(self, index: QModelIndex | None = None):
         return self.parameter_data.select(pl.len()).item()
 
-    def columnCount(self, index):
+    def columnCount(self, index: QModelIndex | None = None):
         return self.parameter_data.width
 
     def flags(self, index):
@@ -141,6 +169,8 @@ class TableModel(QAbstractTableModel):
                 self.parameter_data[index.row(), index.column()] = new_value
                 self.layoutChanged.emit()
                 return True
+            case _:  # do nothing otherwise
+                pass
 
 
 class TableView(QTableView):
@@ -175,25 +205,44 @@ class TableView(QTableView):
     def getCurrentWidth(self) -> int:
         """Get the column width accounting for the scrollbar."""
         width = self.frameWidth() * 2
-        if self.model().rowCount(None) > self.MAX_VISIBLE_ROWS:
-            # this means the scrollbar is visible
-            width += self.verticalScrollBar().sizeHint().width()
-        for i in range(self.model().columnCount(None)):
-            width += self.columnWidth(i)
+
+        model = self.model()
+        if model is not None:
+            if model.rowCount() > self.MAX_VISIBLE_ROWS:
+                # this means the scrollbar is visible
+                vertical_scrollbar = self.verticalScrollBar()
+                if vertical_scrollbar is not None:
+                    width += vertical_scrollbar.sizeHint().width()
+            for i in range(model.columnCount()):
+                width += self.columnWidth(i)
+
         return width
 
     def getMaxHeight(self) -> int:
         """Get the maximum height, dictated by **MAX_VISIBLE_ROWS**."""
-        height = self.frameWidth() * 2 + self.horizontalHeader().sizeHint().height()
+        height = self.frameWidth() * 2
+
+        horizontal_header = self.horizontalHeader()
+        if horizontal_header is not None:
+            height += horizontal_header.sizeHint().height()
+
         for i in range(self.MAX_VISIBLE_ROWS):
             height += self.rowHeight(i)
         return height
 
     def getCurrentHeight(self) -> int:
         """Get the current table height based on how many rows there are."""
-        height = self.frameWidth() * 2 + self.horizontalHeader().sizeHint().height()
-        for i in range(self.model().columnCount(None)):
-            height += self.rowHeight(i)
+        height = self.frameWidth() * 2
+
+        horizontal_header = self.horizontalHeader()
+        if horizontal_header is not None:
+            height += horizontal_header.sizeHint().height()
+
+        model = self.model()
+        if model is not None:
+            for i in range(model.columnCount()):
+                height += self.rowHeight(i)
+
         return height
 
     def updateSize(self):

@@ -5,11 +5,12 @@ from PyQt6.QtWidgets import (
     QStackedLayout,
     QSizePolicy,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal, QThreadPool
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.combo_box import ComboBox  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from custom_widgets.separator import HSeparator
+from custom_widgets.dialog import OkDialog
 from instruments import InstrumentSet  # ../instruments.py
 from helper_functions.layouts import add_sublayout, add_to_layout  # ../helper_functions
 from enums.status import (
@@ -21,6 +22,7 @@ from enums.status import (
     SEQUENCE_COLOR_KEY,
 )  # ../enums
 from .table_model import TableModel, TableView
+from .sequence import SequenceThread
 
 
 class SequenceWidget(GroupBox):
@@ -28,17 +30,13 @@ class SequenceWidget(GroupBox):
 
     # signals
     newDataAquired = pyqtSignal(float, float)
-    cycleNumberChanged = pyqtSignal(int)
     stabilityChanged = pyqtSignal(StabilityStatus)
-    statusChanged = pyqtSignal(SequenceStatus)
-    # this widget receives the first signal and sends back the second signal
+    statusChanged = pyqtSignal(bool)  # True if running else False
+    cycleNumberChanged = pyqtSignal(int)
+    # these are commands sent from other widgets
     skipBuffer = pyqtSignal()
-    bufferSkipped = pyqtSignal()
     skipCycle = pyqtSignal()
-    cycleSkipped = pyqtSignal()
-
     cancelSequence = pyqtSignal()
-    sequenceStatusChanged = pyqtSignal(bool)  # True if running else False
 
     def __init__(self, instruments: InstrumentSet):
         """
@@ -55,7 +53,9 @@ class SequenceWidget(GroupBox):
         self.connect_widgets()
         self.connect_signals()
 
-        self.statusChanged.emit(SequenceStatus.INACTIVE)
+        self.handle_status_change(SequenceStatus.INACTIVE)
+
+        self.threadpool = QThreadPool()
 
     def create_widgets(self):
         """Create subwidgets."""
@@ -103,20 +103,16 @@ class SequenceWidget(GroupBox):
     def connect_widgets(self):
         """Connect internal widget signals."""
         # changing the combobox will update the parameter table
-        self.cycle_combobox.currentTextChanged.connect(
-            lambda new_row_count: self.model.resize(int(new_row_count))
+        self.cycle_combobox.currentIndexChanged.connect(
+            lambda new_index: self.model.resize(int(new_index + 1))
+        )
+        self.model.dataLoaded.connect(
+            lambda row_count: self.cycle_combobox.setCurrentIndexSilent(row_count - 1)
         )
         # TODO: connect the sequence buttons, start, pause, and unpause
 
     def connect_signals(self):
         """Connect external signals."""
-        # cycleNumberChanged
-        self.cycleNumberChanged.connect(self.handle_cycle_number_change)
-        # statusChanged
-        self.statusChanged.connect(self.handle_sequence_status_change)
-        # stabilityChanged
-        self.stabilityChanged.connect(self.handle_stability_status_change)
-
         # oven connection
         self.instruments.oven.connectionChanged.connect(
             lambda connected: self.update_button_states(connected, self.instruments.oven.unlocked)
@@ -131,37 +127,47 @@ class SequenceWidget(GroupBox):
     # ----------------------------------------------------------------------------------------------
     # cycleNumberChanged
     def handle_cycle_number_change(self, cycle_number: int):
+        """Handle the cycleNumberChanged signal."""
         self.update_cycle_number(cycle_number)
         self.limit_parameters(cycle_number)
+        self.cycleNumberChanged.emit(cycle_number)
 
     def update_cycle_number(self, cycle_number: int):
+        """Update the cycle number label."""
         self.cycle_label.setText(str(cycle_number))
 
     def limit_parameters(self, cycle_number):
+        """Limit the options in the cycle count combobox and parameters table."""
         self.cycle_combobox.model().item(cycle_number - 2).setEnabled(False)
         self.model.disable_rows(cycle_number)
 
     # ----------------------------------------------------------------------------------------------
     # statusChanged
-    def handle_sequence_status_change(self, status: SequenceStatus):
+    def handle_status_change(self, status: SequenceStatus):
         match status:
+            # TODO: make sure this is actually done
             case SequenceStatus.ACTIVE:
                 # tell the rest of the program the sequence started
-                pass
+                self.statusChanged.emit(True)
             case SequenceStatus.COMPLETED | SequenceStatus.CANCELED | SequenceStatus.INACTIVE:
                 # tell the rest of the program the sequence ended
-                pass
+                self.handle_sequence_completion()
+                self.statusChanged.emit(False)
             case _:
                 pass
+            # TODO: other Statuses, like pause
 
         self.update_label(self.status_label, SEQUENCE_TEXT_KEY[status], SEQUENCE_COLOR_KEY[status])
 
+    # TODO: something with the buttons
+
     # ----------------------------------------------------------------------------------------------
     # stabilityChanged
-    def handle_stability_status_change(self, status: StabilityStatus):
+    def handle_stability_change(self, status: StabilityStatus):
         self.update_label(
             self.stability_label, STABILITY_TEXT_KEY[status], STABILITY_COLOR_KEY[status]
         )
+        self.stabilityChanged.emit(status)
 
     # ----------------------------------------------------------------------------------------------
     # statusChanged for SequenceStatus.Completed
@@ -171,6 +177,7 @@ class SequenceWidget(GroupBox):
         pass
 
     def unlimit_parameters(self):
+        """Remove limitations on values for the combobox and modelview."""
         cycle_combobox_model = self.cycle_combobox.model()
         for i in range(self.cycle_combobox.count()):
             cycle_combobox_model.item(i).setEnabled(True)
@@ -179,6 +186,7 @@ class SequenceWidget(GroupBox):
 
     # ----------------------------------------------------------------------------------------------
     def update_label(self, label: Label, text: str, color: str):
+        """Generic function to update any label."""
         label.setText(text)
         label.setStyleSheet("color: " + color)
 
@@ -190,7 +198,25 @@ class SequenceWidget(GroupBox):
     # ----------------------------------------------------------------------------------------------
     # sequence
     def start_sequence(self):
-        pass
+        """Start a temperature sequence."""
+        if not self.is_running():
+            thread = SequenceThread(self.instruments, self.model.parameter_data)
+
+            thread.signals.statusChanged.connect(self.handle_status_change)
+            thread.signals.stabilityChanged.connect(self.handle_stability_change)
+            thread.signals.cycleNumberChanged.connect(self.handle_cycle_number_change)
+            # the following gets sent to external widgets
+            thread.signals.newDataAquired.connect(self.newDataAquired.emit)
+
+            # TODO: implement canceling and skipping
+
+            self.threadpool.start(thread)
+        else:
+            # this should never run
+            OkDialog(
+                "Error!", "A sequence is already running. This is a bug, please report it."
+            ).exec()
 
     def is_running(self) -> bool:
-        return False
+        """Determine if any SequenceThreads are active."""
+        return self.threadpool.activeThreadCount() != 0

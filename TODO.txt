@@ -1,0 +1,14 @@
+Add the Quincy icon to all windows.
+
+Find a way to replace minimalmodbus with pyserial. I hate how it uses slaveaddress as a parameter.
+
+Implement the sequence thread, signals and all.
+- You may need to modify the newDataAcquired signal so you can write to the files
+- Implement a file-writing function
+- Probably need constants for the file locations.
+
+Fix PyTest
+- Write as many unit tests as possible. For things like the sequence, making sure signals trigger
+  the proper events, etc.
+
+Package the application and make an installer using the Forge thing from the PyQt6 guide.

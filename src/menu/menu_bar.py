@@ -21,8 +21,9 @@ class MenuBar(QMenuBar):
         # need to store these because they have signals
         self.stability = StabilityMenu(self, parent.stability_check_widget)
         self.sequence = SequenceMenu(self, parent.sequence_widget)
+        self.view = ViewMenu(self, parent)
 
         self.addMenu(FileMenu(self, parent))
-        self.addMenu(ViewMenu(self, parent))
+        self.addMenu(self.view)
         self.addMenu(self.stability)
         self.addMenu(self.sequence)

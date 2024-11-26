@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from PyQt6.QtCore import pyqtSignal, QObject
+from serial import Serial, SerialException
 
 
 class ConnectionStatus(Enum):
@@ -49,12 +50,15 @@ class Instrument(QObject):
 class Oven(Instrument):
     """Class to represent the physical oven Quincy controls."""
 
+    # TODO: remove these when you use pyserial
+
     MINIMUM_TEMPERATURE = 0.0
     MAXIMUM_TEMPERATURE = 232.0
 
     def __init__(self, oven_port: str):
         super().__init__()
         self.port = oven_port
+        self.instrument = None  # the physical oven connection
 
     def read_temp(self) -> float | None:
         """Returns the oven's temperature if the oven is connected, None otherwise."""
@@ -95,3 +99,14 @@ class InstrumentSet:
 
     oven: Oven
     potentiostat: None
+
+
+# TODO: implement the Oven using pySerial. This will require a lot of testing
+class Test:
+    def __init__(self):
+        self.serial = Serial()
+
+        try:
+            self.serial.open()
+        except SerialException:
+            pass

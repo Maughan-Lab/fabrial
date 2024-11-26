@@ -11,9 +11,7 @@ class SequenceMenu(QMenu):
         self.create_actions(parent, widget)
         self.connect_signals(widget)
 
-        self.addAction(
-            Action(parent, "Save Settings", lambda: print("NOT IMPLEMENTED"), shortcut="Ctrl+S")
-        )
+        self.addAction(Action(parent, "Save Settings", widget.model.save_data, shortcut="Ctrl+S"))
         self.addAction(self.load_settings)
 
         self.addSeparator()
@@ -32,7 +30,7 @@ class SequenceMenu(QMenu):
 
     def create_actions(self, parent: QMenuBar, widget: SequenceWidget):
         self.load_settings = Action(
-            parent, "Load Settings", self.load_saved_settings, shortcut="Ctrl+Shift+L"
+            parent, "Load Settings", widget.model.load_data, shortcut="Ctrl+Shift+L"
         )
         self.skip_current_cycle = Action(parent, "Skip Current Cycle", widget.skipCycle.emit)
         self.skip_current_buffer = Action(parent, "Skip Current Buffer", widget.skipBuffer.emit)
@@ -41,18 +39,8 @@ class SequenceMenu(QMenu):
         for action in (self.skip_current_cycle, self.skip_current_buffer, self.cancel_sequence):
             action.setEnabled(False)
 
-    def connect_actions(self):
-        """Connect internal action signals."""
-        # disable skipping until the cycle/buffer has been officially skipped
-        self.skip_current_cycle.triggered.connect(lambda: self.skip_current_cycle.setEnabled(False))
-        self.skip_current_buffer.triggered.connect(
-            lambda: self.skip_current_buffer.setEnabled(False)
-        )
-
     def connect_signals(self, widget: SequenceWidget):
         """Connect external signals."""
-        widget.cycleSkipped.connect(lambda: self.skip_current_cycle.setEnabled(True))
-        widget.bufferSkipped.connect(lambda: self.skip_current_buffer.setEnabled(True))
         widget.statusChanged.connect(self.handle_status_change)
 
     def handle_status_change(self, running: bool):
@@ -60,7 +48,3 @@ class SequenceMenu(QMenu):
         self.cancel_sequence.setEnabled(running)
         self.skip_current_cycle.setEnabled(running)
         self.skip_current_buffer.setEnabled(running)
-
-    def load_saved_settings(self):
-        print("NOT IMPLEMENTED")
-        pass

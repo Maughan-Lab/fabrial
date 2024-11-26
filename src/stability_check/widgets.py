@@ -88,6 +88,11 @@ class StabilityCheckWidget(GroupBox):
         self.stability_label.setText(STABILITY_TEXT_KEY[status])
         self.stability_label.setStyleSheet("color: " + STABILITY_COLOR_KEY[status])
 
+    def reset(self):
+        """Reset the stability label and setpoint spinbox."""
+        self.handle_stability_change(StabilityStatus.NULL)
+        self.setpoint_spinbox.setValue(0.0)
+
     def update_button_states(self, connected: bool, unlocked: bool, running: bool):
         """Update the states of buttons."""
         # enable the button if the oven is connected and a check isn't running
