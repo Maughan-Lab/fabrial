@@ -72,12 +72,12 @@ class SequenceThread(QRunnable):
             setpoint = self.cycle_settings.item(self.cycle_number - 1, TEMPERATURE_COLUMN)
             self.oven.change_setpoint(setpoint)
 
-            self.stabilize(setpoint)
-            if self.skip or self.cancel:
+            proceed = self.stabilize(setpoint)
+            if not proceed:
                 continue
 
-            self.buffer()
-            if self.skip or self.cancel:
+            proceed = self.buffer()
+            if not proceed:
                 continue
 
             self.collect_data()
@@ -103,7 +103,7 @@ class SequenceThread(QRunnable):
 
         self.oven.release()
 
-    def stabilize(self, setpoint: float):
+    def stabilize(self, setpoint: float) -> bool:
         """Collect data while waiting for the oven to stabilize."""
         self.update_stability(StabilityStatus.CHECKING)
 
@@ -119,7 +119,7 @@ class SequenceThread(QRunnable):
                     self.connection_problem = True
                 proceed = self.wait()
                 if not proceed:
-                    return
+                    return False
 
             stable = True
             for location in range(len(temperature_variances)):
@@ -133,10 +133,11 @@ class SequenceThread(QRunnable):
 
         self.update_stability(StabilityStatus.STABLE)
         self.record_stabilization_time()
+        return True
 
-    def buffer(self):
+    def buffer(self) -> bool:
         """Buffer and collect data."""
-        pass
+        return True
 
     def collect_data(self):
         """Collect data. The oven should be stable at this point."""
