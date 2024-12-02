@@ -58,14 +58,14 @@ class GraphWidget(Frame):
         print("Point added! POGGERS")
 
     def move_to_next_cycle(self, cycle_number: int):
-        self.plot.axes.set_title("Cycle" + str(cycle_number))
+        self.plot.axes.set_title("Cycle " + str(cycle_number))
         self.clear()
 
         # TODO: remove this
         print("Cycle moved, YIPPEE")
 
     def handle_stability_status_change(self, status: StabilityStatus):
-        # TODO: add the actual colors for point_color
+        line_index = -1  # need to instantiate this for later
         match status:
             case StabilityStatus.CHECKING:
                 line_index = 0
@@ -73,8 +73,10 @@ class GraphWidget(Frame):
                 line_index = 1
             case StabilityStatus.STABLE:
                 line_index = 2
+            case StabilityStatus.NULL:
+                return  # the sequence ended, do nothing
             case _:
-                pass  # protect against irrelevant StabilityStatus
+                pass  # protect against an irrelevant StabilityStatus
 
         point_color = STABILITY_COLOR_KEY[status]
 

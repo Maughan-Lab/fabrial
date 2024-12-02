@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QVBoxLayout
 from PyQt6.QtGui import QResizeEvent
 from .container import Container
 from .frame import Frame
-from helper_functions.layouts import add_to_layout  # ../helper_functions
+from utility.layouts import add_to_layout  # ../utility
 import matplotlib
 from matplotlib.backends.backend_qtagg import (
     FigureCanvasQTAgg,

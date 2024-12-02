@@ -5,11 +5,11 @@ from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from custom_widgets.dialog import OkDialog
 from instruments import InstrumentSet  # ../instruments.py
-from helper_functions.layouts import (
+from utility.layouts import (
     add_sublayout,
     add_to_layout,
     add_to_layout_grid,
-)  # ../helper_functions
+)  # ../utility
 from enums.status import StabilityStatus, STABILITY_TEXT_KEY, STABILITY_COLOR_KEY  # ../enums
 from .stability_check import StabilityCheckThread
 

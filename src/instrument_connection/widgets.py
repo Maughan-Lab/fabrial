@@ -3,8 +3,8 @@ from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.combo_box import ComboBox  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet, ConnectionStatus, CONNECTION_COLOR_KEY  # ../instruments.py
-from helper_functions.layouts import add_sublayout, add_to_layout  # ../helper_functions
-from helper_functions.new_timer import new_timer  # ../helper_functions
+from utility.layouts import add_sublayout, add_to_layout  # ../utility
+from utility.new_timer import new_timer  # ../utility
 from .ports import get_ports_list
 from .constants import PORTS_FILE
 

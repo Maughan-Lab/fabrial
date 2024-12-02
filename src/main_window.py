@@ -8,7 +8,7 @@ from sequence.widgets import SequenceWidget
 from graph.widgets import GraphWidget, PoppedGraph
 from custom_widgets.dialog import YesCancelDialog
 from instruments import InstrumentSet
-from helper_functions.layouts import add_to_layout_grid
+from utility.layouts import add_to_layout_grid
 from menu.menu_bar import MenuBar
 
 

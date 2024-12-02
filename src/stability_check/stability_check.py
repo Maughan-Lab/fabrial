@@ -8,8 +8,9 @@ from time import time
 class StabilityCheckThread(QRunnable):
     """Thread for running stability checks."""
 
-    # how far off the temperature can be from the setpoint for stability in degrees C
-    ERROR_MARGIN = 1.0
+    MINIMUM_MEASUREMENTS = 150
+    VARIANCE_TOLERANCE = 1.0  # degree C
+    MEASUREMENT_INTERVAL = 5.0  # seconds
 
     def __init__(self, instruments: InstrumentSet, setpoint: float):
         super().__init__()
@@ -25,18 +26,18 @@ class StabilityCheckThread(QRunnable):
         self.pre_run()
 
         measurement_count = 0
-        while measurement_count < 150:
+        while measurement_count < self.MINIMUM_MEASUREMENTS:
             temperature = self.oven.read_temp()
             if temperature is None:
                 self.update_stability(StabilityStatus.ERROR)
             else:
-                if abs(temperature - self.setpoint) > self.ERROR_MARGIN:  # unstable
+                if abs(temperature - self.setpoint) > self.VARIANCE_TOLERANCE:  # unstable
                     self.post_run(StabilityStatus.UNSTABLE)
                     return
                 measurement_count += 1
 
-            next_time = time() + 5
-            while time() < next_time:  # wait 5 seconds
+            next_time = time() + self.MEASUREMENT_INTERVAL
+            while time() < next_time:  # wait MEASUREMENT_INTERVAL seconds
                 if self.cancel:  # check to proceed
                     self.post_run(StabilityStatus.NULL)
                     return

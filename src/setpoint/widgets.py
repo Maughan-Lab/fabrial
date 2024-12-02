@@ -3,7 +3,7 @@ from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet  # ../instruments.py
-from helper_functions.layouts import add_to_layout
+from utility.layouts import add_to_layout  # ../utility
 
 
 class SetpointWidget(GroupBox):

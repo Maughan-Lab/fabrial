@@ -4,7 +4,7 @@ from PyQt6.QtGui import QFont
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet  # ../instruments.py
-from helper_functions.new_timer import new_timer  # ../helper_functions
+from utility.new_timer import new_timer  # ../utility
 
 
 class PassiveMonitoringWidget(GroupBox):

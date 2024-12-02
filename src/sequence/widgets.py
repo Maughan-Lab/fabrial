@@ -12,7 +12,7 @@ from custom_widgets.groupbox import GroupBox
 from custom_widgets.separator import HSeparator
 from custom_widgets.dialog import OkDialog
 from instruments import InstrumentSet  # ../instruments.py
-from helper_functions.layouts import add_sublayout, add_to_layout  # ../helper_functions
+from utility.layouts import add_sublayout, add_to_layout  # ../helper_functions
 from enums.status import (
     StabilityStatus,
     SequenceStatus,
@@ -33,6 +33,9 @@ class SequenceWidget(GroupBox):
     stabilityChanged = pyqtSignal(StabilityStatus)
     statusChanged = pyqtSignal(bool)  # True if running else False
     cycleNumberChanged = pyqtSignal(int)
+    # pausing
+    pauseSequence = pyqtSignal()
+    unpauseSequence = pyqtSignal()
     # these are commands sent from other widgets
     skipBuffer = pyqtSignal()
     skipCycle = pyqtSignal()
@@ -207,8 +210,10 @@ class SequenceWidget(GroupBox):
             thread.signals.cycleNumberChanged.connect(self.handle_cycle_number_change)
             # the following gets sent to external widgets
             thread.signals.newDataAquired.connect(self.newDataAquired.emit)
-
-            # TODO: implement canceling and skipping
+            # the following are sent to the thread
+            self.cancelSequence.connect(thread.cancel_sequence)
+            self.skipCycle.connect(thread.skip_cycle)
+            self.skipBuffer.connect(thread.skip_buffer)
 
             self.threadpool.start(thread)
         else:
