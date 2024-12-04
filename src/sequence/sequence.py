@@ -3,7 +3,6 @@ import time
 from os import path
 import os
 from .constants import (
-    CYCLE_COLUMN,
     TEMPERATURE_COLUMN,
     BUFFER_HOURS_COLUMN,
     BUFFER_MINUTES_COLUMN,
@@ -20,7 +19,6 @@ from .constants import (
     TEMPERATURE,
 )
 from instruments import InstrumentSet  # ../instruments.py
-from polars import col
 import polars as pl
 from enums.status import StabilityStatus, SequenceStatus
 from typing import TextIO
@@ -72,15 +70,23 @@ class SequenceThread(QRunnable):
             setpoint = self.cycle_settings.item(self.cycle_number - 1, TEMPERATURE_COLUMN)
             self.oven.change_setpoint(setpoint)
 
+            # stabilizing
+            self.update_stability(StabilityStatus.CHECKING)
             proceed = self.stabilize(setpoint)
             if not proceed:
                 continue
 
-            proceed = self.buffer()
+            # buffering
+            self.update_stability(StabilityStatus.BUFFERING)
+            proceed = self.collect_data(
+                BUFFER_HOURS_COLUMN, BUFFER_MINUTES_COLUMN, self.buffer_file
+            )
             if not proceed:
                 continue
 
-            self.collect_data()
+            # data collection while stable
+            self.update_stability(StabilityStatus.STABLE)
+            self.collect_data(HOLD_HOURS_COLUMN, HOLD_MINUTES_COLUMN, self.stable_file)
 
         self.post_run()
 
@@ -105,8 +111,6 @@ class SequenceThread(QRunnable):
 
     def stabilize(self, setpoint: float) -> bool:
         """Collect data while waiting for the oven to stabilize."""
-        self.update_stability(StabilityStatus.CHECKING)
-
         temperature_variances: list[float] = []
         stable = False
         while not stable:
@@ -116,7 +120,7 @@ class SequenceThread(QRunnable):
                     temperature_variances.append(abs(temperature - setpoint))
                     self.record_temperature_data(self.pre_stable_file, temperature)
                 else:
-                    self.connection_problem = True
+                    self.process_connection_problem()
                 proceed = self.wait()
                 if not proceed:
                     return False
@@ -135,17 +139,27 @@ class SequenceThread(QRunnable):
         self.record_stabilization_time()
         return True
 
-    def buffer(self) -> bool:
-        """Buffer and collect data."""
+    def collect_data(self, hours_column: str, minutes_column: str, data_file: TextIO) -> bool:
+        """Collect data every **MEASUREMENT_INTERVAL** seconds."""
+        hours: int = self.cycle_settings.item(self.cycle_number - 1, hours_column)
+        minutes: int = self.cycle_settings.item(self.cycle_number - 1, minutes_column)
+        repeat_count = (hours * 3600 + minutes * 60) / self.MEASUREMENT_INTERVAL
+        current_count = 0
+        while current_count < repeat_count:
+            temperature = self.oven.read_temp()
+            if temperature is not None:
+                self.record_temperature_data(data_file, temperature)
+            else:
+                self.process_connection_problem()
+            proceed = self.wait()
+            if not proceed:
+                return False
+            current_count += 1
         return True
-
-    def collect_data(self):
-        """Collect data. The oven should be stable at this point."""
-        pass
 
     def wait(self) -> bool:
         """
-        Wait for MEASUREMENT_INTERVAL or while there is a connection problem. Returns
+        Wait for **MEASUREMENT_INTERVAL** or while there is a connection problem. Returns
         True if the cycle should proceed, False otherwise (i.e. the cycle is canceled or skipped).
         """
         next_time = time.time() + self.MEASUREMENT_INTERVAL

@@ -34,7 +34,7 @@ class Action(QAction):
 class Shortcut(QShortcut):
     """Easy QShortcut class."""
 
-    def __init__(self, parent: QObject, key: str, action: Callable[[None], None]):
+    def __init__(self, parent: QObject, key: str, action: Callable[[], Any]):
         """
         Creates a QShortcut tied to **parent**.
 

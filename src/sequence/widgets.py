@@ -112,7 +112,9 @@ class SequenceWidget(GroupBox):
         self.model.dataLoaded.connect(
             lambda row_count: self.cycle_combobox.setCurrentIndexSilent(row_count - 1)
         )
-        # TODO: connect the sequence buttons, start, pause, and unpause
+        self.start_button.pressed.connect(self.start_sequence)
+        self.pause_button.pressed.connect(self.pauseSequence.emit)
+        self.unpause_button.pressed.connect(self.unpauseSequence.emit)
 
     def connect_signals(self):
         """Connect external signals."""
@@ -148,21 +150,22 @@ class SequenceWidget(GroupBox):
     # statusChanged
     def handle_status_change(self, status: SequenceStatus):
         match status:
-            # TODO: make sure this is actually done
             case SequenceStatus.ACTIVE:
                 # tell the rest of the program the sequence started
                 self.statusChanged.emit(True)
+                self.update_button_visibility(self.pause_button)
             case SequenceStatus.COMPLETED | SequenceStatus.CANCELED | SequenceStatus.INACTIVE:
-                # tell the rest of the program the sequence ended
                 self.handle_sequence_completion()
+                # tell the rest of the program the sequence ended
                 self.statusChanged.emit(False)
-            case _:
+            case SequenceStatus.PAUSED:
+                self.update_button_visibility(self.unpause_button)
+            case _:  # in case other SequenceStatus options are added
                 pass
-            # TODO: other Statuses, like pause
-
         self.update_label(self.status_label, SEQUENCE_TEXT_KEY[status], SEQUENCE_COLOR_KEY[status])
 
-    # TODO: something with the buttons
+    def update_button_visibility(self, button_to_show: QPushButton):
+        self.button_layout.setCurrentWidget(button_to_show)
 
     # ----------------------------------------------------------------------------------------------
     # stabilityChanged
@@ -173,11 +176,10 @@ class SequenceWidget(GroupBox):
         self.stabilityChanged.emit(status)
 
     # ----------------------------------------------------------------------------------------------
-    # statusChanged for SequenceStatus.Completed
+    # sequence completion
     def handle_sequence_completion(self):
         self.unlimit_parameters()
-        # TODO: finish this
-        pass
+        self.update_button_visibility(self.start_button)
 
     def unlimit_parameters(self):
         """Remove limitations on values for the combobox and modelview."""
@@ -211,6 +213,8 @@ class SequenceWidget(GroupBox):
             # the following gets sent to external widgets
             thread.signals.newDataAquired.connect(self.newDataAquired.emit)
             # the following are sent to the thread
+            self.pauseSequence.connect(thread.pause_sequence)
+            self.unpauseSequence.connect(thread.unpause_sequence)
             self.cancelSequence.connect(thread.cancel_sequence)
             self.skipCycle.connect(thread.skip_cycle)
             self.skipBuffer.connect(thread.skip_buffer)

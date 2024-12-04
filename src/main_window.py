@@ -53,9 +53,7 @@ class MainWindow(QMainWindow):
         # connect the graph
         self.sequence_widget.newDataAquired.connect(self.graph_widget.add_point)
         self.sequence_widget.cycleNumberChanged.connect(self.graph_widget.move_to_next_cycle)
-        self.sequence_widget.stabilityChanged.connect(
-            self.graph_widget.handle_stability_status_change
-        )
+        self.sequence_widget.stabilityChanged.connect(self.graph_widget.handle_stability_change)
         # connect the stability check
         self.sequence_widget.statusChanged.connect(
             lambda running: self.stability_check_widget.reset() if running else None

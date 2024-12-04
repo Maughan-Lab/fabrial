@@ -64,7 +64,7 @@ class GraphWidget(Frame):
         # TODO: remove this
         print("Cycle moved, YIPPEE")
 
-    def handle_stability_status_change(self, status: StabilityStatus):
+    def handle_stability_change(self, status: StabilityStatus):
         line_index = -1  # need to instantiate this for later
         match status:
             case StabilityStatus.CHECKING:
@@ -73,10 +73,8 @@ class GraphWidget(Frame):
                 line_index = 1
             case StabilityStatus.STABLE:
                 line_index = 2
-            case StabilityStatus.NULL:
-                return  # the sequence ended, do nothing
-            case _:
-                pass  # protect against an irrelevant StabilityStatus
+            case _:  # irrelevant Stability Status, do nothing
+                return
 
         point_color = STABILITY_COLOR_KEY[status]
 
