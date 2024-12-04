@@ -120,7 +120,9 @@ class SequenceWidget(GroupBox):
         """Connect external signals."""
         # oven connection
         self.instruments.oven.connectionChanged.connect(
-            lambda connected: self.update_button_states(connected, self.instruments.oven.unlocked)
+            lambda connected: self.update_button_states(
+                connected, self.instruments.oven.is_unlocked()
+            )
         )
         # oven lock
         self.instruments.oven.lockChanged.connect(

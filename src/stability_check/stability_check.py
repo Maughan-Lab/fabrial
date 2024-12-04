@@ -4,7 +4,7 @@ from enums.status import StabilityStatus  # ../enums
 from time import time
 
 
-# TODO: implement the stability check on this QRunnable
+# TODO: need to handle a connection problem by storing and replacing the stability status
 class StabilityCheckThread(QRunnable):
     """Thread for running stability checks."""
 
@@ -47,7 +47,7 @@ class StabilityCheckThread(QRunnable):
 
     def pre_run(self):
         """Pre-run tasks."""
-        self.oven.aquire()
+        self.oven.acquire()
         self.signals.statusChanged.emit(True)
         self.update_stability(StabilityStatus.CHECKING)
 

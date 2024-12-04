@@ -92,7 +92,7 @@ class SequenceThread(QRunnable):
 
     def pre_run(self):
         """Pre-run tasks."""
-        self.oven.aquire()
+        self.oven.acquire()
 
         self.update_status(SequenceStatus.ACTIVE)
 

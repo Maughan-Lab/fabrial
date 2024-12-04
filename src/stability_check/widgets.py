@@ -64,14 +64,14 @@ class StabilityCheckWidget(GroupBox):
         self.statusChanged.connect(
             lambda running: self.update_button_states(
                 self.instruments.oven.is_connected(),
-                self.instruments.oven.unlocked,
+                self.instruments.oven.is_unlocked(),
                 running,
             )
         )
         # oven connection
         self.instruments.oven.connectionChanged.connect(
             lambda connected: self.update_button_states(
-                connected, self.instruments.oven.unlocked, self.is_running()
+                connected, self.instruments.oven.is_unlocked(), self.is_running()
             )
         )
         # oven lock
