@@ -24,7 +24,7 @@ class InstrumentConnectionWidget(GroupBox):
 
         # check the oven's connection on an interval
         self.connection_timer = new_timer(1000, self.check_instrument_connection)
-        self.check_instrument_connection()
+        self.update_connection_label(False)
 
     def create_widgets(self):
         """Create subwidgets."""

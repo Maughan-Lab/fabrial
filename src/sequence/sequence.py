@@ -1,4 +1,5 @@
 from PyQt6.QtCore import QRunnable, pyqtSignal, pyqtSlot, QObject
+from .table_model import TableModel
 import time
 from os import path
 import os
@@ -24,7 +25,7 @@ from enums.status import StabilityStatus, SequenceStatus
 from typing import TextIO
 
 
-class SequenceThread(QRunnable):
+class SequenceProcess(QRunnable):
     """Thread for running temperature sequences."""
 
     # sequence specifications. There must be at least MINIMUM_MEASUREMENTS that are within
@@ -40,12 +41,12 @@ class SequenceThread(QRunnable):
     )
     CYCLE_TIMES_HEADER = f"Cycle Number,Time Cycle Began ({DATE_FORMAT}),Time Cycle Began (seconds)"
 
-    def __init__(self, instruments: InstrumentSet, cycle_settings: pl.DataFrame):
+    def __init__(self, instruments: InstrumentSet, model: TableModel):
         super().__init__()
         self.signals = Signals()
 
         self.oven = instruments.oven
-        self.cycle_settings = cycle_settings
+        self.model = model
 
         self.cycle_number = 0
 
@@ -63,12 +64,24 @@ class SequenceThread(QRunnable):
         self.pre_run()
 
         # other stuff
-        while self.cycle_number < self.cycle_settings.select(pl.len()).item() and not self.cancel:
+        while self.cycle_number < self.model.rowCount() and not self.cancel:
             self.increment_cycle_number()
             self.record_cycle_time()
 
-            setpoint = self.cycle_settings.item(self.cycle_number - 1, TEMPERATURE_COLUMN)
-            self.oven.change_setpoint(setpoint)
+            setpoint = self.model.parameter_data.item(self.cycle_number - 1, TEMPERATURE_COLUMN)
+            # make sure the setpoint gets set
+            proceed = True
+            while True:
+                self.oven.change_setpoint(setpoint)
+                if self.oven.get_setpoint() != setpoint:
+                    self.process_connection_problem()
+                    proceed = self.wait()
+                    if not proceed:
+                        break
+                else:
+                    break
+            if not proceed:
+                continue
 
             # stabilizing
             self.update_stability(StabilityStatus.CHECKING)
@@ -92,7 +105,7 @@ class SequenceThread(QRunnable):
 
     def pre_run(self):
         """Pre-run tasks."""
-        self.oven.acquire()
+        # self.oven.acquire()
 
         self.update_status(SequenceStatus.ACTIVE)
 
@@ -141,8 +154,8 @@ class SequenceThread(QRunnable):
 
     def collect_data(self, hours_column: str, minutes_column: str, data_file: TextIO) -> bool:
         """Collect data every **MEASUREMENT_INTERVAL** seconds."""
-        hours: int = self.cycle_settings.item(self.cycle_number - 1, hours_column)
-        minutes: int = self.cycle_settings.item(self.cycle_number - 1, minutes_column)
+        hours: int = self.model.parameter_data.item(self.cycle_number - 1, hours_column)
+        minutes: int = self.model.parameter_data.item(self.cycle_number - 1, minutes_column)
         repeat_count = (hours * 3600 + minutes * 60) / self.MEASUREMENT_INTERVAL
         current_count = 0
         while current_count < repeat_count:
@@ -164,7 +177,13 @@ class SequenceThread(QRunnable):
         """
         next_time = time.time() + self.MEASUREMENT_INTERVAL
         while time.time() < next_time or self.pause:
-            if self.cancel or self.skip or self.buffer_skip:
+            if self.cancel:
+                return False
+            elif self.skip:
+                self.skip = False
+                return False
+            elif self.buffer_skip:
+                self.buffer_skip = False
                 return False
             if self.connection_problem:
                 if self.oven.is_connected():

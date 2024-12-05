@@ -1,6 +1,11 @@
 from dataclasses import dataclass
 from PyQt6.QtCore import pyqtSignal, QObject
 import minimalmodbus as modbus
+from mutex import SignalMutex
+from typing import Union, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from developer import DeveloperOven
 
 
 class Instrument(QObject):
@@ -8,23 +13,30 @@ class Instrument(QObject):
 
     # signals
     connectionChanged = pyqtSignal(bool)  # True if connected False if disconnected
-    lockChanged = pyqtSignal(bool)  # True if unlocked False if locked
 
     def __init__(self):
         super().__init__()
         self.connected = False
-        # you should only ever read this value, never set it manually
-        self.unlocked = True
 
-    def release(self):
-        """Make the instrument mutable for other process."""
-        self.unlocked = True
-        self.lockChanged.emit(self.is_unlocked())
+        # lock system
+        self.lock = SignalMutex()  # do not manually access the lock ever
+        self.lockChanged = self.lock.lockChanged  # shortcut to signal inside self.lock
 
     def acquire(self):
-        """Make the instrument mutable for only one process."""
-        self.unlocked = False
-        self.lockChanged.emit(self.is_unlocked())
+        """
+        Make the instrument mutable for only one process. This should be followed by a call to
+        **release()**.
+        """
+        self.lock.lock()
+
+    def release(self):
+        """Make the instrument mutable for other processes."""
+        self.lock.unlock()
+
+    def update_connection_status(self, connected: bool):
+        if self.connected != connected:
+            self.connected = connected
+            self.connectionChanged.emit(self.is_connected())
 
     def is_connected(self) -> bool:
         """Get the connection status of this instrument as a bool."""
@@ -32,13 +44,15 @@ class Instrument(QObject):
 
     def is_unlocked(self) -> bool:
         """Get the lock status of this instrument as a bool."""
-        return self.unlocked
+        acquired = self.lock.tryLock()
+        if acquired:
+            self.lock.unlock()
+        return acquired
 
 
 class Oven(Instrument):
     """Class to represent the physical oven Quincy controls."""
 
-    # TODO: remove these when you use pyserial
     SETPOINT_REGISTER = 0
     TEMPERATURE_REGISTER = 1
     NUMBER_OF_DECIMALS = 1
@@ -87,10 +101,6 @@ class Oven(Instrument):
             connected = False
         self.update_connection_status(connected)
 
-    def update_connection_status(self, connected: bool):
-        self.connected = connected
-        self.connectionChanged.emit(self.is_connected())
-
     def update_port(self, port: str):
         """Updates the oven's connection port."""
         self.port = port
@@ -101,5 +111,5 @@ class Oven(Instrument):
 class InstrumentSet:
     """Container for instruments (ovens, potentiostats, etc.)"""
 
-    oven: Oven
+    oven: Union[Oven, "DeveloperOven"]
     potentiostat: None

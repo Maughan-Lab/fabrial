@@ -22,7 +22,7 @@ from enums.status import (
     SEQUENCE_COLOR_KEY,
 )  # ../enums
 from .table_model import TableModel, TableView
-from .sequence import SequenceThread
+from .sequence import SequenceProcess
 
 
 class SequenceWidget(GroupBox):
@@ -145,7 +145,8 @@ class SequenceWidget(GroupBox):
 
     def limit_parameters(self, cycle_number):
         """Limit the options in the cycle count combobox and parameters table."""
-        self.cycle_combobox.model().item(cycle_number - 2).setEnabled(False)
+        if cycle_number > 1:
+            self.cycle_combobox.model().item(cycle_number - 2).setEnabled(False)
         self.model.disable_rows(cycle_number)
 
     # ----------------------------------------------------------------------------------------------
@@ -207,7 +208,7 @@ class SequenceWidget(GroupBox):
     def start_sequence(self):
         """Start a temperature sequence."""
         if not self.is_running():
-            thread = SequenceThread(self.instruments, self.model.parameter_data)
+            thread = SequenceProcess(self.instruments, self.model)
 
             thread.signals.statusChanged.connect(self.handle_status_change)
             thread.signals.stabilityChanged.connect(self.handle_stability_change)
@@ -229,5 +230,5 @@ class SequenceWidget(GroupBox):
             ).exec()
 
     def is_running(self) -> bool:
-        """Determine if any SequenceThreads are active."""
+        """Determine if any SequenceProcesss are active."""
         return self.threadpool.activeThreadCount() != 0

@@ -1,12 +1,16 @@
-from PyQt6.QtCore import QRunnable, QObject, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
 from instruments import InstrumentSet  # ../instruments.py
 from enums.status import StabilityStatus  # ../enums
 from time import time
 
 
 # TODO: need to handle a connection problem by storing and replacing the stability status
-class StabilityCheckThread(QRunnable):
+class StabilityCheckProcess(QObject):
     """Thread for running stability checks."""
+
+    # signals
+    stabilityChanged = pyqtSignal(StabilityStatus)
+    statusChanged = pyqtSignal(bool)
 
     MINIMUM_MEASUREMENTS = 150
     VARIANCE_TOLERANCE = 1.0  # degree C
@@ -14,8 +18,6 @@ class StabilityCheckThread(QRunnable):
 
     def __init__(self, instruments: InstrumentSet, setpoint: float):
         super().__init__()
-        self.signals = Signals()
-
         self.setpoint = setpoint
         self.oven = instruments.oven
         self.cancel = False
@@ -48,24 +50,18 @@ class StabilityCheckThread(QRunnable):
     def pre_run(self):
         """Pre-run tasks."""
         self.oven.acquire()
-        self.signals.statusChanged.emit(True)
+        self.statusChanged.emit(True)
         self.update_stability(StabilityStatus.CHECKING)
 
     def post_run(self, final_stability: StabilityStatus):
         """Post-run tasks."""
         self.update_stability(final_stability)
-        self.signals.statusChanged.emit(False)
+        self.statusChanged.emit(False)
         self.oven.release()
 
     def update_stability(self, stability: StabilityStatus):
-        self.signals.stabilityChanged.emit(stability)
+        self.stabilityChanged.emit(stability)
 
+    @pyqtSlot()
     def cancel_stability_check(self):
         self.cancel = True
-
-
-class Signals(QObject):
-    """Signals for the StabilityCheckThread."""
-
-    stabilityChanged = pyqtSignal(StabilityStatus)
-    statusChanged = pyqtSignal(bool)

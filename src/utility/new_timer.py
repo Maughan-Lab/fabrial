@@ -2,9 +2,9 @@ from PyQt6.QtCore import QTimer
 from typing import Callable
 
 
-def new_timer(interval_ms: int, slot: Callable) -> QTimer:
+def new_timer(interval_ms: int, slot: Callable[[], None]) -> QTimer:
     """
-    Helper function to instantiate new timers.
+    Instantiate a new timer. **slot** is called immediately.
 
     :param interval_ms: The timeout interval of the timer in milliseconds.
 
@@ -15,6 +15,7 @@ def new_timer(interval_ms: int, slot: Callable) -> QTimer:
     timer so it does not get deleted.
     :rtype: QTimer
     """
+    slot()
     timer = QTimer()
     timer.setInterval(interval_ms)
     timer.timeout.connect(slot)

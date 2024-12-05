@@ -10,9 +10,7 @@ from utility.new_timer import new_timer  # ../utility
 class PassiveMonitoringWidget(GroupBox):
     """Widget for monitoring the oven."""
 
-    # signals
-    temperatureRead = pyqtSignal(float)
-    setpointRead = pyqtSignal(float)
+    NULL_TEXT = "-----"
 
     def __init__(self, instruments: InstrumentSet):
         """:param instruments: Container for instruments."""
@@ -23,7 +21,7 @@ class PassiveMonitoringWidget(GroupBox):
 
         # timer to update the oven temperature, setpoint, and status every second
         self.update_timer = new_timer(1000, self.monitor)
-        self.monitor()
+        self.handle_disconnect()
 
     def create_widgets(self):
         """Create subwidgets."""
@@ -49,21 +47,18 @@ class PassiveMonitoringWidget(GroupBox):
         self.instruments.oven.connectionChanged.connect(
             lambda connected: self.handle_disconnect() if not connected else None
         )
-        self.temperatureRead.connect(
-            lambda temperature: self.temperature_label.setText(str(temperature))
-        )
-        self.setpointRead.connect(lambda setpoint: self.setpoint_label.setText(str(setpoint)))
 
     def handle_disconnect(self):
-        null_text = "-----"
         for label in (self.temperature_label, self.setpoint_label):
-            label.setText(null_text)
+            label.setText(self.NULL_TEXT)
+
+    def update_label(self, label: Label, value: float | None):
+        text = str(value) if value is not None else self.NULL_TEXT
+        label.setText(text)
 
     def monitor(self):
         temperature = self.instruments.oven.read_temp()
-        if temperature is not None:
-            self.temperatureRead.emit(temperature)
+        self.update_label(self.temperature_label, temperature)
 
         setpoint = self.instruments.oven.get_setpoint()
-        if setpoint is not None:
-            self.setpointRead.emit(setpoint)
+        self.update_label(self.setpoint_label, setpoint)
