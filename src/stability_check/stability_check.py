@@ -1,51 +1,53 @@
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QRunnable
 from instruments import InstrumentSet  # ../instruments.py
 from enums.status import StabilityStatus  # ../enums
-from time import time
+import time
 
 
-# TODO: need to handle a connection problem by storing and replacing the stability status
-class StabilityCheckProcess(QObject):
+class StabilityCheckThread(QRunnable):
     """Thread for running stability checks."""
-
-    # signals
-    stabilityChanged = pyqtSignal(StabilityStatus)
-    statusChanged = pyqtSignal(bool)
 
     MINIMUM_MEASUREMENTS = 150
     VARIANCE_TOLERANCE = 1.0  # degree C
-    MEASUREMENT_INTERVAL = 5.0  # seconds
+    MEASUREMENT_INTERVAL = 5  # seconds
+    WAIT_INTERVAL = 0.01  # seconds
 
     def __init__(self, instruments: InstrumentSet, setpoint: float):
         super().__init__()
+        # signals
+        self.signals = Signals()
+        self.statusChanged = self.signals.statusChanged  # shortcut
+        self.stabilityChanged = self.signals.stabilityChanged  # shortcut
+
         self.setpoint = setpoint
         self.oven = instruments.oven
         self.cancel = False
+        self.connection_problem = False
 
     @pyqtSlot()
     def run(self):
         """Run a stability check in another thread."""
         self.pre_run()
+        final_stability = StabilityStatus.STABLE
 
         measurement_count = 0
         while measurement_count < self.MINIMUM_MEASUREMENTS:
             temperature = self.oven.read_temp()
             if temperature is None:
-                self.update_stability(StabilityStatus.ERROR)
+                self.process_connection_problem()
             else:
                 if abs(temperature - self.setpoint) > self.VARIANCE_TOLERANCE:  # unstable
-                    self.post_run(StabilityStatus.UNSTABLE)
-                    return
+                    final_stability = StabilityStatus.UNSTABLE
+                    break
                 measurement_count += 1
 
-            next_time = time() + self.MEASUREMENT_INTERVAL
-            while time() < next_time:  # wait MEASUREMENT_INTERVAL seconds
-                if self.cancel:  # check to proceed
-                    self.post_run(StabilityStatus.NULL)
-                    return
+            proceed = self.wait()
+            if not proceed:
+                final_stability = StabilityStatus.NULL
+                break
 
         # if we make it here, we're stable!
-        self.post_run(StabilityStatus.STABLE)
+        self.post_run(final_stability)
 
     def pre_run(self):
         """Pre-run tasks."""
@@ -59,9 +61,31 @@ class StabilityCheckProcess(QObject):
         self.statusChanged.emit(False)
         self.oven.release()
 
+    def wait(self) -> bool:
+        """Wait for **MEASUREMENT_INTERVAL** and handle connection problems."""
+        count = 0.0
+        while count < self.MEASUREMENT_INTERVAL or self.connection_problem:
+            if self.cancel:
+                return False
+            if self.connection_problem:
+                if self.oven.is_connected():
+                    self.connection_problem = False
+                    self.update_stability(StabilityStatus.CHECKING)
+            time.sleep(self.WAIT_INTERVAL)
+            count += self.WAIT_INTERVAL
+        return True
+
+    def process_connection_problem(self):
+        self.connection_problem = True
+        self.update_stability(StabilityStatus.ERROR)
+
     def update_stability(self, stability: StabilityStatus):
         self.stabilityChanged.emit(stability)
 
-    @pyqtSlot()
     def cancel_stability_check(self):
         self.cancel = True
+
+
+class Signals(QObject):
+    stabilityChanged = pyqtSignal(StabilityStatus)
+    statusChanged = pyqtSignal(bool)

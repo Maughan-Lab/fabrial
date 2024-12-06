@@ -20,12 +20,11 @@ from .constants import (
     TEMPERATURE,
 )
 from instruments import InstrumentSet  # ../instruments.py
-import polars as pl
 from enums.status import StabilityStatus, SequenceStatus
 from typing import TextIO
 
 
-class SequenceProcess(QRunnable):
+class SequenceThread(QRunnable):
     """Thread for running temperature sequences."""
 
     # sequence specifications. There must be at least MINIMUM_MEASUREMENTS that are within
@@ -33,6 +32,7 @@ class SequenceProcess(QRunnable):
     MINIMUM_MEASUREMENTS = 150
     VARIANCE_TOLERANCE = 1.0  # degree C
     MEASUREMENT_INTERVAL = 5.0  # seconds
+    WAIT_INTERVAL = 0.01
 
     # headers
     TEMPERATURE_DATA_HEADER = f"Time ({DATE_FORMAT}),{TIME},{TEMPERATURE}"
@@ -69,17 +69,7 @@ class SequenceProcess(QRunnable):
             self.record_cycle_time()
 
             setpoint = self.model.parameter_data.item(self.cycle_number - 1, TEMPERATURE_COLUMN)
-            # make sure the setpoint gets set
-            proceed = True
-            while True:
-                self.oven.change_setpoint(setpoint)
-                if self.oven.get_setpoint() != setpoint:
-                    self.process_connection_problem()
-                    proceed = self.wait()
-                    if not proceed:
-                        break
-                else:
-                    break
+            proceed = self.change_setpoint(setpoint)
             if not proceed:
                 continue
 
@@ -95,7 +85,10 @@ class SequenceProcess(QRunnable):
                 BUFFER_HOURS_COLUMN, BUFFER_MINUTES_COLUMN, self.buffer_file
             )
             if not proceed:
-                continue
+                if not self.buffer_skip:
+                    continue
+                else:
+                    self.buffer_skip = False
 
             # data collection while stable
             self.update_stability(StabilityStatus.STABLE)
@@ -105,7 +98,7 @@ class SequenceProcess(QRunnable):
 
     def pre_run(self):
         """Pre-run tasks."""
-        # self.oven.acquire()
+        self.oven.acquire()
 
         self.update_status(SequenceStatus.ACTIVE)
 
@@ -121,6 +114,19 @@ class SequenceProcess(QRunnable):
         self.update_status(SequenceStatus.COMPLETED if not self.cancel else SequenceStatus.CANCELED)
 
         self.oven.release()
+
+    def change_setpoint(self, setpoint: float) -> bool:
+        """
+        Change the setpoint (blocks until the setpoint is set or the sequence is interrupted).
+        Returns whether the sequence should proceed.
+        """
+        proceed = True
+        while not self.oven.change_setpoint(setpoint):
+            self.process_connection_problem()
+            proceed = self.wait()
+            if not proceed:
+                break
+        return proceed
 
     def stabilize(self, setpoint: float) -> bool:
         """Collect data while waiting for the oven to stabilize."""
@@ -143,12 +149,9 @@ class SequenceProcess(QRunnable):
                 variance = temperature_variances[location]
                 if variance >= self.VARIANCE_TOLERANCE:
                     stable = False
+                    del temperature_variances[:]
                     break
-            # remove all values at and before the instability point (this won't matter if
-            # stable = True after the for loop, since the outer while loop will end)
-            del temperature_variances[: location + 1]
 
-        self.update_stability(StabilityStatus.STABLE)
         self.record_stabilization_time()
         return True
 
@@ -175,15 +178,16 @@ class SequenceProcess(QRunnable):
         Wait for **MEASUREMENT_INTERVAL** or while there is a connection problem. Returns
         True if the cycle should proceed, False otherwise (i.e. the cycle is canceled or skipped).
         """
-        next_time = time.time() + self.MEASUREMENT_INTERVAL
-        while time.time() < next_time or self.pause:
+        count = 0.0
+        while count < self.MEASUREMENT_INTERVAL or self.pause:
+            time.sleep(self.WAIT_INTERVAL)
+            count += self.WAIT_INTERVAL
             if self.cancel:
                 return False
             elif self.skip:
                 self.skip = False
                 return False
             elif self.buffer_skip:
-                self.buffer_skip = False
                 return False
             if self.connection_problem:
                 if self.oven.is_connected():
@@ -205,7 +209,7 @@ class SequenceProcess(QRunnable):
         # replace semicolons for the folder name
         datetime = convert_to_datetime(starting_time).replace(":", "ː")
         # create a timestamped folder to store the data files in
-        os.mkdir(path.join(DATA_FILES_LOCATION, datetime))
+        os.makedirs(path.join(DATA_FILES_LOCATION, datetime), exist_ok=True)
 
         # open the files where this sequence will record its data
         self.pre_stable_file = open(path.join(DATA_FILES_LOCATION, datetime, PRE_STABLE_FILE), "w")
@@ -317,4 +321,4 @@ def convert_to_datetime(time_since_epoch: float) -> str:
 
 def get_times(starting_time: float) -> tuple[float, str]:
     current_time = time.time()
-    return (starting_time - current_time, convert_to_datetime(current_time))
+    return (current_time - starting_time, convert_to_datetime(current_time))

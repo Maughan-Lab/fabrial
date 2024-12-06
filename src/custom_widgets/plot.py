@@ -1,7 +1,6 @@
 from PyQt6.QtWidgets import QVBoxLayout
 from PyQt6.QtGui import QResizeEvent
 from .container import Container
-from .frame import Frame
 from utility.layouts import add_to_layout  # ../utility
 import matplotlib
 from matplotlib.backends.backend_qtagg import (
@@ -9,8 +8,9 @@ from matplotlib.backends.backend_qtagg import (
     NavigationToolbar2QT as Toolbar,
 )
 from matplotlib.figure import Figure
+from matplotlib.patches import Patch
 
-matplotlib.use("qtagg")
+matplotlib.use("QtAgg")
 
 
 class PlotWidget(Container):
@@ -37,5 +37,38 @@ class PlotWidget(Container):
         self.figure.tight_layout()
         return super().resizeEvent(event)
 
+    def clean(self):
+        """Remove the data without modifying the axes labels or legend."""
+        xlabel = self.axes.get_xlabel()
+        ylabel = self.axes.get_ylabel()
+        handles = self.axes.get_legend().get_patches()
+        self.axes.clear()
+        self.axes.set_xlabel(xlabel)
+        self.axes.set_ylabel(ylabel)
+        self.axes.legend(handles=handles)
+
+    # ----------------------------------------------------------------------------------------------
+    # reexported methods
+    def plot(self, *args, **kwargs):
+        return self.axes.plot(*args, **kwargs)
+
+    def scatter(self, x: float, y: float, **kwargs):
+        return self.axes.scatter(x, y, **kwargs)
+
     def draw(self):
         self.canvas.draw()
+
+    def set_title(self, title: str):
+        self.axes.set_title(title)
+
+    def set_xlabel(self, label: str):
+        self.axes.set_xlabel(label)
+
+    def set_ylabel(self, label: str):
+        self.axes.set_ylabel(label)
+
+    def tight_layout(self):
+        self.figure.tight_layout()
+
+    def legend(self, handles: tuple[Patch], fontsize: int | str):
+        self.axes.legend(handles=handles, fontsize=fontsize)

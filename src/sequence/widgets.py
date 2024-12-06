@@ -13,16 +13,9 @@ from custom_widgets.separator import HSeparator
 from custom_widgets.dialog import OkDialog
 from instruments import InstrumentSet  # ../instruments.py
 from utility.layouts import add_sublayout, add_to_layout  # ../helper_functions
-from enums.status import (
-    StabilityStatus,
-    SequenceStatus,
-    STABILITY_TEXT_KEY,
-    SEQUENCE_TEXT_KEY,
-    STABILITY_COLOR_KEY,
-    SEQUENCE_COLOR_KEY,
-)  # ../enums
+from enums.status import StabilityStatus, SequenceStatus  # ../enums
 from .table_model import TableModel, TableView
-from .sequence import SequenceProcess
+from .sequence import SequenceThread
 
 
 class SequenceWidget(GroupBox):
@@ -88,7 +81,7 @@ class SequenceWidget(GroupBox):
         add_to_layout(cycle_label_layout, Label("Cycle:"), self.cycle_label)
         # sequence status labels
         stability_label_layout = add_sublayout(layout, QHBoxLayout, QSizePolicy.Policy.Fixed)
-        self.stability_label = Label(STABILITY_TEXT_KEY[StabilityStatus.NULL])
+        self.stability_label = Label(str(StabilityStatus.NULL))
         add_to_layout(stability_label_layout, Label("Stability Status:"), self.stability_label)
 
         # separator
@@ -165,7 +158,7 @@ class SequenceWidget(GroupBox):
                 self.update_button_visibility(self.unpause_button)
             case _:  # in case other SequenceStatus options are added
                 pass
-        self.update_label(self.status_label, SEQUENCE_TEXT_KEY[status], SEQUENCE_COLOR_KEY[status])
+        self.update_label(self.status_label, str(status), status.to_color())
 
     def update_button_visibility(self, button_to_show: QPushButton):
         self.button_layout.setCurrentWidget(button_to_show)
@@ -173,9 +166,7 @@ class SequenceWidget(GroupBox):
     # ----------------------------------------------------------------------------------------------
     # stabilityChanged
     def handle_stability_change(self, status: StabilityStatus):
-        self.update_label(
-            self.stability_label, STABILITY_TEXT_KEY[status], STABILITY_COLOR_KEY[status]
-        )
+        self.update_label(self.stability_label, str(status), status.to_color())
         self.stabilityChanged.emit(status)
 
     # ----------------------------------------------------------------------------------------------
@@ -208,7 +199,7 @@ class SequenceWidget(GroupBox):
     def start_sequence(self):
         """Start a temperature sequence."""
         if not self.is_running():
-            thread = SequenceProcess(self.instruments, self.model)
+            thread = self.new_thread()
 
             thread.signals.statusChanged.connect(self.handle_status_change)
             thread.signals.stabilityChanged.connect(self.handle_stability_change)
@@ -229,6 +220,10 @@ class SequenceWidget(GroupBox):
                 "Error!", "A sequence is already running. This is a bug, please report it."
             ).exec()
 
+    def new_thread(self):  # this is necessary for testing
+        """Create a new SequenceThread."""
+        return SequenceThread(self.instruments, self.model)
+
     def is_running(self) -> bool:
-        """Determine if any SequenceProcesss are active."""
+        """Determine if any SequenceThreads are active."""
         return self.threadpool.activeThreadCount() != 0

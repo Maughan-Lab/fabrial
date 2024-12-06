@@ -34,6 +34,8 @@ class Instrument(QObject):
         self.lock.unlock()
 
     def update_connection_status(self, connected: bool):
+        print("HERE", connected)
+        print(self.connected)
         if self.connected != connected:
             self.connected = connected
             self.connectionChanged.emit(self.is_connected())
@@ -76,12 +78,17 @@ class Oven(Instrument):
             self.update_connection_status(False)
             return None
 
-    def change_setpoint(self, setpoint: float):
-        """Sets the oven's temperature to **setpoint**."""
+    def change_setpoint(self, setpoint: float) -> bool:
+        """
+        Sets the oven's temperature to **setpoint**. Returns a bool indicating whether the operation
+        was successful.
+        """
         try:
             self.device.write_register(self.SETPOINT_REGISTER, setpoint, self.NUMBER_OF_DECIMALS)
+            return True
         except Exception:
             self.update_connection_status(False)
+        return False
 
     def get_setpoint(self) -> float | None:
         """Returns the oven's setpoint if the oven is connected, None otherwise."""

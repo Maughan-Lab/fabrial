@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QGridLayout, QPushButton, QSizePolicy
-from PyQt6.QtCore import pyqtSignal, QThread, pyqtSlot
+from PyQt6.QtCore import pyqtSignal, QThreadPool
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
@@ -10,8 +10,8 @@ from utility.layouts import (
     add_to_layout,
     add_to_layout_grid,
 )  # ../utility
-from enums.status import StabilityStatus, STABILITY_TEXT_KEY, STABILITY_COLOR_KEY  # ../enums
-from .stability_check import StabilityCheckProcess
+from enums.status import StabilityStatus  # ../enums
+from .stability_check import StabilityCheckThread
 
 
 class StabilityCheckWidget(GroupBox):
@@ -29,7 +29,7 @@ class StabilityCheckWidget(GroupBox):
         self.connect_widgets()
         self.connect_signals()
 
-        self.stability_check_thread = QThread()
+        self.threadpool = QThreadPool()
 
     def create_widgets(self):
         """Create subwidgets."""
@@ -50,12 +50,12 @@ class StabilityCheckWidget(GroupBox):
         layout.addWidget(self.stability_check_button)
 
         stability_layout = add_sublayout(layout, QHBoxLayout, QSizePolicy.Policy.Fixed)
-        self.stability_label = Label(STABILITY_TEXT_KEY[StabilityStatus.NULL])
+        self.stability_label = Label(str(StabilityStatus.NULL))
         add_to_layout(stability_layout, Label("Stability Status:"), self.stability_label)
 
     def connect_widgets(self):
         """Connect internal widget signals."""
-        self.setpoint_spinbox.lineEdit().returnPressed.connect(self.start_stability_check)
+        self.setpoint_spinbox.connect_to_button(self.stability_check_button)
         self.stability_check_button.pressed.connect(self.start_stability_check)
         self.detect_setpoint_button.pressed.connect(self.detect_setpoint)
 
@@ -83,24 +83,21 @@ class StabilityCheckWidget(GroupBox):
                 self.is_running(),
             )
         )
-        # TODO: add and connect a signal for the stability status, like in the SequenceWidget
 
-    @pyqtSlot(StabilityStatus)
     def handle_stability_change(self, status: StabilityStatus):
-        self.stability_label.setText(STABILITY_TEXT_KEY[status])
-        self.stability_label.setStyleSheet("color: " + STABILITY_COLOR_KEY[status])
+        self.stability_label.setText(str(status))
+        self.stability_label.setStyleSheet("color: " + status.to_color())
 
     def reset(self):
         """Reset the stability label and setpoint spinbox."""
         self.handle_stability_change(StabilityStatus.NULL)
         self.setpoint_spinbox.setValue(0.0)
 
-    @pyqtSlot(bool, bool, bool)
     def update_button_states(self, connected: bool, unlocked: bool, running: bool):
+        print(connected, unlocked, running)
         """Update the states of buttons."""
         # enable the button if the oven is connected and a check isn't running
         self.detect_setpoint_button.setEnabled(connected and not running)
-
         # enable the button if the oven is connected and unlocked, and a check isn't running
         self.stability_check_button.setEnabled(connected and unlocked and not running)
 
@@ -116,14 +113,12 @@ class StabilityCheckWidget(GroupBox):
     # stability check
     def start_stability_check(self):
         if not self.is_running():
-            self.process = StabilityCheckProcess(self.instruments, self.setpoint_spinbox.value())
-            # self.process.statusChanged.connect(self.statusChanged.emit)
-            # self.process.stabilityChanged.connect(self.handle_stability_change)
-            # self.cancelStabilityCheck.connect(self.process.cancel_stability_check)
+            thread = self.new_thread()
+            thread.statusChanged.connect(self.statusChanged.emit)
+            thread.stabilityChanged.connect(self.handle_stability_change)
+            self.cancelStabilityCheck.connect(thread.cancel_stability_check)
 
-            self.process.moveToThread(self.stability_check_thread)
-            self.stability_check_thread.started.connect(self.process.run)
-            self.stability_check_thread.start()
+            self.threadpool.start(thread)
 
         else:
             # this should never run
@@ -131,6 +126,10 @@ class StabilityCheckWidget(GroupBox):
                 "Error!", "A stability check is already running. This is a bug, please report it."
             ).exec()
 
+    def new_thread(self):  # this is necessary for testing
+        """Create a new StabilityCheckThread."""
+        return StabilityCheckThread(self.instruments, self.setpoint_spinbox.value())
+
     def is_running(self) -> bool:
         """Determine if a StabilityCheckThread is active."""
-        return self.stability_check_thread.isRunning()
+        return self.threadpool.activeThreadCount() != 0

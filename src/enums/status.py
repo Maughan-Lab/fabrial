@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class StabilityStatus(Enum):
-    """States representing oven stability."""
+    """States representing stability."""
 
     STABLE = 0
     BUFFERING = 1
@@ -11,25 +11,37 @@ class StabilityStatus(Enum):
     ERROR = 4
     NULL = 5
 
+    def to_color(self) -> str:
+        """Return a color (string) representation."""
+        match self:
+            case StabilityStatus.STABLE:
+                return "green"
+            case StabilityStatus.BUFFERING:
+                return "cyan"
+            case StabilityStatus.UNSTABLE | StabilityStatus.ERROR:
+                return "red"
+            case StabilityStatus.CHECKING:
+                return "orange"
+            case StabilityStatus.NULL:
+                return ""
 
-# dictionaries to translate a StabilityStatus
-STABILITY_COLOR_KEY = {
-    StabilityStatus.STABLE: "green",
-    StabilityStatus.BUFFERING: "cyan",
-    StabilityStatus.UNSTABLE: "red",
-    StabilityStatus.CHECKING: "orange",
-    StabilityStatus.ERROR: "red",
-    StabilityStatus.NULL: "",
-}
+    def __str__(self):
+        """Return a text representation."""
+        match self:
+            case StabilityStatus.CHECKING:
+                return "Checking..."
+            case StabilityStatus.NULL:
+                return "-----------"
+            case _:
+                return self.name.capitalize()
 
-STABILITY_TEXT_KEY = {
-    StabilityStatus.STABLE: "Stable",
-    StabilityStatus.BUFFERING: "Buffering",
-    StabilityStatus.UNSTABLE: "Unstable",
-    StabilityStatus.CHECKING: "Checking...",
-    StabilityStatus.ERROR: "Error",
-    StabilityStatus.NULL: "-----------",
-}
+    def __bool__(self):
+        """Return a boolean representation of stability."""
+        match self:
+            case StabilityStatus.STABLE:
+                return True
+            case _:
+                return False
 
 
 class SequenceStatus(Enum):
@@ -41,20 +53,24 @@ class SequenceStatus(Enum):
     CANCELED = 3
     PAUSED = 4
 
+    def to_color(self) -> str:
+        """Return a color (string) representation."""
+        match self:
+            case SequenceStatus.INACTIVE | SequenceStatus.COMPLETED | SequenceStatus.CANCELED:
+                return "gray"
+            case SequenceStatus.ACTIVE:
+                return "green"
+            case SequenceStatus.PAUSED:
+                return "cyan"
 
-# dictionaries to translate a SequenceStatus
-SEQUENCE_COLOR_KEY = {
-    SequenceStatus.INACTIVE: "gray",
-    SequenceStatus.ACTIVE: "green",
-    SequenceStatus.COMPLETED: "gray",
-    SequenceStatus.CANCELED: "gray",
-    SequenceStatus.PAUSED: "cyan",
-}
+    def __str__(self):
+        """Return a text representation."""
+        return self.name.capitalize()
 
-SEQUENCE_TEXT_KEY = {
-    SequenceStatus.INACTIVE: "Inactive",
-    SequenceStatus.ACTIVE: "Active",
-    SequenceStatus.COMPLETED: "Completed",
-    SequenceStatus.CANCELED: "Canceled",
-    SequenceStatus.PAUSED: "Paused",
-}
+    def __bool__(self):
+        """Return a boolean representing the running state."""
+        match self:
+            case SequenceStatus.ACTIVE | SequenceStatus.PAUSED:
+                return True
+            case _:
+                return False

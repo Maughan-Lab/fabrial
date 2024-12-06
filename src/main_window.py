@@ -20,7 +20,7 @@ class MainWindow(QMainWindow):
 
         self.create_widgets(instruments)
         self.connect_signals()
-        self.create_menu()
+        self.create_menu(instruments)
 
     def create_widgets(self, instruments):
         """Create subwidgets."""
@@ -30,13 +30,7 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
-        self.setpoint_widget = SetpointWidget(instruments)
-        self.stability_check_widget = StabilityCheckWidget(instruments)
-        self.sequence_widget = SequenceWidget(instruments)
-        self.graph_widget = GraphWidget(instruments)
-        # do not move these two above the other ones
-        self.passive_monitoring_widget = PassiveMonitoringWidget(instruments)
-        self.instrument_connection_widget = InstrumentConnectionWidget(instruments)
+        self.initialize_widgets(instruments)
         # add the widgets
         add_to_layout_grid(
             layout,
@@ -47,6 +41,16 @@ class MainWindow(QMainWindow):
             (self.sequence_widget, 2, 0),
         )
         layout.addWidget(self.graph_widget, 1, 1, 2, 2)
+
+    def initialize_widgets(self, instruments: InstrumentSet):  # this is necessary for testing
+        """Store subwidgets in variables."""
+        self.setpoint_widget = SetpointWidget(instruments)
+        self.stability_check_widget = StabilityCheckWidget(instruments)
+        self.sequence_widget = SequenceWidget(instruments)
+        self.graph_widget = GraphWidget(instruments)
+        # do not move these two above the other ones
+        self.passive_monitoring_widget = PassiveMonitoringWidget(instruments)
+        self.instrument_connection_widget = InstrumentConnectionWidget(instruments)
 
     def connect_signals(self):
         """Connect widget signals."""
@@ -59,8 +63,8 @@ class MainWindow(QMainWindow):
             lambda running: self.stability_check_widget.reset() if running else None
         )
 
-    def create_menu(self):
-        self.menu_bar = MenuBar(self)
+    def create_menu(self, instruments: InstrumentSet):
+        self.menu_bar = MenuBar(self, instruments)
         self.setMenuBar(self.menu_bar)
 
     def new_window(self, new_window: QMainWindow):

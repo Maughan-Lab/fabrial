@@ -2,12 +2,11 @@ from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
 from main_window import MainWindow
 from instruments import Oven, InstrumentSet
+from file_locations import ICON_FILE
 import sys
-import os
 
-BASEDIR = os.path.dirname(__file__)
-
-
+# on windows, this will make the application icon show up in the task bar
+# it does nothing on other platforms
 try:
     from ctypes import windll  # Only exists on Windows.
 
@@ -23,8 +22,7 @@ def main():
     # pass in any provided system arguments
     app = QApplication(sys.argv)
 
-    icon_path = os.path.join(BASEDIR, "oven_icon.png")
-    app.setWindowIcon(QIcon(icon_path))
+    app.setWindowIcon(QIcon(ICON_FILE))
 
     main_window = MainWindow(instruments)
     main_window.show()

@@ -4,21 +4,23 @@ from matplotlib.patches import Patch
 from instruments import InstrumentSet  # ../instruments.py
 from custom_widgets.plot import PlotWidget  # ../custom_widgets
 from custom_widgets.frame import Frame
-from enums.status import StabilityStatus, STABILITY_COLOR_KEY
+from enums.status import StabilityStatus
 from actions import Shortcut  # ../actions.py
 
 
 class GraphWidget(Frame):
     """Graph window that displays information from the temperature sequence."""
 
+    XLABEL = "Time (seconds)"
+    YLABEL = "Temperature ($\degree$C)"
+
     def __init__(self, instruments: InstrumentSet):
         """:param instruments: Container for instruments."""
 
         super().__init__(QVBoxLayout, 0)
-        self.layout().setSpacing(0)
-
-        self.xdata: list[float] = []
-        self.ydata: list[float] = []
+        layout = self.layout()
+        if layout is not None:
+            layout.setSpacing(0)
 
         self.create_widgets()
 
@@ -27,66 +29,40 @@ class GraphWidget(Frame):
 
         # figure
         self.plot = PlotWidget((5, 4), 100)
-        self.axes = self.plot.axes  # shortcut
-        self.axes.set_xlabel("Time (seconds)")
-        self.axes.set_ylabel("Temperature ($\degree$C)")
-
+        self.plot.set_xlabel(self.XLABEL)
+        self.plot.set_ylabel(self.YLABEL)
         self.legend()
-
-        self.plot.figure.tight_layout()
 
         layout.addWidget(self.plot)
 
     def legend(self):
-        self.axes.legend(
+        self.plot.legend(
             handles=(
-                Patch(label="Pre-Stable", color=STABILITY_COLOR_KEY[StabilityStatus.CHECKING]),
-                Patch(label="Buffer", color=STABILITY_COLOR_KEY[StabilityStatus.BUFFERING]),
-                Patch(label="Stable", color=STABILITY_COLOR_KEY[StabilityStatus.STABLE]),
+                Patch(label="Pre-Stable", color=StabilityStatus.CHECKING.to_color()),
+                Patch(label="Buffer", color=StabilityStatus.BUFFERING.to_color()),
+                Patch(label="Stable", color=StabilityStatus.STABLE.to_color()),
             ),
             fontsize="small",
         )
 
     def add_point(self, time: float, temperature: float):
-        self.xdata.append(time)
-        self.ydata.append(temperature)
-        self.line.set_xdata(self.xdata)
-        self.line.set_ydata(self.ydata)
+        # self.plot.scatter(time, temperature, c=self.point_color, marker=".")
+        self.plot.plot(time, temperature, color=self.point_color, marker=".", linestyle="none")
+        self.plot.tight_layout()
         self.plot.draw()
 
-        # TODO: remove this
-        print("Point added! POGGERS")
-
     def move_to_next_cycle(self, cycle_number: int):
-        self.plot.axes.set_title("Cycle " + str(cycle_number))
-        self.clear()
-
-        # TODO: remove this
-        print("Cycle moved, YIPPEE")
+        self.plot.clean()
+        self.plot.set_title(f"Cycle {str(cycle_number)}")
+        self.plot.tight_layout()
 
     def handle_stability_change(self, status: StabilityStatus):
-        line_index = -1  # need to instantiate this for later
         match status:
-            case StabilityStatus.CHECKING:
-                line_index = 0
-            case StabilityStatus.BUFFERING:
-                line_index = 1
-            case StabilityStatus.STABLE:
-                line_index = 2
-            case _:  # irrelevant Stability Status, do nothing
-                return
-
-        point_color = STABILITY_COLOR_KEY[status]
-
-        if len(self.axes.lines) <= line_index:
-            self.line = self.axes.plot([], [], color=point_color, linestyle="none")[line_index]
+            case StabilityStatus.CHECKING | StabilityStatus.BUFFERING | StabilityStatus.STABLE:
+                self.point_color = status.to_color()
 
     def clear(self):
-        # TODO: figure out how to clear the axes so that all lines are erased
-        self.xdata.clear()
-        self.ydata.clear()
-        self.axes.clear()
-        print("Graph cleared. MONKAW")
+        self.plot.clean()
 
 
 class PoppedGraph(QMainWindow):
@@ -108,7 +84,8 @@ class PoppedGraph(QMainWindow):
     def closeEvent(self, event: QCloseEvent | None):  # overridden method
         self.handle_perishing()
         self.destroyed.emit()
-        event.accept()
+        if event is not None:
+            event.accept()
 
     def take_ownership(self, widget: PlotWidget, parent: GraphWidget):
         parent.hide()
@@ -117,6 +94,8 @@ class PoppedGraph(QMainWindow):
 
     def return_ownership(self, widget: PlotWidget, parent: GraphWidget):
         widget.setParent(parent)
-        parent.layout().addWidget(widget)  # layout() will always return a QLayout type here
+        layout = parent.layout()
+        if layout is not None:
+            layout.addWidget(widget)
         parent.show()
         widget.figure.tight_layout()  # necessary to return to the proper size

@@ -3,6 +3,7 @@ from .file import FileMenu
 from .view import ViewMenu
 from .stability import StabilityMenu
 from .sequence import SequenceMenu
+from instruments import InstrumentSet  # ../instruments.py
 
 from typing import TYPE_CHECKING
 
@@ -13,14 +14,14 @@ if TYPE_CHECKING:
 class MenuBar(QMenuBar):
     """The application's menubar."""
 
-    def __init__(self, parent: "MainWindow"):
+    def __init__(self, parent: "MainWindow", instruments: InstrumentSet):
         super().__init__()
-        self.create_submenus(parent)
+        self.create_submenus(parent, instruments)
 
-    def create_submenus(self, parent: "MainWindow"):
+    def create_submenus(self, parent: "MainWindow", instruments: InstrumentSet):
         # need to store these because they have signals
         self.stability = StabilityMenu(self, parent.stability_check_widget)
-        self.sequence = SequenceMenu(self, parent.sequence_widget)
+        self.sequence = SequenceMenu(self, parent.sequence_widget, instruments)
         self.view = ViewMenu(self, parent)
 
         self.addMenu(FileMenu(self, parent))

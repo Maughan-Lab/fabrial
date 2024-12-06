@@ -3,4 +3,6 @@ Hours","Buffer
 Minutes","Hold
 Hours","Hold
 Minutes"
-1,30.0,0,0,0,1
+1,30.0,0,1,0,1
+2,50.0,0,1,0,1
+3,60.0,0,1,0,1

@@ -5,17 +5,20 @@ from PyQt6.QtWidgets import (
     QGridLayout,
     QPushButton,
 )
+from PyQt6.QtGui import QIcon
 from main_window import MainWindow
 from instruments import Oven, InstrumentSet
 from stability_check.widgets import StabilityCheckWidget
-from stability_check.stability_check import StabilityCheckProcess
+from stability_check.stability_check import StabilityCheckThread
 from sequence.widgets import SequenceWidget
-from sequence.sequence import SequenceProcess
-import sys
-import os
+from sequence.sequence import SequenceThread
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from utility.layouts import add_to_layout, add_sublayout  # ../utility
+from file_locations import ICON_FILE
+import sys
+import os
+import time
 
 BASEDIR = os.path.dirname(__file__)
 try:
@@ -47,13 +50,8 @@ class DeveloperOven(Oven):
         self.temperature = temperature
 
     # overridden methods
-    def acquire(self):
-        """Emits the lockChanged(False) signal."""
-        self.lockChanged.emit(False)
 
-    def release(self):
-        """Emits the lockChanged(True) signal."""
-        self.lockChanged.emit(True)
+    # no need to override acquire() or release()
 
     # no need to override is_connected()
 
@@ -63,20 +61,25 @@ class DeveloperOven(Oven):
 
     def read_temp(self) -> float | None:
         """Return the previously set temperature if connected, else None."""
-        if self.connected:
+        if self.is_connected():
             return self.temperature
         else:
+            self.connectionChanged.emit(False)
             return None
 
     def change_setpoint(self, setpoint):
         """Set the setpoint."""
         self.setpoint = setpoint
+        if not self.is_connected():
+            self.connectionChanged.emit(False)
+        return self.connected
 
     def get_setpoint(self) -> float | None:
         """Return the previously set setpoint if connected, else None."""
         if self.is_connected():
             return self.setpoint
         else:
+            self.connectionChanged.emit(False)
             return None
 
     def connect(self):
@@ -100,6 +103,7 @@ class DeveloperWidget(GroupBox):
         self.create_lock_signal_widgets(layout)
         self.create_temperature_widgets(layout)
         self.create_setpoint_widgets(layout)
+        self.create_freeze_widgets(layout)
 
     def create_connection_widgets(self, layout):
         connect_button = QPushButton("Connect")
@@ -120,14 +124,14 @@ class DeveloperWidget(GroupBox):
         lock_button.pressed.connect(lambda: self.oven.set_unlocked(False))
         unlock_button = QPushButton("Unlock")
         unlock_button.pressed.connect(lambda: self.oven.set_unlocked(True))
-        add_to_layout(add_sublayout(layout, QHBoxLayout), lock_button, unlock_button)
+        add_to_layout(add_sublayout(layout, QHBoxLayout), unlock_button, lock_button)
 
     def create_lock_signal_widgets(self, layout):
         acquire_button = QPushButton("Emit Acquired")
-        acquire_button.pressed.connect(self.oven.acquire)
+        acquire_button.pressed.connect(lambda: self.oven.lockChanged.emit(False))
         release_button = QPushButton("Emit Released")
-        release_button.pressed.connect(self.oven.release)
-        add_to_layout(add_sublayout(layout, QHBoxLayout), acquire_button, release_button)
+        release_button.pressed.connect(lambda: self.oven.lockChanged.emit(True))
+        add_to_layout(add_sublayout(layout, QHBoxLayout), release_button, acquire_button)
 
     def create_temperature_widgets(self, layout):
         temperature_spinbox = TemperatureSpinBox()
@@ -149,20 +153,81 @@ class DeveloperWidget(GroupBox):
         setpoint_button.pressed.connect(lambda: self.oven.change_setpoint(setpoint_spinbox.value()))
         add_to_layout(add_sublayout(layout, QHBoxLayout), setpoint_spinbox, setpoint_button)
 
+    def create_freeze_widgets(self, layout):
+        freeze_button = QPushButton("Freeze for 10s")
+        freeze_button.pressed.connect(self.freeze)
+        add_to_layout(add_sublayout(layout, QHBoxLayout), freeze_button)
+
+    def freeze(self):
+        for i in range(1, 11):
+            print(i)
+            time.sleep(1)
+
 
 class DeveloperMainWindow(MainWindow):
+    """
+    Add a DeveloperWidget for controlling the oven and use Developer versions of other widgets.
+    """
+
     def __init__(self, instruments):
         super().__init__(instruments)
         layout: QGridLayout = self.centralWidget().layout()
         layout.addWidget(DeveloperWidget(instruments), 0, 3)
 
+    def initialize_widgets(self, instruments):
+        """Use Developer versions of widgets."""
+        super().initialize_widgets(instruments)
+        self.stability_check_widget = DeveloperStabilityCheckWidget(instruments)
+        self.sequence_widget = DeveloperSequenceWidget(instruments)
+
 
 class DeveloperStabilityCheckWidget(StabilityCheckWidget):
+    """Use a DeveloperStabilityCheckThread instead of a regular one."""
+
     def __init__(self, instruments):
         super().__init__(instruments)
 
-    def start_stability_check(self):
-        return super().start_stability_check()
+    def new_thread(self):
+        return DeveloperStabilityCheckThread(self.instruments, self.setpoint_spinbox.value())
+
+
+class DeveloperStabilityCheckThread(StabilityCheckThread):
+    """Faster stabilization."""
+
+    def __init__(self, instruments, setpoint):
+        super().__init__(instruments, setpoint)
+        self.MEASUREMENT_INTERVAL = 1
+        self.MINIMUM_MEASUREMENTS = 10
+
+
+class DeveloperSequenceWidget(SequenceWidget):
+    """Use a DeveloperSequenceThread instead of a regular one."""
+
+    def __init__(self, instruments):
+        super().__init__(instruments)
+
+    def new_thread(self):
+        return DeveloperSequenceThread(self.instruments, self.model)
+
+
+class DeveloperSequenceThread(SequenceThread):
+    """Faster stabilization."""
+
+    def __init__(self, instruments, model):
+        super().__init__(instruments, model)
+        self.MEASUREMENT_INTERVAL = 1
+        self.MINIMUM_MEASUREMENTS = 10
+
+
+# --------------------------------------------------------------------------------------------------
+
+try:
+    from ctypes import windll  # Only exists on Windows.
+
+    myappid = "maughangroup.quincy.1"
+    windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+except ImportError:
+    pass
 
 
 def main():
@@ -170,6 +235,7 @@ def main():
     instruments = InstrumentSet(DeveloperOven("XXXX"), None)
     # pass in any provided system arguments
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(ICON_FILE))
 
     main_window = DeveloperMainWindow(instruments)
     main_window.show()

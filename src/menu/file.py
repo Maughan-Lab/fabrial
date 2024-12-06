@@ -17,12 +17,11 @@ class FileMenu(QMenu):
 
     def __init__(self, parent: QMenuBar, main_window: "MainWindow"):
         super().__init__("&File", parent)
-        self.addAction(
-            Action(parent, "Honk", lambda: OkCancelDialog("Honk", "Honk").exec())
-        )  # silly
+        # silly
+        self.addAction(Action(parent, "Honk", lambda: OkCancelDialog("Honk", "Honk").exec()))
 
         self.addSeparator()
-        # TODO: implement this
+
         self.addAction(Action(parent, "Show Data Files", self.show_data_files))
 
         self.addSeparator()

@@ -29,7 +29,7 @@ class SetpointWidget(GroupBox):
         """Connect internal widget signals."""
         self.button.pressed.connect(self.change_setpoint)
         # trigger the command when Enter is pressed
-        self.setpoint_spinbox.lineEdit().returnPressed.connect(self.change_setpoint)
+        self.setpoint_spinbox.connect_to_button(self.button)
 
     def connect_signals(self):
         """Connect external signals."""

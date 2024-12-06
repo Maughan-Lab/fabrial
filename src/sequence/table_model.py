@@ -124,8 +124,6 @@ class TableModel(QAbstractTableModel):
             case Qt.ItemDataRole.DisplayRole | Qt.ItemDataRole.EditRole:
                 # return the item at the index to display it
                 return str(self.parameter_data.item(index.row(), index.column()))
-            case _:  # TODO: implement other ItemDataRoles
-                pass
 
     def headerData(self, index, orientation, role):
         match role:
@@ -135,8 +133,6 @@ class TableModel(QAbstractTableModel):
                         return str(self.parameter_data.columns[index])
                     case Qt.Orientation.Vertical:
                         return str(self.parameter_data.select(col(CYCLE_COLUMN)).item(index, 0))
-            case _:
-                pass
 
     def setData(self, index, value, role):
         match role:

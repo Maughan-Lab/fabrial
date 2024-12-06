@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDoubleSpinBox, QAbstractSpinBox, QSpinBox
+from PyQt6.QtWidgets import QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QPushButton
 from instruments import Oven  # ../instruments.py
 
 
@@ -8,6 +8,16 @@ class DoubleSpinBox(QDoubleSpinBox):
     def __init__(self):
         super().__init__()
         self.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
+
+    def connect_to_button(self, button: QPushButton):
+        """
+        Emit the **button**'s **pressed** signal when Enter is pressed and the button is enabled.
+        """
+        lineedit = self.lineEdit()
+        if lineedit is not None:
+            lineedit.returnPressed.connect(
+                lambda: button.pressed.emit() if button.isEnabled() else None
+            )
 
 
 class TemperatureSpinBox(DoubleSpinBox):
@@ -28,21 +38,3 @@ class SpinBox(QSpinBox):
     def __init__(self):
         super().__init__()
         self.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
-
-
-class HoursSpinBox(SpinBox):
-    """SpinBox for hours."""
-
-    def __init__(self):
-        super().__init__()
-        self.setMinimum(0)
-
-
-class MinutesSpinBox(SpinBox):
-    """SpinBox for minutes."""
-
-    def __init__(self):
-        super().__init__()
-        self.setSingleStep(5)  # using the up/down arrow keys will change the minutes by 5
-        self.setMinimum(0)
-        self.setMaximum(59)
