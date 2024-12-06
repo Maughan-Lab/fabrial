@@ -94,7 +94,6 @@ class StabilityCheckWidget(GroupBox):
         self.setpoint_spinbox.setValue(0.0)
 
     def update_button_states(self, connected: bool, unlocked: bool, running: bool):
-        print(connected, unlocked, running)
         """Update the states of buttons."""
         # enable the button if the oven is connected and a check isn't running
         self.detect_setpoint_button.setEnabled(connected and not running)
