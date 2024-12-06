@@ -9,7 +9,10 @@ if TYPE_CHECKING:
 
 
 class Instrument(QObject):
-    """Abstract class to represent instruments."""
+    """
+    Abstract class to represent instruments. When using methods that change the physical oven,
+    call acquire() followed at some point by release().
+    """
 
     # signals
     connectionChanged = pyqtSignal(bool)  # True if connected False if disconnected
@@ -34,8 +37,10 @@ class Instrument(QObject):
         self.lock.unlock()
 
     def update_connection_status(self, connected: bool):
-        print("HERE", connected)
-        print(self.connected)
+        """
+        Helper function to update the connection status and emit a signal. This should not be
+        called outside of the oven.
+        """
         if self.connected != connected:
             self.connected = connected
             self.connectionChanged.emit(self.is_connected())

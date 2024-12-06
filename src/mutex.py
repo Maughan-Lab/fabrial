@@ -10,11 +10,17 @@ class SignalMutex(QMutex):
         self.lockChanged = self.signals.lockedChanged
 
     def lock(self):
+        """Lock the mutex (emits a signal)."""
         super().lock()
         self.lockChanged.emit(False)
 
     def unlock(self):
+        """Unlock the lock (emits a signal)."""
         self.lockChanged.emit(True)
+        super().unlock()
+
+    def unlock_silent(self):
+        """Unlock without emitting a signal (usually used with tryLock())."""
         super().unlock()
 
 
