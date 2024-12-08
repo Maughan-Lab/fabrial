@@ -3,3 +3,5 @@
 **/.pytest_cache/
 **/Data Files/
 **/saved_settings/
+**/build/
+**/dist/
