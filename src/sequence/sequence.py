@@ -119,7 +119,7 @@ class SequenceThread(QRunnable):
 
         self.oven.release()
         self.update_stability(StabilityStatus.NULL)
-        self.update_status(SequenceStatus.COMPLETED if not self.cancel else SequenceStatus.CANCELED)
+        self.update_status(final_status)
 
     def change_setpoint(self, setpoint: float) -> bool:
         """
