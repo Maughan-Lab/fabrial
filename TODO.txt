@@ -1,8 +1,3 @@
----Add the Quincy icon to all windows.---
-
-Automatically graph the whole sequence at the end (post_run) and implement the graph menu function.
-
-
 Fix PyTest
 - Write as many unit tests as possible. For things like the sequence, making sure signals trigger
   the proper events, etc.
