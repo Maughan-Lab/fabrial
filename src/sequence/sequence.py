@@ -207,8 +207,6 @@ class SequenceThread(QRunnable):
         self.pause_sequence()
         self.old_stability = self.stability
         self.update_stability(StabilityStatus.ERROR)
-        print(self.stability.name)
-        print(self.old_stability.name)
 
     # ----------------------------------------------------------------------------------------------
     # file IO
@@ -295,7 +293,7 @@ class SequenceThread(QRunnable):
 
     def update_stability(self, stability: StabilityStatus):
         """Emit the supplied StabilityStatus."""
-        self.stabilty = stability
+        self.stability = stability
         self.signals.stabilityChanged.emit(stability)
 
     # ----------------------------------------------------------------------------------------------
