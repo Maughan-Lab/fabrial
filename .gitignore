@@ -5,3 +5,4 @@
 **/saved_settings/
 **/build/
 **/dist/
+**/*.exe
