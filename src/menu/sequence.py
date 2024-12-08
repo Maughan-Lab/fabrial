@@ -1,14 +1,29 @@
-from PyQt6.QtWidgets import QMenu, QMenuBar
+from PyQt6.QtWidgets import QMenu, QMenuBar, QFileDialog
+from polars.exceptions import ColumnNotFoundError
 from actions import Action  # ../actions.py
-from sequence.widgets import SequenceWidget  # ../sequence
-from enums.status import StabilityStatus  # ../enums
 from instruments import InstrumentSet  # ../instruments.py
+from sequence.widgets import SequenceWidget  # ../sequence
+from sequence.constants import DATA_FILES_LOCATION  # ../sequence
+from custom_widgets.dialog import OkDialog
+from custom_widgets.plot import PlotWidget
+from enums.status import StabilityStatus  # ../enums
+from utility.graph import graph_from_folder  # ../utility
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from main_window import MainWindow  # ../main_window.py
 
 
 class SequenceMenu(QMenu):
     """Sequence menu."""
 
-    def __init__(self, parent: QMenuBar, widget: SequenceWidget, instruments: InstrumentSet):
+    def __init__(
+        self,
+        parent: QMenuBar,
+        widget: SequenceWidget,
+        main_window: "MainWindow",
+        instruments: InstrumentSet,
+    ):
         super().__init__("&Sequence", parent)
         self.oven = instruments.oven
         self.widget = widget
@@ -23,7 +38,10 @@ class SequenceMenu(QMenu):
 
         self.addAction(
             Action(
-                parent, "Generate Graph", lambda: print("NOT IMPLEMENTED"), shortcut="Ctrl+Shift+G"
+                parent,
+                "Generate Graph",
+                lambda: self.generate_graph(main_window),
+                shortcut="Ctrl+Shift+G",
             )
         )
 
@@ -70,3 +88,18 @@ class SequenceMenu(QMenu):
             case _:
                 enabled = False
         self.skip_current_buffer.setEnabled(enabled)
+
+    def generate_graph(self, main_window: "MainWindow"):
+        folder = QFileDialog.getExistingDirectory(self, "Select data folder.", DATA_FILES_LOCATION)
+        if folder != "":
+            try:
+                figure = graph_from_folder(folder)
+                # show the figure
+                plot = PlotWidget(figure)
+                main_window.new_window("Sequence Graph", plot)
+                return
+            except FileNotFoundError:
+                message = "Folder contains no data."
+            except ColumnNotFoundError:
+                message = "Data is formatted incorrectly."
+            OkDialog("Error", message)  # only runs if an exception occurs

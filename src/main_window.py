@@ -5,9 +5,11 @@ from passive_monitoring.widgets import PassiveMonitoringWidget
 from instrument_connection.widgets import InstrumentConnectionWidget
 from stability_check.widgets import StabilityCheckWidget
 from sequence.widgets import SequenceWidget
-from graph.widgets import GraphWidget, PoppedGraph
+from graph.widgets import GraphWidget
 from custom_widgets.dialog import YesCancelDialog
 from instruments import InstrumentSet
+from actions import Shortcut
+from secondary_window import SecondaryWindow
 from utility.layouts import add_to_layout_grid
 from menu.menu_bar import MenuBar
 
@@ -58,29 +60,36 @@ class MainWindow(QMainWindow):
         self.sequence_widget.newDataAquired.connect(self.graph_widget.add_point)
         self.sequence_widget.cycleNumberChanged.connect(self.graph_widget.move_to_next_cycle)
         self.sequence_widget.stabilityChanged.connect(self.graph_widget.handle_stability_change)
-        # connect the stability check
-        self.sequence_widget.statusChanged.connect(
-            lambda running: self.stability_check_widget.reset() if running else None
-        )
 
     def create_menu(self, instruments: InstrumentSet):
+        """Create the menu bar."""
         self.menu_bar = MenuBar(self, instruments)
         self.setMenuBar(self.menu_bar)
 
-    def new_window(self, new_window: QMainWindow):
-        new_window.show()
-        self.secondary_windows.append(new_window)
-        new_window.destroyed.connect(lambda: self.secondary_windows.remove(new_window))
+    def new_window(self, title: str, central_widget: QWidget) -> SecondaryWindow:
+        """
+        Create a new window owned by the main window.
+
+        :param title: The window title.
+        :param central_widget: The widget to show inside the secondary window.
+        :returns: The created window.
+        """
+        window = SecondaryWindow(title, self)
+        window.setCentralWidget(central_widget)
+        window.show()
+        return window
 
     # ----------------------------------------------------------------------------------------------
     # resizing
     def toggle_fullscreen(self):
+        """Toggle fullscreen mode."""
         if self.isFullScreen():
             self.showNormal()
         else:
             self.showFullScreen()
 
     def shrink(self):
+        """Shrink the window to its minimum size. Exits fullscreen mode."""
         if self.isFullScreen():
             self.showNormal()
         self.resize(self.minimumSize())
@@ -88,9 +97,22 @@ class MainWindow(QMainWindow):
     # ----------------------------------------------------------------------------------------------
     # pop the graph
     def pop_graph(self):
-        popped_graph = PoppedGraph(self.graph_widget)
-        popped_graph.destroyed.connect(self.menu_bar.view.poppedGraphDestroyed.emit)
-        self.new_window(popped_graph)
+        """Pop the sequence graph into a new window."""
+        self.graph_widget.hide()
+        plot = self.graph_widget.plot
+        self.popped_graph = self.new_window("Quincy - Popped Graph", plot)
+        # close the window on "Ctrl+g"
+        Shortcut(self.popped_graph, "Ctrl+g", self.popped_graph.close)
+        # save the graph on "Ctrl+s"
+        Shortcut(self.popped_graph, "Ctrl+s", plot.toolbar.save_figure)
+        # return the graph widget to its previous state on PoppedGraph destruction
+        self.popped_graph.closed.connect(lambda: self.graph_widget.give_widget(plot))
+        self.popped_graph.closed.connect(self.menu_bar.view.handle_popped_graph_destruction)
+        self.popped_graph.closed.connect(self.graph_widget.show)
+
+    def unpop_graph(self):
+        """Put the sequence graph back into the main window by closing the PoppedGraph."""
+        self.popped_graph.close()
 
     # ----------------------------------------------------------------------------------------------
     # closing the window
@@ -114,3 +136,9 @@ class MainWindow(QMainWindow):
             signal.emit()
             return True
         return False
+
+
+# --------------------------------------------------------------------------------------------------
+def delete_window(window: QMainWindow):
+    """Delete a window."""
+    del window

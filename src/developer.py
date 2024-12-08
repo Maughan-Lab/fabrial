@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QIcon
 from main_window import MainWindow
-from instruments import Oven, InstrumentSet
+from instruments import Oven, InstrumentSet, ConnectionStatus
 from stability_check.widgets import StabilityCheckWidget
 from stability_check.stability_check import StabilityCheckThread
 from sequence.widgets import SequenceWidget
@@ -15,7 +15,8 @@ from sequence.sequence import SequenceThread
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from utility.layouts import add_to_layout, add_sublayout  # ../utility
-from file_locations import ICON_FILE
+import file_locations
+from sequence.constants import DATA_FILES_LOCATION
 import sys
 import os
 import time
@@ -31,15 +32,15 @@ except ImportError:
 
 
 class DeveloperOven(Oven):
-    def __init__(self, oven_port):
+    def __init__(self, oven_port: str = ""):
         super().__init__(oven_port)
         self.unlocked = True
         self.temperature = 0.0
         self.setpoint = 0.0
 
-    def set_connected(self, conntected: bool):
-        """Set the connection status without firing signals."""
-        self.connected = conntected
+    def set_connected(self, connection_status: ConnectionStatus):
+        """Set the connection status and send signals."""
+        self.update_connection_status(connection_status)
 
     def set_unlocked(self, unlocked: bool):
         """Set the unlocked status without firing signals."""
@@ -55,6 +56,10 @@ class DeveloperOven(Oven):
 
     # no need to override is_connected()
 
+    def update_connection_status(self, connection_status: ConnectionStatus):
+        self.connection_status = connection_status
+        self.connectionChanged.emit(self.is_connected())
+
     def is_unlocked(self):
         """Return the previously set unlocked status."""
         return self.unlocked
@@ -64,27 +69,26 @@ class DeveloperOven(Oven):
         if self.is_connected():
             return self.temperature
         else:
-            self.connectionChanged.emit(False)
+            self.update_connection_status(ConnectionStatus.DISCONNECTED)
             return None
 
     def change_setpoint(self, setpoint):
         """Set the setpoint."""
         self.setpoint = setpoint
         if not self.is_connected():
-            self.connectionChanged.emit(False)
-        return self.connected
+            self.update_connection_status(ConnectionStatus.DISCONNECTED)
+        return self.is_connected()
 
     def get_setpoint(self) -> float | None:
         """Return the previously set setpoint if connected, else None."""
         if self.is_connected():
             return self.setpoint
         else:
-            self.connectionChanged.emit(False)
+            self.update_connection_status(ConnectionStatus.DISCONNECTED)
             return None
 
     def connect(self):
-        """Do nothing."""
-        pass
+        self.update_connection_status(ConnectionStatus.DISCONNECTED)
 
     def update_port(self, port):
         """Update the port variable and do nothing else."""
@@ -107,9 +111,11 @@ class DeveloperWidget(GroupBox):
 
     def create_connection_widgets(self, layout):
         connect_button = QPushButton("Connect")
-        connect_button.pressed.connect(lambda: self.oven.set_connected(True))
+        connect_button.pressed.connect(lambda: self.oven.set_connected(ConnectionStatus.CONNECTED))
         disconnect_button = QPushButton("Disconnect")
-        disconnect_button.pressed.connect(lambda: self.oven.set_connected(False))
+        disconnect_button.pressed.connect(
+            lambda: self.oven.set_connected(ConnectionStatus.DISCONNECTED)
+        )
         add_to_layout(add_sublayout(layout, QHBoxLayout), connect_button, disconnect_button)
 
     def create_connection_signal_widgets(self, layout):
@@ -177,46 +183,27 @@ class DeveloperMainWindow(MainWindow):
     def initialize_widgets(self, instruments):
         """Use Developer versions of widgets."""
         super().initialize_widgets(instruments)
-        self.stability_check_widget = DeveloperStabilityCheckWidget(instruments)
-        self.sequence_widget = DeveloperSequenceWidget(instruments)
+        # # reinitialize the oven's connection status to emit the proper signals
+        # instruments.oven.connected = ConnectionStatus.NULL
 
-
-class DeveloperStabilityCheckWidget(StabilityCheckWidget):
-    """Use a DeveloperStabilityCheckThread instead of a regular one."""
-
-    def __init__(self, instruments):
-        super().__init__(instruments)
-
-    def new_thread(self):
-        return DeveloperStabilityCheckThread(self.instruments, self.setpoint_spinbox.value())
+        self.stability_check_widget = StabilityCheckWidget(
+            instruments, DeveloperStabilityCheckThread
+        )
+        self.sequence_widget = SequenceWidget(instruments, DeveloperSequenceThread)
 
 
 class DeveloperStabilityCheckThread(StabilityCheckThread):
     """Faster stabilization."""
 
-    def __init__(self, instruments, setpoint):
-        super().__init__(instruments, setpoint)
-        self.MEASUREMENT_INTERVAL = 1
-        self.MINIMUM_MEASUREMENTS = 10
-
-
-class DeveloperSequenceWidget(SequenceWidget):
-    """Use a DeveloperSequenceThread instead of a regular one."""
-
-    def __init__(self, instruments):
-        super().__init__(instruments)
-
-    def new_thread(self):
-        return DeveloperSequenceThread(self.instruments, self.model)
+    MEASUREMENT_INTERVAL = 1
+    MINIMUM_MEASUREMENTS = 10
 
 
 class DeveloperSequenceThread(SequenceThread):
     """Faster stabilization."""
 
-    def __init__(self, instruments, model):
-        super().__init__(instruments, model)
-        self.MEASUREMENT_INTERVAL = 1
-        self.MINIMUM_MEASUREMENTS = 10
+    MEASUREMENT_INTERVAL = 1
+    MINIMUM_MEASUREMENTS = 10
 
 
 # --------------------------------------------------------------------------------------------------
@@ -229,13 +216,17 @@ try:
 except ImportError:
     pass
 
+FOLDERS_TO_CREATE = (file_locations.SAVED_SETTINGS_LOCATION, DATA_FILES_LOCATION)
+
 
 def main():
+    for folder in FOLDERS_TO_CREATE:
+        os.makedirs(folder, exist_ok=True)
     # create instruments
-    instruments = InstrumentSet(DeveloperOven("XXXX"), None)
+    instruments = InstrumentSet(DeveloperOven(), None)
     # pass in any provided system arguments
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(ICON_FILE))
+    app.setWindowIcon(QIcon(file_locations.ICON_FILE))
 
     main_window = DeveloperMainWindow(instruments)
     main_window.show()

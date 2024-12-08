@@ -16,8 +16,6 @@ class StabilityCheckThread(QRunnable):
         super().__init__()
         # signals
         self.signals = Signals()
-        self.statusChanged = self.signals.statusChanged  # shortcut
-        self.stabilityChanged = self.signals.stabilityChanged  # shortcut
 
         self.setpoint = setpoint
         self.oven = instruments.oven
@@ -46,20 +44,22 @@ class StabilityCheckThread(QRunnable):
                 final_stability = StabilityStatus.NULL
                 break
 
+            self.signals.progressed.emit()
+
         # if we make it here, we're stable!
         self.post_run(final_stability)
 
     def pre_run(self):
         """Pre-run tasks."""
+        self.signals.statusChanged.emit(True)
         self.oven.acquire()
-        self.statusChanged.emit(True)
         self.update_stability(StabilityStatus.CHECKING)
 
     def post_run(self, final_stability: StabilityStatus):
         """Post-run tasks."""
         self.update_stability(final_stability)
-        self.statusChanged.emit(False)
         self.oven.release()
+        self.signals.statusChanged.emit(False)
 
     def wait(self) -> bool:
         """Wait for **MEASUREMENT_INTERVAL** and handle connection problems."""
@@ -80,7 +80,7 @@ class StabilityCheckThread(QRunnable):
         self.update_stability(StabilityStatus.ERROR)
 
     def update_stability(self, stability: StabilityStatus):
-        self.stabilityChanged.emit(stability)
+        self.signals.stabilityChanged.emit(stability)
 
     def cancel_stability_check(self):
         self.cancel = True
@@ -89,3 +89,4 @@ class StabilityCheckThread(QRunnable):
 class Signals(QObject):
     stabilityChanged = pyqtSignal(StabilityStatus)
     statusChanged = pyqtSignal(bool)
+    progressed = pyqtSignal()

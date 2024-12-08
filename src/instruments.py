@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum
 from PyQt6.QtCore import pyqtSignal, QObject
 import minimalmodbus as modbus
 from mutex import SignalMutex
@@ -6,6 +7,17 @@ from typing import Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from developer import DeveloperOven
+
+
+class ConnectionStatus(Enum):
+    """Enum to represent connection states."""
+
+    CONNECTED = 0
+    DISCONNECTED = 1
+    NULL = 2
+
+    def __bool__(self):
+        return self == ConnectionStatus.CONNECTED
 
 
 class Instrument(QObject):
@@ -19,7 +31,7 @@ class Instrument(QObject):
 
     def __init__(self):
         super().__init__()
-        self.connected = False
+        self.connection_status = ConnectionStatus.NULL
 
         # lock system
         self.lock = SignalMutex()  # do not manually access the lock ever
@@ -36,18 +48,18 @@ class Instrument(QObject):
         """Make the instrument mutable for other processes."""
         self.lock.unlock()
 
-    def update_connection_status(self, connected: bool):
+    def update_connection_status(self, connection_status: ConnectionStatus):
         """
         Helper function to update the connection status and emit a signal. This should not be
         called outside of the oven.
         """
-        if self.connected != connected:
-            self.connected = connected
+        if self.connection_status != connection_status:
+            self.connection_status = connection_status
             self.connectionChanged.emit(self.is_connected())
 
     def is_connected(self) -> bool:
         """Get the connection status of this instrument as a bool."""
-        return self.connected
+        return bool(self.connection_status)
 
     def is_unlocked(self) -> bool:
         """Get the lock status of this instrument as a bool."""
@@ -67,10 +79,9 @@ class Oven(Instrument):
     MINIMUM_TEMPERATURE = 0.0
     MAXIMUM_TEMPERATURE = 232.0
 
-    def __init__(self, oven_port: str):
+    def __init__(self, oven_port: str = ""):
         super().__init__()
         self.port = oven_port
-        self.connect()
 
     def read_temp(self) -> float | None:
         """Returns the oven's temperature if the oven is connected, None otherwise."""
@@ -80,7 +91,7 @@ class Oven(Instrument):
             )
             return temperature
         except Exception:
-            self.update_connection_status(False)
+            self.update_connection_status(ConnectionStatus.DISCONNECTED)
             return None
 
     def change_setpoint(self, setpoint: float) -> bool:
@@ -92,7 +103,7 @@ class Oven(Instrument):
             self.device.write_register(self.SETPOINT_REGISTER, setpoint, self.NUMBER_OF_DECIMALS)
             return True
         except Exception:
-            self.update_connection_status(False)
+            self.update_connection_status(ConnectionStatus.DISCONNECTED)
         return False
 
     def get_setpoint(self) -> float | None:
@@ -101,17 +112,17 @@ class Oven(Instrument):
             setpoint = self.device.read_register(self.SETPOINT_REGISTER, self.NUMBER_OF_DECIMALS)
             return setpoint
         except Exception:
-            self.update_connection_status(False)
+            self.update_connection_status(ConnectionStatus.DISCONNECTED)
             return None
 
     def connect(self):
         """Attempts to connect to the oven."""
         try:
             self.device = modbus.Instrument(self.port, 1)
-            connected = True
+            connection_status = ConnectionStatus.CONNECTED
         except Exception:
-            connected = False
-        self.update_connection_status(connected)
+            connection_status = ConnectionStatus.DISCONNECTED
+        self.update_connection_status(connection_status)
 
     def update_port(self, port: str):
         """Updates the oven's connection port."""

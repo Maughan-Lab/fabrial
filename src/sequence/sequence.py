@@ -16,12 +16,13 @@ from .constants import (
     STABLE_FILE,
     CYCLE_TIMES_FILE,
     STABILIZATON_TIMES_FILE,
+    GRAPH_FILE,
     TIME,
     TEMPERATURE,
 )
 from instruments import InstrumentSet  # ../instruments.py
-from enums.status import StabilityStatus, SequenceStatus
-from typing import TextIO
+from enums.status import StabilityStatus, SequenceStatus  # ../enums
+from utility.graph import graph_from_folder  # ../utility
 
 
 class SequenceThread(QRunnable):
@@ -30,9 +31,10 @@ class SequenceThread(QRunnable):
     # sequence specifications. There must be at least MINIMUM_MEASUREMENTS that are within
     # VARIANCE_TOLERANCE for the oven to be stable
     MINIMUM_MEASUREMENTS = 150
-    VARIANCE_TOLERANCE = 1.0  # degree C
+    VARIANCE_TOLERANCE = 1.0  # degrees C
     MEASUREMENT_INTERVAL = 5.0  # seconds
     WAIT_INTERVAL = 0.01
+    END_TEMPERATURE = 30  # degrees C
 
     # headers
     TEMPERATURE_DATA_HEADER = f"Time ({DATE_FORMAT}),{TIME},{TEMPERATURE}"
@@ -98,9 +100,8 @@ class SequenceThread(QRunnable):
 
     def pre_run(self):
         """Pre-run tasks."""
-        self.oven.acquire()
-
         self.update_status(SequenceStatus.ACTIVE)
+        self.oven.acquire()
 
         # this should be last
         self.starting_time = time.time()
@@ -108,12 +109,17 @@ class SequenceThread(QRunnable):
 
     def post_run(self):
         """Post-run tasks."""
-        self.close_files()
-
-        self.update_stability(StabilityStatus.NULL)
-        self.update_status(SequenceStatus.COMPLETED if not self.cancel else SequenceStatus.CANCELED)
+        if self.cancel:
+            final_status = SequenceStatus.CANCELED
+        else:
+            # if the sequence finishes naturally, set the oven to the END_TEMPERATURE
+            self.change_setpoint(self.END_TEMPERATURE)
+            final_status = SequenceStatus.COMPLETED
+        self.graph_and_save()
 
         self.oven.release()
+        self.update_stability(StabilityStatus.NULL)
+        self.update_status(SequenceStatus.COMPLETED if not self.cancel else SequenceStatus.CANCELED)
 
     def change_setpoint(self, setpoint: float) -> bool:
         """
@@ -149,14 +155,14 @@ class SequenceThread(QRunnable):
                 variance = temperature_variances[location]
                 if variance >= self.VARIANCE_TOLERANCE:
                     stable = False
-                    del temperature_variances[:]
+                    del temperature_variances[: location + 1]
                     break
 
         self.record_stabilization_time()
         return True
 
-    def collect_data(self, hours_column: str, minutes_column: str, data_file: TextIO) -> bool:
-        """Collect data every **MEASUREMENT_INTERVAL** seconds."""
+    def collect_data(self, hours_column: str, minutes_column: str, data_file: str) -> bool:
+        """Collect data every **MEASUREMENT_INTERVAL** seconds and write data to **data_file**."""
         hours: int = self.model.parameter_data.item(self.cycle_number - 1, hours_column)
         minutes: int = self.model.parameter_data.item(self.cycle_number - 1, minutes_column)
         repeat_count = (hours * 3600 + minutes * 60) / self.MEASUREMENT_INTERVAL
@@ -201,6 +207,8 @@ class SequenceThread(QRunnable):
         self.pause_sequence()
         self.old_stability = self.stability
         self.update_stability(StabilityStatus.ERROR)
+        print(self.stability.name)
+        print(self.old_stability.name)
 
     # ----------------------------------------------------------------------------------------------
     # file IO
@@ -208,57 +216,71 @@ class SequenceThread(QRunnable):
         """Initialize this sequence's data files."""
         # replace semicolons for the folder name
         datetime = convert_to_datetime(starting_time).replace(":", "ː")
+        self.data_folder = path.join(DATA_FILES_LOCATION, datetime)
         # create a timestamped folder to store the data files in
-        os.makedirs(path.join(DATA_FILES_LOCATION, datetime), exist_ok=True)
+        os.makedirs(self.data_folder, exist_ok=True)
 
-        # open the files where this sequence will record its data
-        self.pre_stable_file = open(path.join(DATA_FILES_LOCATION, datetime, PRE_STABLE_FILE), "w")
-        self.buffer_file = open(path.join(DATA_FILES_LOCATION, datetime, BUFFER_FILE), "w")
-        self.stable_file = open(path.join(DATA_FILES_LOCATION, datetime, STABLE_FILE), "w")
-        self.cycle_times_file = open(
-            path.join(DATA_FILES_LOCATION, datetime, CYCLE_TIMES_FILE), "w"
-        )
-        self.stabilization_times_file = open(
-            path.join(DATA_FILES_LOCATION, datetime, STABILIZATON_TIMES_FILE), "w"
-        )
+        # get the names of the files where this sequence will record its data
+        self.pre_stable_file = path.join(self.data_folder, PRE_STABLE_FILE)
+        self.buffer_file = path.join(self.data_folder, BUFFER_FILE)
+        self.stable_file = path.join(self.data_folder, STABLE_FILE)
+        self.cycle_times_file = path.join(self.data_folder, CYCLE_TIMES_FILE)
+        self.stabilization_times_file = path.join(self.data_folder, STABILIZATON_TIMES_FILE)
 
         self.write_file_headers()  # write the file headers
 
     def write_file_headers(self):
         """Write the data file headers."""
         for file in (self.pre_stable_file, self.buffer_file, self.stable_file):
-            file.write(self.TEMPERATURE_DATA_HEADER + "\n")
-        self.cycle_times_file.write(self.CYCLE_TIMES_HEADER + "\n")
-        self.stabilization_times_file.write(self.STABILIZATION_TIMES_HEADER + "\n")
+            self.write_csv_line(file, self.TEMPERATURE_DATA_HEADER, file_mode="w")
+        self.write_csv_line(self.cycle_times_file, self.CYCLE_TIMES_HEADER, file_mode="w")
+        self.write_csv_line(
+            self.stabilization_times_file, self.STABILIZATION_TIMES_HEADER, file_mode="w"
+        )
 
-    def close_files(self):
-        """Close all the files."""
-        for file in (
-            self.pre_stable_file,
-            self.buffer_file,
-            self.stable_file,
-            self.cycle_times_file,
-            self.stabilization_times_file,
-        ):
-            file.close()
-
-    def record_temperature_data(self, file: TextIO, temperature: float):
+    def record_temperature_data(self, file: str, temperature: float):
         """Write temperature data to **file**."""
         seconds_since_start, datetime = get_times(self.starting_time)
-        file.write(f"{datetime},{seconds_since_start},{temperature}\n")
+        self.write_csv_line(file, datetime, seconds_since_start, temperature)
         self.signals.newDataAquired.emit(seconds_since_start, temperature)
 
     def record_cycle_time(self):
         """Record the current cycle's start time."""
         seconds_since_start, datetime = get_times(self.starting_time)
-        self.cycle_times_file.write(f"{self.cycle_number},{datetime},{seconds_since_start}\n")
+        self.write_csv_line(self.cycle_times_file, self.cycle_number, datetime, seconds_since_start)
 
     def record_stabilization_time(self):
         """Record the current cycle's stabilization time."""
         seconds_since_start, datetime = get_times(self.starting_time)
-        self.stabilization_times_file.write(
-            f"{self.cycle_number},{datetime},{seconds_since_start}\n"
-        )
+        self.write_csv_line(self.stabilization_times_file, seconds_since_start, datetime)
+
+    def write_csv_line(self, file: str, *values: float | str, file_mode: str = "a"):
+        """
+        Write a line in a csv file. The line will end with a newline character.
+
+        :param file: The file to write to.
+        :param *values: The values to write to the file. Each value will be comma separated.
+        :param file_mode: The mode to open the file in. Must grant write privileges.
+        Defaults to "a" (append) mode.
+        """
+        if len(values) == 1:
+            line = f"{values[0]}\n"
+        else:
+            line = ""
+            for value in values[:-1]:
+                line += f"{value},"
+            line += f"{values[-1]}\n"
+        with open(file, file_mode) as f:
+            f.write(line)
+
+    def graph_and_save(self):
+        """Graph the sequence on one plot and save the figure."""
+        try:
+            graph_from_folder(self.data_folder).savefig(
+                path.join(self.data_folder, GRAPH_FILE), dpi=1000
+            )
+        except Exception:
+            self.signals.graphFailed.emit()
 
     # ----------------------------------------------------------------------------------------------
     # signals
@@ -308,6 +330,7 @@ class Signals(QObject):
     cycleNumberChanged = pyqtSignal(int)
     stabilityChanged = pyqtSignal(StabilityStatus)
     statusChanged = pyqtSignal(SequenceStatus)
+    graphFailed = pyqtSignal()
 
 
 # --------------------------------------------------------------------------------------------------

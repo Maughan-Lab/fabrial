@@ -11,12 +11,10 @@ if TYPE_CHECKING:
 class ViewMenu(QMenu):
     """View menu."""
 
-    poppedGraphDestroyed = pyqtSignal()
-
     def __init__(self, parent: QMenuBar, main_window: "MainWindow"):
         super().__init__("&View", parent)
-        self.create_actions(parent, main_window)
-        self.connect_signals()
+        self.create_actions(parent)
+        self.connect_signals(main_window)
 
         self.addAction(Action(parent, "Fullscreen", main_window.toggle_fullscreen, shortcut="F11"))
         self.addAction(
@@ -32,14 +30,22 @@ class ViewMenu(QMenu):
 
         self.addAction(self.pop_graph)
 
-    def create_actions(self, parent: QMenuBar, main_window: "MainWindow"):
+    def create_actions(self, parent: QMenuBar):
         self.pop_graph = Action(
             parent,
             "Pop Sequence Graph",
-            main_window.pop_graph,
             shortcut="Ctrl+G",
         )
+        self.pop_graph.setCheckable(True)
 
-    def connect_signals(self):
-        self.pop_graph.triggered.connect(lambda: self.pop_graph.setEnabled(False))
-        self.poppedGraphDestroyed.connect(lambda: self.pop_graph.setEnabled(True))
+    def connect_signals(self, main_window: "MainWindow"):
+        """Connect action signals."""
+        self.pop_graph.triggered.connect(
+            lambda is_checked: main_window.pop_graph() if is_checked else main_window.unpop_graph()
+        )
+
+    def handle_popped_graph_destruction(self):
+        """Uncheck the Pop Graph option without triggering signals."""
+        self.pop_graph.blockSignals(True)
+        self.pop_graph.setChecked(False)
+        self.pop_graph.blockSignals(False)

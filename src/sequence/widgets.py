@@ -16,6 +16,7 @@ from utility.layouts import add_sublayout, add_to_layout  # ../helper_functions
 from enums.status import StabilityStatus, SequenceStatus  # ../enums
 from .table_model import TableModel, TableView
 from .sequence import SequenceThread
+from typing import Type
 
 
 class SequenceWidget(GroupBox):
@@ -34,13 +35,15 @@ class SequenceWidget(GroupBox):
     skipCycle = pyqtSignal()
     cancelSequence = pyqtSignal()
 
-    def __init__(self, instruments: InstrumentSet):
+    def __init__(
+        self, instruments: InstrumentSet, thread_type: Type[SequenceThread] = SequenceThread
+    ):
         """
         :param instruments: Container for instruments.
-
-        :param graph_widget: A **GraphWidget** to connect to this **SequenceWidget**.
+        :param thread_type: The type of thread object to use when running sequences.
         """
         super().__init__("Temperature Sequence", QVBoxLayout, instruments)
+        self.thread_type = thread_type
 
         # variables
         self.running = False
@@ -112,17 +115,17 @@ class SequenceWidget(GroupBox):
     def connect_signals(self):
         """Connect external signals."""
         # oven connection
-        self.instruments.oven.connectionChanged.connect(
-            lambda connected: self.update_button_states(
-                connected, self.instruments.oven.is_unlocked()
-            )
-        )
+        self.instruments.oven.connectionChanged.connect(self.handle_connection_change)
         # oven lock
-        self.instruments.oven.lockChanged.connect(
-            lambda unlocked: self.update_button_states(
-                self.instruments.oven.is_connected(), unlocked
-            )
-        )
+        self.instruments.oven.lockChanged.connect(self.handle_lock_change)
+
+    def handle_connection_change(self, connected: bool):
+        """Handle the oven's connectedChanged signal."""
+        self.update_button_states(connected, self.instruments.oven.is_unlocked())
+
+    def handle_lock_change(self, unlocked: bool):
+        """Handle the oven's lockChanged signal."""
+        self.update_button_states(self.instruments.oven.is_connected(), unlocked)
 
     # ----------------------------------------------------------------------------------------------
     # cycleNumberChanged
@@ -199,11 +202,17 @@ class SequenceWidget(GroupBox):
     def start_sequence(self):
         """Start a temperature sequence."""
         if not self.is_running():
-            thread = self.new_thread()
+            thread = self.thread_type(self.instruments, self.model)
 
             thread.signals.statusChanged.connect(self.handle_status_change)
             thread.signals.stabilityChanged.connect(self.handle_stability_change)
             thread.signals.cycleNumberChanged.connect(self.handle_cycle_number_change)
+            thread.signals.graphFailed.connect(
+                lambda: OkDialog(
+                    "Graphing Failed",
+                    "Unable to graph sequence data upon finishing the sequence. Data is saved.",
+                ).exec()
+            )
             # the following gets sent to external widgets
             thread.signals.newDataAquired.connect(self.newDataAquired.emit)
             # the following are sent to the thread
@@ -219,10 +228,6 @@ class SequenceWidget(GroupBox):
             OkDialog(
                 "Error!", "A sequence is already running. This is a bug, please report it."
             ).exec()
-
-    def new_thread(self):  # this is necessary for testing
-        """Create a new SequenceThread."""
-        return SequenceThread(self.instruments, self.model)
 
     def is_running(self) -> bool:
         """Determine if any SequenceThreads are active."""

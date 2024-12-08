@@ -5,7 +5,7 @@ from utility.layouts import add_to_layout  # ../utility
 import matplotlib
 from matplotlib.backends.backend_qtagg import (
     FigureCanvasQTAgg,
-    NavigationToolbar2QT as Toolbar,
+    NavigationToolbar2QT,
 )
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch
@@ -13,19 +13,36 @@ from matplotlib.patches import Patch
 matplotlib.use("QtAgg")
 
 
+class Toolbar(NavigationToolbar2QT):
+    """Toolbar with some altered commands."""
+
+    def __init__(self, canvas, parent=None, coordinates=True):
+        super().__init__(canvas, parent, coordinates)
+
+    def home(self, *args):  # overridden method
+        self.canvas.figure.tight_layout()
+        super().home(*args)
+
+
 class PlotWidget(Container):
     """Plot class for displaying **matplotlib** plots."""
 
-    def __init__(self, figsize: tuple[int, int], dpi: int):
+    def __init__(
+        self, figure: Figure | None = None, figsize: tuple[int, int] = (6, 5), dpi: int = 100
+    ):
         """
-        :param figsize: Figure size in inches (width, height).
-
-        :param dpi: The dots per inch of the figure.
+        :param figure: The figure to use inside this widget. Optional.
+        :param figsize: Figure size in inches (width, height). Defaults to 6x5.
+        :param dpi: The dots per inch of the figure. Defaults to 100.
         """
         super().__init__(QVBoxLayout)
 
-        self.figure = Figure(figsize=figsize, dpi=dpi)
-        self.axes = self.figure.add_subplot()
+        if figure is None:
+            self.figure = Figure(figsize=figsize, dpi=dpi)
+            self.axes = self.figure.add_subplot()
+        else:
+            self.figure = figure
+            self.axes = figure.gca()
         self.canvas = FigureCanvasQTAgg(self.figure)
         self.toolbar = Toolbar(self.canvas)
 

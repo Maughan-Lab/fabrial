@@ -31,7 +31,6 @@ def new_timer(interval_ms: int, slot: Callable[[], None]) -> QTimer:
 
     :returns: The created timer. The timer is already started. Note that you must keep a reference to the
     timer so it does not get deleted.
-    :rtype: QTimer
     """
     timer = new_timer_nostart(interval_ms, slot)
     slot()

@@ -1,18 +1,14 @@
-from PyQt6.QtWidgets import QVBoxLayout, QMainWindow
-from PyQt6.QtGui import QCloseEvent
+from PyQt6.QtWidgets import QVBoxLayout, QWidget
 from matplotlib.patches import Patch
 from instruments import InstrumentSet  # ../instruments.py
 from custom_widgets.plot import PlotWidget  # ../custom_widgets
 from custom_widgets.frame import Frame
 from enums.status import StabilityStatus
-from actions import Shortcut  # ../actions.py
+from .constants import XLABEL, YLABEL
 
 
 class GraphWidget(Frame):
     """Graph window that displays information from the temperature sequence."""
-
-    XLABEL = "Time (seconds)"
-    YLABEL = "Temperature ($\degree$C)"
 
     def __init__(self, instruments: InstrumentSet):
         """:param instruments: Container for instruments."""
@@ -28,9 +24,9 @@ class GraphWidget(Frame):
         layout = self.layout()
 
         # figure
-        self.plot = PlotWidget((5, 4), 100)
-        self.plot.set_xlabel(self.XLABEL)
-        self.plot.set_ylabel(self.YLABEL)
+        self.plot = PlotWidget()
+        self.plot.set_xlabel(XLABEL)
+        self.plot.set_ylabel(YLABEL)
         self.legend()
 
         layout.addWidget(self.plot)
@@ -46,8 +42,7 @@ class GraphWidget(Frame):
         )
 
     def add_point(self, time: float, temperature: float):
-        # self.plot.scatter(time, temperature, c=self.point_color, marker=".")
-        self.plot.plot(time, temperature, color=self.point_color, marker=".", linestyle="none")
+        self.plot.scatter(time, temperature, c=self.point_color, marker=".")
         self.plot.tight_layout()
         self.plot.draw()
 
@@ -64,38 +59,14 @@ class GraphWidget(Frame):
     def clear(self):
         self.plot.clean()
 
-
-class PoppedGraph(QMainWindow):
-    """Secondary window for holding popped graphs."""
-
-    def __init__(self, graph_widget: GraphWidget):
-        super().__init__()
-        self.setWindowTitle("Quincy - Popped Graph")
-        self.take_ownership(graph_widget.plot, graph_widget)
-
-        self.create_shortcuts(graph_widget.plot)
-
-        self.handle_perishing = lambda: self.return_ownership(graph_widget.plot, graph_widget)
-
-    def create_shortcuts(self, plot: PlotWidget):
-        self.close_shortcut = Shortcut(self, "Ctrl+G", self.close)
-        self.save_shortcut = Shortcut(self, "Ctrl+S", plot.toolbar.save_figure)
-
-    def closeEvent(self, event: QCloseEvent | None):  # overridden method
-        self.handle_perishing()
-        self.destroyed.emit()
-        if event is not None:
-            event.accept()
-
-    def take_ownership(self, widget: PlotWidget, parent: GraphWidget):
-        parent.hide()
+    def give_widget(self, widget: QWidget):
+        """Transfer ownership of a widget to this widget."""
         widget.setParent(self)
-        self.setCentralWidget(widget)
-
-    def return_ownership(self, widget: PlotWidget, parent: GraphWidget):
-        widget.setParent(parent)
-        layout = parent.layout()
+        layout = self.layout()
         if layout is not None:
             layout.addWidget(widget)
-        parent.show()
-        widget.figure.tight_layout()  # necessary to return to the proper size
+
+    def show(self):  # overridden method
+        """Resize the plot, then show."""
+        self.plot.tight_layout()
+        super().show()
