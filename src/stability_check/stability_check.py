@@ -7,7 +7,7 @@ import time
 class StabilityCheckThread(QRunnable):
     """Thread for running stability checks."""
 
-    MINIMUM_MEASUREMENTS = 150
+    MINIMUM_MEASUREMENTS = 10
     VARIANCE_TOLERANCE = 1.0  # degree C
     MEASUREMENT_INTERVAL = 5  # seconds
     WAIT_INTERVAL = 0.01  # seconds
@@ -29,7 +29,7 @@ class StabilityCheckThread(QRunnable):
         final_stability = StabilityStatus.STABLE
 
         measurement_count = 0
-        while measurement_count < self.MINIMUM_MEASUREMENTS:
+        while True:
             temperature = self.oven.read_temp()
             if temperature is None:
                 self.process_connection_problem()
@@ -38,13 +38,14 @@ class StabilityCheckThread(QRunnable):
                     final_stability = StabilityStatus.UNSTABLE
                     break
                 measurement_count += 1
+                self.signals.progressed.emit()
+                if measurement_count >= self.MINIMUM_MEASUREMENTS:
+                    break  # end the sequence
 
             proceed = self.wait()
             if not proceed:
                 final_stability = StabilityStatus.NULL
                 break
-
-            self.signals.progressed.emit()
 
         # if we make it here, we're stable!
         self.post_run(final_stability)

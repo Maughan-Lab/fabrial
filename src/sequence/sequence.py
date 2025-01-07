@@ -30,7 +30,7 @@ class SequenceThread(QRunnable):
 
     # sequence specifications. There must be at least MINIMUM_MEASUREMENTS that are within
     # VARIANCE_TOLERANCE for the oven to be stable
-    MINIMUM_MEASUREMENTS = 150
+    MINIMUM_MEASUREMENTS = 10
     VARIANCE_TOLERANCE = 1.0  # degrees C
     MEASUREMENT_INTERVAL = 5.0  # seconds
     WAIT_INTERVAL = 0.01
@@ -139,13 +139,15 @@ class SequenceThread(QRunnable):
         temperature_variances: list[float] = []
         stable = False
         while not stable:
-            while len(temperature_variances) < self.MINIMUM_MEASUREMENTS:
+            while True:
                 temperature = self.oven.read_temp()
                 if temperature is not None:
                     temperature_variances.append(abs(temperature - setpoint))
                     self.record_temperature_data(self.pre_stable_file, temperature)
                 else:
                     self.process_connection_problem()
+                if len(temperature_variances) >= self.MINIMUM_MEASUREMENTS:
+                    break  # we're good to check the stability
                 proceed = self.wait()
                 if not proceed:
                     return False

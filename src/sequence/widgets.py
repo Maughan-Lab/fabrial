@@ -51,7 +51,9 @@ class SequenceWidget(GroupBox):
         self.create_widgets()
         self.connect_widgets()
         self.connect_signals()
+        self.model.load_data()
 
+        # set up the initial label state
         self.handle_status_change(SequenceStatus.INACTIVE)
 
         self.threadpool = QThreadPool()
