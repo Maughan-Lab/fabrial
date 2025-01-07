@@ -118,7 +118,7 @@ class Oven(Instrument):
     def connect(self):
         """Attempts to connect to the oven."""
         try:
-            self.device = modbus.Instrument(self.port, 1)
+            self.device = modbus.Instrument(self.port, 1, close_port_after_each_call=True)
             connection_status = ConnectionStatus.CONNECTED
         except Exception:
             connection_status = ConnectionStatus.DISCONNECTED

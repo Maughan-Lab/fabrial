@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import QComboBox
 from PyQt6.QtCore import pyqtSignal
+from typing import Iterable
 
 MAX_VISIBLE_ITEMS = 20
 
@@ -25,6 +26,18 @@ class ComboBox(QComboBox):
         """Update the current text without emitting signals."""
         self.blockSignals(True)
         self.setCurrentText(text)
+        self.blockSignals(False)
+
+    def clearSilent(self):
+        """Clear the combobox entries without emitting signals."""
+        self.blockSignals(True)
+        self.clear()
+        self.blockSignals(False)
+
+    def addItemsSilent(self, items: Iterable[str | None]):
+        """Add items to the combobox without emitting signals."""
+        self.blockSignals(True)
+        self.addItems(items)
         self.blockSignals(False)
 
     # ----------------------------------------------------------------------------------------------

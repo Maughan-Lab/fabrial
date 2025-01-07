@@ -54,10 +54,12 @@ class InstrumentConnectionWidget(GroupBox):
 
     def update_comboboxes(self):
         """Update the port comboboxes to show the ports that currently exist."""
-        index = self.oven_combobox.currentIndex()
+        text = self.oven_combobox.currentText()
+        self.oven_combobox.blockSignals(True)
         self.oven_combobox.clear()
         self.oven_combobox.addItems(get_ports_list())
-        self.oven_combobox.setCurrentIndex(index)
+        self.oven_combobox.setCurrentText(text)
+        self.oven_combobox.blockSignals(False)
         # NOTE: when adding additional instruments, make sure they can never use the same port
 
     def update_connection_label(self, connected: bool):
