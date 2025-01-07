@@ -48,7 +48,7 @@ class InstrumentConnectionWidget(GroupBox):
     def connect_signals(self):
         """Give widgets logic."""
         # changing the oven combobox updates the oven port instantly
-        self.oven_combobox.currentTextChanged.connect(self.instruments.oven.update_port)
+        self.oven_combobox.activated.connect(self.update_port)
         self.oven_combobox.activated.connect(self.save_ports)
         self.oven_combobox.pressed.connect(self.update_comboboxes)
         self.instruments.oven.connectionChanged.connect(self.handle_connection_change)
@@ -72,7 +72,10 @@ class InstrumentConnectionWidget(GroupBox):
 
     def check_instrument_connection(self):
         """Reconnect to all instruments."""
-        self.update_comboboxes()
+        self.update_port()
+
+    def update_port(self, index: int | None = None):
+        """Update the oven's port (this is a slot)."""
         self.instruments.oven.update_port(self.oven_combobox.currentText())
 
     def handle_connection_change(self, connected: bool):
