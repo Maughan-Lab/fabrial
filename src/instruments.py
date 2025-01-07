@@ -9,6 +9,22 @@ if TYPE_CHECKING:
     from developer import DeveloperOven
 
 
+def to_str(connected: bool) -> str:
+    """Convert a bool representing the connection status to text."""
+    if connected:
+        return "CONNECTED"
+    else:
+        return "DISCONNECTED"
+
+
+def to_color(connected: bool) -> str:
+    """Convert a bool representing the connection status to a color string."""
+    if connected:
+        return "green"
+    else:
+        return "red"
+
+
 class ConnectionStatus(Enum):
     """Enum to represent connection states."""
 

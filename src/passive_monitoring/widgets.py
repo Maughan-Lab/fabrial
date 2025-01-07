@@ -4,7 +4,7 @@ from PyQt6.QtGui import QFont
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet  # ../instruments.py
-from utility.new_timer import new_timer_nostart  # ../utility
+from utility.timers import Timer  # ../utility
 
 
 class PassiveMonitoringWidget(GroupBox):
@@ -19,7 +19,7 @@ class PassiveMonitoringWidget(GroupBox):
         self.create_widgets()
 
         # timer to update the oven temperature, setpoint, and status every second
-        self.update_timer = new_timer_nostart(1000, self.monitor)
+        self.update_timer = Timer(1000, self.monitor)
         self.connect_signals()
 
     def create_widgets(self):
@@ -36,7 +36,6 @@ class PassiveMonitoringWidget(GroupBox):
         category_label = Label("Oven " + text + ":")
 
         font = QFont("Arial", 16)
-        # category_label.setFont(font)
         label_widget.setFont(font)
 
         layout.addWidget(category_label, row, 0, Qt.AlignmentFlag.AlignRight)
@@ -48,7 +47,7 @@ class PassiveMonitoringWidget(GroupBox):
     def handle_connection_change(self, connected: bool):
         # only monitor the oven when it is connected
         if connected:
-            self.update_timer.start()
+            self.update_timer.start_fast()
         else:
             self.handle_disconnect()
 

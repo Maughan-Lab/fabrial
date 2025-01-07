@@ -2,11 +2,11 @@ from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.combo_box import ComboBox  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
-from instruments import InstrumentSet  # ../instruments.py
+from instruments import InstrumentSet, to_str, to_color  # ../instruments.py
 from utility.layouts import add_sublayout, add_to_layout  # ../utility
-from utility.new_timer import new_timer  # ../utility
+from utility.timers import Timer  # ../utility
 from .ports import get_ports_list
-from .constants import PORTS_FILE, CONNECTION_COLOR_KEY
+from .constants import PORTS_FILE
 from os import path
 
 
@@ -23,16 +23,17 @@ class InstrumentConnectionWidget(GroupBox):
         self.create_widgets()
 
         # check the oven's connection on an interval
-        self.connection_timer = new_timer(1000, self.check_instrument_connection)
+        self.connection_timer = Timer(1000, self.check_instrument_connection)
         self.connect_signals()
         self.load_ports()
+        self.connection_timer.start_fast()
 
     def create_widgets(self):
         """Create subwidgets."""
         layout = self.layout()
 
         self.oven_combobox = ComboBox()
-        # add "COM1" through "COM500" to the combobox
+        # add all available COM ports to the list
         self.oven_combobox.addItems(get_ports_list())
         self.oven_connection_label = Label(self.NULL_TEXT)
 
@@ -48,7 +49,7 @@ class InstrumentConnectionWidget(GroupBox):
         """Give widgets logic."""
         # changing the oven combobox updates the oven port instantly
         self.oven_combobox.currentTextChanged.connect(self.instruments.oven.update_port)
-        self.oven_combobox.currentTextChanged.connect(self.save_ports)
+        self.oven_combobox.activated.connect(self.save_ports)
         self.oven_combobox.pressed.connect(self.update_comboboxes)
         self.instruments.oven.connectionChanged.connect(self.handle_connection_change)
 
@@ -64,14 +65,15 @@ class InstrumentConnectionWidget(GroupBox):
 
     def update_connection_label(self, connected: bool):
         """Update the connection status label's text and color."""
-        text = "CONNECTED" if connected else "DISCONNECTED"
+        text = to_str(connected)
         self.oven_connection_label.setText(text)
         # this is HTML syntax
-        self.oven_connection_label.setStyleSheet("color: " + CONNECTION_COLOR_KEY[connected])
+        self.oven_connection_label.setStyleSheet("color: " + to_color(connected))
 
     def check_instrument_connection(self):
         """Reconnect to all instruments."""
-        self.instruments.oven.connect()
+        self.update_comboboxes()
+        self.instruments.oven.update_port(self.oven_combobox.currentText())
 
     def handle_connection_change(self, connected: bool):
         self.update_connection_label(connected)
@@ -79,12 +81,13 @@ class InstrumentConnectionWidget(GroupBox):
         if connected:
             self.connection_timer.stop()
         else:
-            self.connection_timer.start()
+            self.connection_timer.start_fast()
 
-    def save_ports(self, new_port: str):
+    def save_ports(self, index: int):
         """Writes the current port selections to a file."""
+        port = self.oven_combobox.currentText()
         with open(PORTS_FILE, "w") as f:
-            f.write(new_port)
+            f.write(port)
 
     def load_ports(self):
         """Loads saved port selections."""
@@ -93,4 +96,4 @@ class InstrumentConnectionWidget(GroupBox):
                 port = f.read()
             # if the combobox contains the previously stored port
             if self.oven_combobox.findText(port) != -1:
-                self.oven_combobox.setCurrentText(port)  # this auto-triggers the oven to update
+                self.oven_combobox.setCurrentText(port)
