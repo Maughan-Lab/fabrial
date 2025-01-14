@@ -3,7 +3,7 @@
 /lib/
 /include/
 /lib64/
-/
+pyvenv.cfg
 # Quincy files
 **/__pycache__/
 **/.mypy_cache/
@@ -12,3 +12,6 @@
 **/saved_settings/
 **/build/
 **/dist/
+
+# random folder I saw once
+/share/

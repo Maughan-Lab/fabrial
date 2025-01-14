@@ -7,7 +7,7 @@ import time
 class StabilityCheckThread(QRunnable):
     """Thread for running stability checks."""
 
-    MINIMUM_MEASUREMENTS = 10
+    MINIMUM_MEASUREMENTS = 150
     VARIANCE_TOLERANCE = 1.0  # degree C
     MEASUREMENT_INTERVAL = 5  # seconds
     WAIT_INTERVAL = 0.01  # seconds

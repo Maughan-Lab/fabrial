@@ -23,6 +23,7 @@ class InstrumentConnectionWidget(GroupBox):
 
         # check the oven's connection on an interval
         self.connect_signals()
+        self.instruments.oven.start()
         self.load_ports()
 
     def create_widgets(self):

@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QPushButton
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
+from custom_widgets.dialog import OkDialog
 from instruments import InstrumentSet  # ../instruments.py
 from utility.layouts import add_to_layout  # ../utility
 
@@ -53,6 +54,8 @@ class SetpointWidget(GroupBox):
 
     def change_setpoint(self):
         """Change the oven's setpoint."""
-        self.instruments.oven.acquire()
-        self.instruments.oven.change_setpoint(self.setpoint_spinbox.value())
-        self.instruments.oven.release()
+        # intentionally not locking the oven because this is such a fast operation
+        success = self.instruments.oven.change_setpoint(self.setpoint_spinbox.value())
+        if not success:
+            # this will probably never run, but it could if the read operation fails
+            OkDialog("Error", "Failed to change setpoint, please try again.").exec()

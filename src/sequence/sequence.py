@@ -30,7 +30,7 @@ class SequenceThread(QRunnable):
 
     # sequence specifications. There must be at least MINIMUM_MEASUREMENTS that are within
     # VARIANCE_TOLERANCE for the oven to be stable
-    MINIMUM_MEASUREMENTS = 10
+    MINIMUM_MEASUREMENTS = 150
     VARIANCE_TOLERANCE = 1.0  # degrees C
     MEASUREMENT_INTERVAL = 5.0  # seconds
     WAIT_INTERVAL = 0.01
@@ -67,13 +67,14 @@ class SequenceThread(QRunnable):
 
         # other stuff
         while self.cycle_number < self.model.rowCount() and not self.cancel:
-            self.increment_cycle_number()
-            self.record_cycle_time()
-
+            # this section MUST be first
             setpoint = self.model.parameter_data.item(self.cycle_number - 1, TEMPERATURE_COLUMN)
             proceed = self.change_setpoint(setpoint)
             if not proceed:
                 continue
+
+            self.increment_cycle_number()
+            self.record_cycle_time()
 
             # stabilizing
             self.update_stability(StabilityStatus.CHECKING)
@@ -187,7 +188,6 @@ class SequenceThread(QRunnable):
         True if the cycle should proceed, False otherwise (i.e. the cycle is canceled or skipped).
         """
         count = 0.0
-        print(f"Connection problem?: {self.connection_problem}")
         while count < self.MEASUREMENT_INTERVAL or self.pause:
             time.sleep(self.WAIT_INTERVAL)
             count += self.WAIT_INTERVAL
