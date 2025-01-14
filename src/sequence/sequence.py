@@ -67,14 +67,14 @@ class SequenceThread(QRunnable):
 
         # other stuff
         while self.cycle_number < self.model.rowCount() and not self.cancel:
-            # this section MUST be first
+            self.increment_cycle_number()
+            self.record_cycle_time()
+
+            # self.change_setpoint() will wait until the operation is successful
             setpoint = self.model.parameter_data.item(self.cycle_number - 1, TEMPERATURE_COLUMN)
             proceed = self.change_setpoint(setpoint)
             if not proceed:
                 continue
-
-            self.increment_cycle_number()
-            self.record_cycle_time()
 
             # stabilizing
             self.update_stability(StabilityStatus.CHECKING)
