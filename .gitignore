@@ -1,3 +1,8 @@
+# Python virtual environment
+/bin/
+/lib/
+/include/
+# Quincy files
 **/__pycache__/
 **/.mypy_cache/
 **/.pytest_cache/
@@ -5,4 +10,3 @@
 **/saved_settings/
 **/build/
 **/dist/
-# **/*.exe
