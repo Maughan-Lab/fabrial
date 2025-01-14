@@ -103,6 +103,7 @@ class Oven(Instrument):
     def __init__(self, oven_port: str = ""):
         super().__init__()
         # the __ before variables just means they should not be read directly (private)
+        self.__device: modbus.Instrument | None = None
         self.__port = oven_port
         self.__temperature: float = -1
         self.__setpoint: float = -1
@@ -112,24 +113,25 @@ class Oven(Instrument):
 
         self.connection_timer = Timer(self, 1000, self.connect)
         self.connectionChanged.connect(self.handle_connection_change)
-        self.connection_timer.start_fast()
+        self.connection_timer.start()
 
     def handle_connection_change(self, connected: bool):
         if connected:
             self.connection_timer.stop()
-            self.temperature_timer.start_fast()
-            self.setpoint_timer.start_fast()
+            self.temperature_timer.start()
+            self.setpoint_timer.start()
         else:
-            self.connection_timer.start()
             self.temperature_timer.stop()
             self.setpoint_timer.stop()
             self.__temperature = -1
             self.__setpoint = -1
+            self.connection_timer.start()
 
     def read_temp(self) -> float | None:
         """Returns the oven's temperature if the oven is connected, None otherwise."""
+        print("READING TEMPERATURE")
         try:
-            temperature = self.device.read_register(
+            temperature = self.__device.read_register(
                 self.TEMPERATURE_REGISTER, self.NUMBER_OF_DECIMALS
             )
             if temperature != self.__temperature:
@@ -146,7 +148,7 @@ class Oven(Instrument):
         was successful.
         """
         try:
-            self.device.write_register(self.SETPOINT_REGISTER, setpoint, self.NUMBER_OF_DECIMALS)
+            self.__device.write_register(self.SETPOINT_REGISTER, setpoint, self.NUMBER_OF_DECIMALS)
             self.__setpoint = setpoint
             self.setpointChanged.emit(setpoint)
             return True
@@ -156,8 +158,9 @@ class Oven(Instrument):
 
     def get_setpoint(self) -> float | None:
         """Returns the oven's setpoint if the oven is connected, None otherwise."""
+        print("READING SETPOINT")
         try:
-            setpoint = self.device.read_register(self.SETPOINT_REGISTER, self.NUMBER_OF_DECIMALS)
+            setpoint = self.__device.read_register(self.SETPOINT_REGISTER, self.NUMBER_OF_DECIMALS)
             if setpoint != self.__setpoint:
                 self.__setpoint = setpoint
                 self.setpointChanged.emit(setpoint)
@@ -169,10 +172,13 @@ class Oven(Instrument):
     def connect(self):
         """Attempts to connect to the oven."""
         try:
-            self.device = modbus.Instrument(self.__port, 1, close_port_after_each_call=True)
+            del self.__device
+            self.__device = modbus.Instrument(self.__port, 1, close_port_after_each_call=True)
             connection_status = ConnectionStatus.CONNECTED
+            print("CONNECTED")
         except Exception:
             connection_status = ConnectionStatus.DISCONNECTED
+            print("NOT CONNECTED")
         self.update_connection_status(connection_status)
 
     def update_port(self, port: str):

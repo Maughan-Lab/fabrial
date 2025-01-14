@@ -46,7 +46,6 @@ class InstrumentConnectionWidget(GroupBox):
         """Give widgets logic."""
         # changing the oven combobox updates the oven port instantly
         self.oven_combobox.activated.connect(self.update_port)
-        self.oven_combobox.activated.connect(lambda: print("HERE"))
         self.oven_combobox.activated.connect(self.save_ports)
         self.oven_combobox.pressed.connect(self.update_comboboxes)
         self.instruments.oven.connectionChanged.connect(self.handle_connection_change)

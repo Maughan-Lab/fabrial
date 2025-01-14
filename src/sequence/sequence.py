@@ -187,6 +187,7 @@ class SequenceThread(QRunnable):
         True if the cycle should proceed, False otherwise (i.e. the cycle is canceled or skipped).
         """
         count = 0.0
+        print(self.connection_problem)
         while count < self.MEASUREMENT_INTERVAL or self.pause:
             time.sleep(self.WAIT_INTERVAL)
             count += self.WAIT_INTERVAL
