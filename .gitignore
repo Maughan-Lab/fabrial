@@ -2,6 +2,8 @@
 /bin/
 /lib/
 /include/
+/lib64/
+/
 # Quincy files
 **/__pycache__/
 **/.mypy_cache/
