@@ -4,7 +4,6 @@ from PyQt6.QtGui import QFont
 from custom_widgets.label import Label  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet  # ../instruments.py
-from utility.timers import Timer  # ../utility
 
 
 class PassiveMonitoringWidget(GroupBox):
@@ -17,9 +16,6 @@ class PassiveMonitoringWidget(GroupBox):
         super().__init__("Measurements", QGridLayout, instruments)
 
         self.create_widgets()
-
-        # timer to update the oven temperature, setpoint, and status every second
-        self.update_timer = Timer(1000, self.monitor)
         self.connect_signals()
 
     def create_widgets(self):
@@ -43,29 +39,22 @@ class PassiveMonitoringWidget(GroupBox):
 
     def connect_signals(self):
         self.instruments.oven.connectionChanged.connect(self.handle_connection_change)
+        self.instruments.oven.temperatureChanged.connect(self.handle_temperature_change)
+        self.instruments.oven.setpointChanged.connect(self.handle_setpoint_change)
 
     def handle_connection_change(self, connected: bool):
-        # only monitor the oven when it is connected
-        if connected:
-            self.update_timer.start_fast()
-        else:
+        if not connected:
             self.handle_disconnect()
 
     def handle_disconnect(self):
         for label in (self.temperature_label, self.setpoint_label):
             label.setText(self.NULL_TEXT)
-        self.update_timer.stop()
+
+    def handle_temperature_change(self, temperature: float):
+        self.update_label(self.temperature_label, temperature)
+
+    def handle_setpoint_change(self, setpoint: float):
+        self.update_label(self.setpoint_label, setpoint)
 
     def update_label(self, label: Label, value: float):
         label.setText(str(value))
-
-    def monitor(self):
-        temperature = self.instruments.oven.read_temp()
-        if temperature is None:
-            return
-        self.update_label(self.temperature_label, temperature)
-
-        setpoint = self.instruments.oven.get_setpoint()
-        if setpoint is None:
-            return
-        self.update_label(self.setpoint_label, setpoint)

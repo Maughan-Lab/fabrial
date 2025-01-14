@@ -4,7 +4,6 @@ from custom_widgets.combo_box import ComboBox  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet, to_str, to_color  # ../instruments.py
 from utility.layouts import add_sublayout, add_to_layout  # ../utility
-from utility.timers import Timer  # ../utility
 from .ports import get_ports_list
 from .constants import PORTS_FILE
 from os import path
@@ -23,10 +22,8 @@ class InstrumentConnectionWidget(GroupBox):
         self.create_widgets()
 
         # check the oven's connection on an interval
-        self.connection_timer = Timer(1000, self.check_instrument_connection)
         self.connect_signals()
         self.load_ports()
-        self.connection_timer.start_fast()
 
     def create_widgets(self):
         """Create subwidgets."""
@@ -49,6 +46,7 @@ class InstrumentConnectionWidget(GroupBox):
         """Give widgets logic."""
         # changing the oven combobox updates the oven port instantly
         self.oven_combobox.activated.connect(self.update_port)
+        self.oven_combobox.activated.connect(lambda: print("HERE"))
         self.oven_combobox.activated.connect(self.save_ports)
         self.oven_combobox.pressed.connect(self.update_comboboxes)
         self.instruments.oven.connectionChanged.connect(self.handle_connection_change)
@@ -70,21 +68,12 @@ class InstrumentConnectionWidget(GroupBox):
         # this is HTML syntax
         self.oven_connection_label.setStyleSheet("color: " + to_color(connected))
 
-    def check_instrument_connection(self):
-        """Reconnect to all instruments."""
-        self.update_port()
+    def handle_connection_change(self, connected: bool):
+        self.update_connection_label(connected)
 
     def update_port(self, index: int | None = None):
         """Update the oven's port (this is a slot)."""
         self.instruments.oven.update_port(self.oven_combobox.currentText())
-
-    def handle_connection_change(self, connected: bool):
-        self.update_connection_label(connected)
-        # only check instrument connection when a disconnect is detected
-        if connected:
-            self.connection_timer.stop()
-        else:
-            self.connection_timer.start_fast()
 
     def save_ports(self, index: int):
         """Writes the current port selections to a file."""
@@ -100,3 +89,4 @@ class InstrumentConnectionWidget(GroupBox):
             # if the combobox contains the previously stored port
             if self.oven_combobox.findText(port) != -1:
                 self.oven_combobox.setCurrentText(port)
+                self.instruments.oven.update_port(port)
