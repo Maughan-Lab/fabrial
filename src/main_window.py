@@ -136,9 +136,3 @@ class MainWindow(QMainWindow):
             signal.emit()
             return True
         return False
-
-
-# --------------------------------------------------------------------------------------------------
-def delete_window(window: QMainWindow):
-    """Delete a window."""
-    del window

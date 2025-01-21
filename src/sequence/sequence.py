@@ -1,14 +1,9 @@
 from PyQt6.QtCore import QRunnable, pyqtSignal, pyqtSlot, QObject
-from .table_model import TableModel
+from .table_model import TableModel, Column
 import time
 from os import path
 import os
 from .constants import (
-    TEMPERATURE_COLUMN,
-    BUFFER_HOURS_COLUMN,
-    BUFFER_MINUTES_COLUMN,
-    HOLD_HOURS_COLUMN,
-    HOLD_MINUTES_COLUMN,
     DATE_FORMAT,
     DATA_FILES_LOCATION,
     PRE_STABLE_FILE,
@@ -71,7 +66,9 @@ class SequenceThread(QRunnable):
             self.record_cycle_time()
 
             # self.change_setpoint() will wait until the operation is successful
-            setpoint = self.model.parameter_data.item(self.cycle_number - 1, TEMPERATURE_COLUMN)
+            setpoint = self.model.parameter_data.item(
+                self.cycle_number - 1, str(Column.TEMPERATURE)
+            )
             proceed = self.change_setpoint(setpoint)
             if not proceed:
                 continue
@@ -85,7 +82,7 @@ class SequenceThread(QRunnable):
             # buffering
             self.update_stability(StabilityStatus.BUFFERING)
             proceed = self.collect_data(
-                BUFFER_HOURS_COLUMN, BUFFER_MINUTES_COLUMN, self.buffer_file
+                str(Column.BUFFER_HOURS), str(Column.BUFFER_MINUTES), self.buffer_file
             )
             if not proceed:
                 if not self.buffer_skip:
@@ -95,7 +92,7 @@ class SequenceThread(QRunnable):
 
             # data collection while stable
             self.update_stability(StabilityStatus.STABLE)
-            self.collect_data(HOLD_HOURS_COLUMN, HOLD_MINUTES_COLUMN, self.stable_file)
+            self.collect_data(str(Column.HOLD_HOURS), Column.HOLD_MINUTES, self.stable_file)
 
         self.post_run()
 

@@ -24,6 +24,23 @@ class Column(Enum):
     HOLD_HOURS = 4
     HOLD_MINUTES = 5
 
+    def __str__(self):
+        """Return the name of the column as a string."""
+        match self:
+            case Column.CYCLE:
+                return CYCLE_COLUMN
+            case Column.TEMPERATURE:
+                return TEMPERATURE_COLUMN
+            case Column.BUFFER_HOURS:
+                return BUFFER_HOURS_COLUMN
+            case Column.BUFFER_MINUTES:
+                return BUFFER_MINUTES_COLUMN
+            case Column.HOLD_HOURS:
+                return HOLD_HOURS_COLUMN
+            case Column.HOLD_MINUTES:
+                return HOLD_MINUTES_COLUMN
+        return "ERROR"  # this should never run
+
 
 class TableModel(QAbstractTableModel):
     """Concrete version of a QAbstractTableModel for working with **Polars** **DataFrame**s."""
@@ -79,12 +96,12 @@ class TableModel(QAbstractTableModel):
         temperatures = [Oven.MINIMUM_TEMPERATURE for i in range(row_count)]
         new_rows = pl.DataFrame(
             {
-                CYCLE_COLUMN: cycles,
-                TEMPERATURE_COLUMN: temperatures,
-                BUFFER_HOURS_COLUMN: times,
-                BUFFER_MINUTES_COLUMN: times,
-                HOLD_HOURS_COLUMN: times,
-                HOLD_MINUTES_COLUMN: times,
+                str(Column.CYCLE): cycles,
+                str(Column.TEMPERATURE): temperatures,
+                str(Column.BUFFER_HOURS): times,
+                str(Column.BUFFER_MINUTES): times,
+                str(Column.HOLD_HOURS): times,
+                str(Column.HOLD_MINUTES): times,
             }
         )
         return new_rows
@@ -131,8 +148,8 @@ class TableModel(QAbstractTableModel):
                 match orientation:
                     case Qt.Orientation.Horizontal:
                         return str(self.parameter_data.columns[index])
-                    case Qt.Orientation.Vertical:
-                        return str(self.parameter_data.select(col(CYCLE_COLUMN)).item(index, 0))
+                    case _:
+                        return ""
 
     def setData(self, index, value, role):
         match role:
