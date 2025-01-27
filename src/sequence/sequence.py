@@ -92,7 +92,7 @@ class SequenceThread(QRunnable):
 
             # data collection while stable
             self.update_stability(StabilityStatus.STABLE)
-            self.collect_data(str(Column.HOLD_HOURS), Column.HOLD_MINUTES, self.stable_file)
+            self.collect_data(str(Column.HOLD_HOURS), str(Column.HOLD_MINUTES), self.stable_file)
 
         self.post_run()
 
@@ -259,7 +259,9 @@ class SequenceThread(QRunnable):
     def record_stabilization_time(self):
         """Record the current cycle's stabilization time."""
         seconds_since_start, datetime = get_times(self.starting_time)
-        self.write_csv_line(self.stabilization_times_file, seconds_since_start, datetime)
+        self.write_csv_line(
+            self.stabilization_times_file, self.cycle_number, datetime, seconds_since_start
+        )
 
     def write_csv_line(self, file: str, *values: float | str, file_mode: str = "a"):
         """
