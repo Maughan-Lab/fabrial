@@ -144,18 +144,27 @@ class SequenceThread(QRunnable):
                     self.record_temperature_data(self.pre_stable_file, temperature)
                 else:
                     self.process_connection_problem()
-                if len(temperature_variances) >= self.MINIMUM_MEASUREMENTS:
-                    break  # we're good to check the stability
+
+                # check to proceed
                 proceed = self.wait()
                 if not proceed:
                     return False
 
+                if len(temperature_variances) >= self.MINIMUM_MEASUREMENTS:
+                    break  # we're good to check the stability
+
             stable = True
-            for location in range(len(temperature_variances)):
+            # start from the end of the list and search for the first instance of an "unstable"
+            # measurement. If one is not found, we're stable!
+            # we must start from the end because we want to eliminate as much of the list as
+            # possible
+            for location in range(len(temperature_variances) - 1, -1, -1):
                 variance = temperature_variances[location]
                 if variance >= self.VARIANCE_TOLERANCE:
                     stable = False
-                    del temperature_variances[: location + 1]
+                    # we delete the list from the "unstable" point and before, and keep the rest
+                    # the garbage collector will remove the rest of the list
+                    temperature_variances = temperature_variances[location + 1 :]
                     break
 
         self.record_stabilization_time()
