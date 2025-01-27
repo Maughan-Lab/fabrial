@@ -158,13 +158,20 @@ class SequenceThread(QRunnable):
             # measurement. If one is not found, we're stable!
             # we must start from the end because we want to eliminate as much of the list as
             # possible
-            for location in range(len(temperature_variances) - 1, -1, -1):
+            length = len(temperature_variances)
+            for index in range(length - 1, -1, -1):
                 variance = temperature_variances[location]
                 if variance >= self.VARIANCE_TOLERANCE:
                     stable = False
                     # we delete the list from the "unstable" point and before, and keep the rest
                     # the garbage collector will remove the rest of the list
-                    temperature_variances = temperature_variances[location + 1 :]
+                    if (index + 1) == length:
+                        # if the "unstable" point was the last point in the list, remove the whole
+                        # list
+                        temperature_variances = []
+                    else:
+                        # otherwise remove the "unstable" point and everything before
+                        temperature_variances = temperature_variances[index+1:]
                     break
 
         self.record_stabilization_time()
