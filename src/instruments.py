@@ -49,44 +49,44 @@ class Instrument(QObject):
 
     def __init__(self):
         super().__init__()
-        self.__connection_status = ConnectionStatus.NULL
+        self.connection_status = ConnectionStatus.NULL
 
         # this lock indicates to the rest of the application the instrument is not available
-        self.__lock = SignalMutex()  # do not manually access the lock ever
-        self.lockChanged = self.__lock.lockChanged  # shortcut to signal inside self.lock
+        self.lock = SignalMutex()  # do not manually access the lock ever
+        self.lockChanged = self.lock.lockChanged  # shortcut to signal inside self.lock
 
         # this lock ensures accessing the physical device is thread safe
-        self._device_lock = QMutex()
+        self.device_lock = QMutex()
 
     def acquire(self):
         """
         Make the instrument mutable for only one process. This should be followed by a call to
         **release()**.
         """
-        self.__lock.lock()
+        self.lock.lock()
 
     def release(self):
         """Make the instrument mutable for other processes."""
-        self.__lock.unlock()
+        self.lock.unlock()
 
     def update_connection_status(self, connection_status: ConnectionStatus):
         """
         Helper function to update the connection status and emit a signal. This should not be
         called outside of the oven.
         """
-        if self.__connection_status != connection_status:
-            self.__connection_status = connection_status
+        if self.connection_status != connection_status:
+            self.connection_status = connection_status
             self.connectionChanged.emit(self.is_connected())
 
     def is_connected(self) -> bool:
         """Get the connection status of this instrument as a bool."""
-        return bool(self.__connection_status)
+        return bool(self.connection_status)
 
     def is_unlocked(self) -> bool:
         """Get the lock status of this instrument as a bool."""
-        acquired = self.__lock.tryLock()
+        acquired = self.lock.tryLock()
         if acquired:
-            self.__lock.unlock()
+            self.lock.unlock()
         return acquired
 
 
@@ -107,12 +107,12 @@ class Oven(Instrument):
     def __init__(self, oven_port: str = ""):
         super().__init__()
         # the __ before variables just means they should not be read directly (private)
-        self.__port = oven_port
-        self.__temperature: float = -1
-        self.__setpoint: float = -1
+        self.port = oven_port
+        self.temperature: float = -1
+        self.setpoint: float = -1
 
-        self.__temperature_timer = Timer(self, 1000, self.read_temp)
-        self.__setpoint_timer = Timer(self, 1000, self.get_setpoint)
+        self.temperature_timer = Timer(self, 1000, self.read_temp)
+        self.setpoint_timer = Timer(self, 1000, self.get_setpoint)
 
         self.connection_timer = Timer(self, 1000, self.connect)
         self.connectionChanged.connect(self.handle_connection_change)
@@ -120,13 +120,13 @@ class Oven(Instrument):
     def handle_connection_change(self, connected: bool):
         if connected:
             self.connection_timer.stop()
-            self.__temperature_timer.start()
-            self.__setpoint_timer.start()
+            self.temperature_timer.start()
+            self.setpoint_timer.start()
         else:
-            self.__temperature_timer.stop()
-            self.__setpoint_timer.stop()
-            self.__temperature = -1
-            self.__setpoint = -1
+            self.temperature_timer.stop()
+            self.setpoint_timer.stop()
+            self.temperature = -1
+            self.setpoint = -1
             self.connection_timer.start()
 
     def read_temp(self) -> float | None:
@@ -137,16 +137,16 @@ class Oven(Instrument):
         temperature: float | None = None
         try:
             temperature = float(
-                self.__device.read_register(self.TEMPERATURE_REGISTER, self.NUMBER_OF_DECIMALS)
+                self.device.read_register(self.TEMPERATURE_REGISTER, self.NUMBER_OF_DECIMALS)
             )
-            if temperature != self.__temperature:
-                self.__temperature = temperature
+            if temperature != self.temperature:
+                self.temperature = temperature
                 self.temperatureChanged.emit(temperature)
         except Exception:
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
             return None
         finally:
-            self._device_lock.unlock()
+            self.device_lock.unlock()
 
         return temperature
 
@@ -160,41 +160,39 @@ class Oven(Instrument):
 
         success = False
         try:
-            self.__device.write_register(self.SETPOINT_REGISTER, setpoint, self.NUMBER_OF_DECIMALS)
-            self.__setpoint = setpoint
+            self.device.write_register(self.SETPOINT_REGISTER, setpoint, self.NUMBER_OF_DECIMALS)
+            self.setpoint = setpoint
             self.setpointChanged.emit(setpoint)
             success = True
         except Exception:
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
         finally:
-            self._device_lock.unlock()
+            self.device_lock.unlock()
 
         return success
 
-    def get_setpoint(self) -> float | None:
-        """Returns the oven's setpoint if on a successful read, None otherwise."""
+    def get_setpoint(self) -> None:
+        """Updates the oven's setpoint if on a successful read."""
         if not self.try_device_lock():
             return None
 
         setpoint: float | None = None
         try:
             setpoint = float(
-                self.__device.read_register(self.SETPOINT_REGISTER, self.NUMBER_OF_DECIMALS)
+                self.device.read_register(self.SETPOINT_REGISTER, self.NUMBER_OF_DECIMALS)
             )
-            if setpoint != self.__setpoint:
-                self.__setpoint = setpoint
+            if setpoint != self.setpoint:
+                self.setpoint = setpoint
                 self.setpointChanged.emit(setpoint)
         except Exception:
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
         finally:
-            self._device_lock.unlock()
-
-        return setpoint
+            self.device_lock.unlock()
 
     def try_device_lock(self) -> bool:
         """Try to acquire the device lock twice, pausing in between."""
         for i in range(2):
-            if self._device_lock.tryLock():
+            if self.device_lock.tryLock():
                 return True
             if i != 1:
                 time.sleep(0.01)
@@ -203,7 +201,7 @@ class Oven(Instrument):
     def connect(self):
         """Attempts to connect to the oven."""
         try:
-            self.__device = modbus.Instrument(self.__port, 1, close_port_after_each_call=True)
+            self.device = modbus.Instrument(self.port, 1, close_port_after_each_call=True)
             connection_status = ConnectionStatus.CONNECTED
         except Exception:
             connection_status = ConnectionStatus.DISCONNECTED
@@ -211,7 +209,7 @@ class Oven(Instrument):
 
     def update_port(self, port: str):
         """Updates the oven's connection port."""
-        self.__port = port
+        self.port = port
         self.connect()
 
     def start(self):

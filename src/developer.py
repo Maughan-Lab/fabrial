@@ -35,8 +35,8 @@ class DeveloperOven(Oven):
     def __init__(self, oven_port: str = ""):
         super().__init__(oven_port)
         self.unlocked = True
-        self.temperature = 0.0
-        self.setpoint = 0.0
+        self.developer_temperature = 0.0
+        self.developer_setpoint = 0.0
 
     def set_connected(self, connection_status: ConnectionStatus):
         """Set the connection status and send signals."""
@@ -48,7 +48,7 @@ class DeveloperOven(Oven):
 
     def set_temperature(self, temperature: float):
         """Set the oven's temperature."""
-        self.temperature = temperature
+        self.developer_temperature = temperature
 
     # overridden methods
 
@@ -67,28 +67,27 @@ class DeveloperOven(Oven):
     def read_temp(self) -> float | None:
         """Return the previously set temperature if connected, else None."""
         if self.is_connected():
-            return self.temperature
+            self.temperatureChanged.emit(self.developer_temperature)
+            return self.developer_temperature
         else:
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
             return None
 
     def change_setpoint(self, setpoint):
         """Set the setpoint."""
-        self.setpoint = setpoint
+        self.developer_setpoint = setpoint
         if not self.is_connected():
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
         return self.is_connected()
 
-    def get_setpoint(self) -> float | None:
-        """Return the previously set setpoint if connected, else None."""
+    def get_setpoint(self):
         if self.is_connected():
-            return self.setpoint
+            self.setpointChanged.emit(self.developer_setpoint)
         else:
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
-            return None
 
     def connect(self):
-        self.update_connection_status(ConnectionStatus.DISCONNECTED)
+        return
 
     def update_port(self, port):
         """Update the port variable and do nothing else."""
@@ -177,7 +176,7 @@ class DeveloperMainWindow(MainWindow):
 
     def __init__(self, instruments):
         super().__init__(instruments)
-        layout: QGridLayout = self.centralWidget().layout()
+        layout = self.centralWidget().layout()
         layout.addWidget(DeveloperWidget(instruments), 0, 3)
 
     def initialize_widgets(self, instruments):

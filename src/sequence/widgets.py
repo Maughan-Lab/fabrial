@@ -209,7 +209,7 @@ class SequenceWidget(GroupBox):
             thread.signals.statusChanged.connect(self.handle_status_change)
             thread.signals.stabilityChanged.connect(self.handle_stability_change)
             thread.signals.cycleNumberChanged.connect(self.handle_cycle_number_change)
-              # the following gets sent to external widgets
+            # the following gets sent to external widgets
             thread.signals.newDataAquired.connect(self.newDataAquired.emit)
             # the following are sent to the thread
             self.pauseSequence.connect(thread.pause_sequence)
