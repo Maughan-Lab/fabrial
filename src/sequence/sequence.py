@@ -160,7 +160,7 @@ class SequenceThread(QRunnable):
             # possible
             length = len(temperature_variances)
             for index in range(length - 1, -1, -1):
-                variance = temperature_variances[location]
+                variance = temperature_variances[index]
                 if variance >= self.VARIANCE_TOLERANCE:
                     stable = False
                     # we delete the list from the "unstable" point and before, and keep the rest
@@ -200,10 +200,9 @@ class SequenceThread(QRunnable):
         Wait for **MEASUREMENT_INTERVAL** or while there is a connection problem. Returns
         True if the cycle should proceed, False otherwise (i.e. the cycle is canceled or skipped).
         """
-        count = 0.0
-        while count < self.MEASUREMENT_INTERVAL or self.pause:
+        end_time = time.time() + self.MEASUREMENT_INTERVAL
+        while time.time() < end_time or self.pause:
             time.sleep(self.WAIT_INTERVAL)
-            count += self.WAIT_INTERVAL
             if self.cancel:
                 return False
             elif self.skip:

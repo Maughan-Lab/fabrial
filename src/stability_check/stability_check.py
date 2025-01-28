@@ -64,8 +64,8 @@ class StabilityCheckThread(QRunnable):
 
     def wait(self) -> bool:
         """Wait for **MEASUREMENT_INTERVAL** and handle connection problems."""
-        count = 0.0
-        while count < self.MEASUREMENT_INTERVAL or self.connection_problem:
+        end_time = time.time() + self.MEASUREMENT_INTERVAL
+        while time.time() < end_time or self.connection_problem:
             if self.cancel:
                 return False
             if self.connection_problem:
@@ -73,7 +73,6 @@ class StabilityCheckThread(QRunnable):
                     self.connection_problem = False
                     self.update_stability(StabilityStatus.CHECKING)
             time.sleep(self.WAIT_INTERVAL)
-            count += self.WAIT_INTERVAL
         return True
 
     def process_connection_problem(self):
