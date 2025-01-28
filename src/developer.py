@@ -79,11 +79,13 @@ class DeveloperOven(Oven):
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
         return self.is_connected()
 
-    def get_setpoint(self):
+    def get_setpoint(self) -> float | None:
         if self.is_connected():
             self.setpointChanged.emit(self.developer_setpoint)
+            return self.setpoint
         else:
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
+        return None
 
     def connect(self):
         return

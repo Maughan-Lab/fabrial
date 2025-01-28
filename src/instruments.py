@@ -171,7 +171,7 @@ class Oven(Instrument):
 
         return success
 
-    def get_setpoint(self) -> None:
+    def get_setpoint(self) -> float | None:
         """Updates the oven's setpoint if on a successful read."""
         if not self.try_device_lock():
             return None
@@ -188,6 +188,7 @@ class Oven(Instrument):
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
         finally:
             self.device_lock.unlock()
+        return setpoint
 
     def try_device_lock(self) -> bool:
         """Try to acquire the device lock twice, pausing in between."""
