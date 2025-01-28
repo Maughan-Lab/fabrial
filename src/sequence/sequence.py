@@ -18,6 +18,7 @@ from .constants import (
 from instruments import InstrumentSet  # ../instruments.py
 from enums.status import StabilityStatus, SequenceStatus  # ../enums
 from utility.graph import graph_from_folder  # ../utility
+from custom_widgets.dialog import OkDialog
 
 
 class SequenceThread(QRunnable):
@@ -171,7 +172,7 @@ class SequenceThread(QRunnable):
                         temperature_variances = []
                     else:
                         # otherwise remove the "unstable" point and everything before
-                        temperature_variances = temperature_variances[index+1:]
+                        temperature_variances = temperature_variances[index + 1 :]
                     break
 
         self.record_stabilization_time()
@@ -295,7 +296,10 @@ class SequenceThread(QRunnable):
                 path.join(self.data_folder, GRAPH_FILE), dpi=1000
             )
         except Exception:
-            self.signals.graphFailed.emit()
+            OkDialog(
+                "Graphing Failed",
+                "Unable to graph sequence data upon finishing the sequence. Data is saved.",
+            ).exec()
 
     # ----------------------------------------------------------------------------------------------
     # signals
@@ -345,7 +349,6 @@ class Signals(QObject):
     cycleNumberChanged = pyqtSignal(int)
     stabilityChanged = pyqtSignal(StabilityStatus)
     statusChanged = pyqtSignal(SequenceStatus)
-    graphFailed = pyqtSignal()
 
 
 # --------------------------------------------------------------------------------------------------
