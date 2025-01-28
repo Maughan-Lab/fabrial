@@ -5,6 +5,7 @@ import minimalmodbus as modbus
 from mutex import SignalMutex
 from typing import Union, TYPE_CHECKING
 from utility.timers import Timer
+import time
 
 if TYPE_CHECKING:
     from developer import DeveloperOven
@@ -130,10 +131,10 @@ class Oven(Instrument):
 
     def read_temp(self) -> float | None:
         """Returns the oven's temperature if on a successful read, None otherwise."""
-        if not self._device_lock.tryLock():
+        if not self.try_device_lock():
             return None
-        temperature: float | None = None
 
+        temperature: float | None = None
         try:
             temperature = float(
                 self.__device.read_register(self.TEMPERATURE_REGISTER, self.NUMBER_OF_DECIMALS)
@@ -154,10 +155,10 @@ class Oven(Instrument):
         Sets the oven's temperature to **setpoint**. Returns True if the operation was successful,
         False otherwise.
         """
-        if not self._device_lock.tryLock():
+        if not self.try_device_lock():
             return False
-        success = False
 
+        success = False
         try:
             self.__device.write_register(self.SETPOINT_REGISTER, setpoint, self.NUMBER_OF_DECIMALS)
             self.__setpoint = setpoint
@@ -172,10 +173,10 @@ class Oven(Instrument):
 
     def get_setpoint(self) -> float | None:
         """Returns the oven's setpoint if on a successful read, None otherwise."""
-        if not self._device_lock.tryLock():
+        if not self.try_device_lock():
             return None
-        setpoint: float | None = None
 
+        setpoint: float | None = None
         try:
             setpoint = float(
                 self.__device.read_register(self.SETPOINT_REGISTER, self.NUMBER_OF_DECIMALS)
@@ -183,13 +184,21 @@ class Oven(Instrument):
             if setpoint != self.__setpoint:
                 self.__setpoint = setpoint
                 self.setpointChanged.emit(setpoint)
-
         except Exception:
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
         finally:
             self._device_lock.unlock()
 
         return setpoint
+
+    def try_device_lock(self) -> bool:
+        """Try to acquire the device lock twice, pausing in between."""
+        for i in range(2):
+            if self._device_lock.tryLock():
+                return True
+            if i != 1:
+                time.sleep(0.01)
+        return False
 
     def connect(self):
         """Attempts to connect to the oven."""
