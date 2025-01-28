@@ -31,6 +31,8 @@ class SequenceThread(QRunnable):
     WAIT_INTERVAL = 0.01
     END_TEMPERATURE = 30  # degrees C
 
+    MAX_FILE_ERRORS = 10
+
     # headers
     TEMPERATURE_DATA_HEADER = f"Time ({DATE_FORMAT}),{TIME},{TEMPERATURE}"
     STABILIZATION_TIMES_HEADER = (
@@ -55,44 +57,50 @@ class SequenceThread(QRunnable):
         self.stability = StabilityStatus.NULL
         self.old_stability = StabilityStatus.NULL
 
+        self.file_error_count = 0
+
     @pyqtSlot()
     def run(self):
         """Run the temperature sequence."""
-        self.pre_run()
+        try:
+            self.pre_run()
 
-        # other stuff
-        while self.cycle_number < self.model.rowCount() and not self.cancel:
-            self.increment_cycle_number()
-            self.record_cycle_time()
+            while self.cycle_number < self.model.rowCount() and not self.cancel:
+                self.increment_cycle_number()
+                self.record_cycle_time()
 
-            # self.change_setpoint() will wait until the operation is successful
-            setpoint = self.model.parameter_data.item(
-                self.cycle_number - 1, str(Column.TEMPERATURE)
-            )
-            proceed = self.change_setpoint(setpoint)
-            if not proceed:
-                continue
-
-            # stabilizing
-            self.update_stability(StabilityStatus.CHECKING)
-            proceed = self.stabilize(setpoint)
-            if not proceed:
-                continue
-
-            # buffering
-            self.update_stability(StabilityStatus.BUFFERING)
-            proceed = self.collect_data(
-                str(Column.BUFFER_HOURS), str(Column.BUFFER_MINUTES), self.buffer_file
-            )
-            if not proceed:
-                if not self.buffer_skip:
+                # self.change_setpoint() will wait until the operation is successful
+                setpoint = self.model.parameter_data.item(
+                    self.cycle_number - 1, str(Column.TEMPERATURE)
+                )
+                proceed = self.change_setpoint(setpoint)
+                if not proceed:
                     continue
-                else:
-                    self.buffer_skip = False
 
-            # data collection while stable
-            self.update_stability(StabilityStatus.STABLE)
-            self.collect_data(str(Column.HOLD_HOURS), str(Column.HOLD_MINUTES), self.stable_file)
+                # stabilizing
+                self.update_stability(StabilityStatus.CHECKING)
+                proceed = self.stabilize(setpoint)
+                if not proceed:
+                    continue
+
+                # buffering
+                self.update_stability(StabilityStatus.BUFFERING)
+                proceed = self.collect_data(
+                    str(Column.BUFFER_HOURS), str(Column.BUFFER_MINUTES), self.buffer_file
+                )
+                if not proceed:
+                    if not self.buffer_skip:
+                        continue
+                    else:
+                        self.buffer_skip = False
+
+                # data collection while stable
+                self.update_stability(StabilityStatus.STABLE)
+                self.collect_data(
+                    str(Column.HOLD_HOURS), str(Column.HOLD_MINUTES), self.stable_file
+                )
+        except IOError:  # file-related errors
+            pass
 
         self.post_run()
 
@@ -110,9 +118,12 @@ class SequenceThread(QRunnable):
         if self.cancel:
             final_status = SequenceStatus.CANCELED
         else:
-            # if the sequence finishes naturally, set the oven to the END_TEMPERATURE
+            if self.file_error_count >= self.MAX_FILE_ERRORS:
+                final_status = SequenceStatus.ERROR
+            else:
+                final_status = SequenceStatus.COMPLETED
+            # if the sequence is not cancelled by the user, set the oven to the END_TEMPERATURE
             self.change_setpoint(self.END_TEMPERATURE)
-            final_status = SequenceStatus.COMPLETED
         self.graph_and_save()
 
         self.oven.release()
@@ -171,7 +182,7 @@ class SequenceThread(QRunnable):
                         temperature_variances = []
                     else:
                         # otherwise remove the "unstable" point and everything before
-                        temperature_variances = temperature_variances[index + 1 :]
+                        temperature_variances = temperature_variances[index+1:]
                     break
 
         self.record_stabilization_time()
@@ -285,8 +296,16 @@ class SequenceThread(QRunnable):
             for value in values[:-1]:
                 line += f"{value},"
             line += f"{values[-1]}\n"
-        with open(file, file_mode) as f:
-            f.write(line)
+
+        try:
+            with open(file, file_mode) as f:
+                f.write(line)
+        except IOError as e:
+            # there can be a maximum of MAX_FILE_ERRORS before Quincy actually cancels the sequence
+            # the user will be notified via an OkDialog (SequenceStatus.ERROR is used)
+            self.file_error_count += 1
+            if self.file_error_count >= self.MAX_FILE_ERRORS:
+                raise e
 
     def graph_and_save(self):
         """Graph the sequence on one plot and save the figure."""

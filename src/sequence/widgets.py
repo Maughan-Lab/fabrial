@@ -159,6 +159,12 @@ class SequenceWidget(GroupBox):
                 self.handle_sequence_completion()
                 # tell the rest of the program the sequence ended
                 self.statusChanged.emit(False)
+            case SequenceStatus.ERROR:
+                self.handle_sequence_completion()
+                self.statusChanged.emit(False)
+                OkDialog(
+                    "Fatal Error", "Failed to write data too many times, sequence terminated."
+                ).exec()
             case SequenceStatus.PAUSED:
                 self.update_button_visibility(self.unpause_button)
             case _:  # in case other SequenceStatus options are added

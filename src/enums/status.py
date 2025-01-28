@@ -52,6 +52,7 @@ class SequenceStatus(Enum):
     COMPLETED = 2
     CANCELED = 3
     PAUSED = 4
+    ERROR = 5
 
     def to_color(self) -> str:
         """Return a color (string) representation."""
@@ -62,6 +63,8 @@ class SequenceStatus(Enum):
                 return "green"
             case SequenceStatus.PAUSED:
                 return "cyan"
+            case SequenceStatus.ERROR:
+                return "red"
 
     def __str__(self):
         """Return a text representation."""

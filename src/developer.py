@@ -2,7 +2,6 @@ from PyQt6.QtWidgets import (
     QApplication,
     QVBoxLayout,
     QHBoxLayout,
-    QGridLayout,
     QPushButton,
 )
 from PyQt6.QtGui import QIcon
