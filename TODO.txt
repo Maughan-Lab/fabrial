@@ -1,1 +1,6 @@
-Update lab peeps about breaking changes to the file format.y
+Finish implementing the potentiostatic EIS options widget.
+
+Mess around with Jinja for writing your Python files with the sequence wizard.
+
+Implement the sequence wizard by writing a Python file that gets run during a sequence.
+Use the exec(open("FILENAME.py").read()) function for this.

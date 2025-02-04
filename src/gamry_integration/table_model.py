@@ -9,86 +9,89 @@ from custom_widgets.tablemodel import TableModel
 from custom_widgets.tableview import TableView
 
 
-class Column(Enum):
+class DataNames(Enum):
     # TODO: finish adding the columns
-    CYCLE = 0
+    INITIAL_FREQUENCY = 0
+    FINAL_FREQUENCY = 1
+    POINTS_PER_DECADE = 2
+    AC_VOLTAGE = 3
+    DC_VOLTAGE = 4
+    ESTIMATED_Z = 5
+    OPTIMIZATION_MODE = 6
+    # possibly unnecessary
+    AREA = 7
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Get the column name."""
         match self:
-            case Column.CYCLE:
-                return "Cycle"
+            case DataNames.INITIAL_FREQUENCY:
+                return "Initial\nFreq. (Hz)"
+            case DataNames.FINAL_FREQUENCY:
+                return "Final Freq. (Hz)"
+            case DataNames.POINTS_PER_DECADE:
+                return "Points/Decade"
+            case DataNames.AC_VOLTAGE:
+                return "AC Voltage\n(mV rms)"
+            case DataNames.DC_VOLTAGE:
+                return "DC Voltage (V)"
+            case DataNames.OPTIMIZATION_MODE:
+                return "Optimize for:"
+            case DataNames.AREA:
+                return "Area (cm^2)"
+        return "ERROR"  # this should never run
+
+    def default(self) -> int:
+        match self:
+            # TODO: get the actual default values
+            case DataNames.INITIAL_FREQUENCY:
+                return 0
+            case DataNames.FINAL_FREQUENCY:
+                return 0
+            case DataNames.POINTS_PER_DECADE:
+                return 10
+            case DataNames.AC_VOLTAGE:
+                return 20
+            case DataNames.DC_VOLTAGE:
+                return 0
+            case DataNames.OPTIMIZATION_MODE:
+                return 0
+            case DataNames.AREA:
+                return 1
+        return -1  # this should never run
 
 
 class EISTableModel(TableModel):
     def __init__(self):
         super().__init__()
-
-
-class PotentiostatModel(QAbstractTableModel):
-    def __init__(self):
-        super().__init__()
-        self.enabled = True
         self.parameter_data = self.generate_data()
-        pass
 
     def generate_data(self) -> pl.DataFrame:
-        # TODO: determine what columns need to be included in the table
-        return pl.DataFrame()
-
-    def save_data(self):
-        """Write the sequence settings to a file."""
-        pass
-
-    def load_data(self):
-        """Attempt to load previously saved sequency settings, showing a dialog on failure."""
-        pass
+        return pl.DataFrame({str(DataNames(i)): DataNames(i).default() for i in range(len(DataNames))})
 
     def disable(self):
         """Disable editing of this widget's data."""
-        self.enabled = False
+        self.disable_rows(1)
 
     def enable(self):
         """Enable editing of this widget's data."""
-        self.enabled = True
+        self.enable_all_rows()
 
     def is_enabled(self):
         """Is this widget's data editable?"""
-        return self.enabled
+        return self.disabled_row_index == 0
 
     # ----------------------------------------------------------------------------------------------
     # overridden methods
-    def rowCount(self, index: QModelIndex | None = None):
-        return self.parameter_data.select(pl.len()).item()
+    def save_data(self):
+        # TODO: implement
+        pass
 
-    def columnCount(self, index: QModelIndex | None = None):
-        return self.parameter_data.width
-
-    def flags(self, index):
-        if self.is_enabled():
-            flags = Qt.ItemFlag.NoItemFlags
-        else:
-            flags = Qt.ItemFlag.ItemIsEnabled
-            if index.column() > Column.CYCLE.value:
-                flags |= Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable
-        return flags
-
-    def data(self, index, role):
-        match role:
-            case Qt.ItemDataRole.DisplayRole | Qt.ItemDataRole.EditRole:
-                # return the item at the index to display it
-                return str(self.parameter_data.item(index.row(), index.column()))
-
-    def headerData(self, index, orientation, role):
-        match role:
-            case Qt.ItemDataRole.DisplayRole:
-                match orientation:
-                    case Qt.Orientation.Horizontal:
-                        return str(self.parameter_data.columns[index])
-                    case Qt.Orientation.Vertical:
-                        return ""
+    def load_data(self):
+        # TODO: implement
+        pass
 
     def setData(self, index, value, role):
+        # TODO: actually implement this instead of copying
         match role:
             case Qt.ItemDataRole.EditRole:
                 try:
@@ -103,3 +106,13 @@ class PotentiostatModel(QAbstractTableModel):
                 return True
             case _:  # do nothing otherwise
                 pass
+
+    def flags(self, index):
+        # TODO: actually implement this instead of copying
+        if self.is_enabled():
+            flags = Qt.ItemFlag.NoItemFlags
+        else:
+            flags = Qt.ItemFlag.ItemIsEnabled
+            if index.column() > DataNames.CYCLE.value:
+                flags |= Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable
+        return flags
