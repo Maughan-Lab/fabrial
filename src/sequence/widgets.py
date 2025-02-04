@@ -11,10 +11,11 @@ from custom_widgets.combo_box import ComboBox  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from custom_widgets.separator import HSeparator
 from custom_widgets.dialog import OkDialog
+from custom_widgets.tableview import TableView
 from instruments import InstrumentSet  # ../instruments.py
 from utility.layouts import add_sublayout, add_to_layout  # ../helper_functions
 from enums.status import StabilityStatus, SequenceStatus  # ../enums
-from .table_model import TableModel, TableView
+from .tablemodel import SequenceTableModel
 from .sequence import SequenceThread
 from typing import Type
 
@@ -67,8 +68,8 @@ class SequenceWidget(GroupBox):
         self.cycle_combobox.addItems([str(i) for i in range(1, 501)])  # add entries 1-500
 
         # tabular widgets
-        self.model = TableModel()
-        self.parameter_table = TableView(self.model)
+        self.model = SequenceTableModel()
+        self.parameter_table = TableView(self.model, 5)
 
         # add the widgets
         add_to_layout(layout, Label("Cycle Count"), self.cycle_combobox, self.parameter_table)

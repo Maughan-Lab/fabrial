@@ -5,5 +5,4 @@ import comtypes.client as client
 
 if __name__ == "__main__":
     devices = client.CreateObject(progid="GamryCOM.GamryDeviceList")
-    ex
     print(devices.EnumSections())

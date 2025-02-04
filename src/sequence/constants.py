@@ -1,14 +1,6 @@
 import file_locations  # ../file_locations.py
 from os import path
 
-# sequence parameters
-CYCLE_COLUMN = "Cycle"  # 0
-TEMPERATURE_COLUMN = "Temp"  # 1
-BUFFER_HOURS_COLUMN = "Buffer\nHours"  # 2
-BUFFER_MINUTES_COLUMN = "Buffer\nMinutes"  # 3
-HOLD_HOURS_COLUMN = "Hold\nHours"  # 4
-HOLD_MINUTES_COLUMN = "Hold\nMinutes"  # 5
-
 # files
 SAVED_SETTINGS_FILE = path.join(file_locations.SAVED_SETTINGS_LOCATION + "sequence_settings.csv")
 

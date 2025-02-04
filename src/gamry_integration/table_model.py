@@ -5,6 +5,8 @@ from polars import col
 import polars as pl
 from enum import Enum
 from instruments import Oven  # ../instruments.py
+from custom_widgets.tablemodel import TableModel
+from custom_widgets.tableview import TableView
 
 
 class Column(Enum):
@@ -16,6 +18,11 @@ class Column(Enum):
         match self:
             case Column.CYCLE:
                 return "Cycle"
+
+
+class EISTableModel(TableModel):
+    def __init__(self):
+        super().__init__()
 
 
 class PotentiostatModel(QAbstractTableModel):
@@ -96,76 +103,3 @@ class PotentiostatModel(QAbstractTableModel):
                 return True
             case _:  # do nothing otherwise
                 pass
-
-
-class PotentiostatTable(QTableView):
-    """
-    **QTableView** widget with additional functions for sizing.
-    """
-
-    def __init__(self, model: PotentiostatModel):
-        super().__init__()
-        self.setModel(model)
-        self.connect_signals()
-        self.initialize_size_policies()
-
-    def connect_signals(self):
-        self.model().layoutChanged.connect(self.updateSize)
-
-    def initialize_size_policies(self):
-        # TODO: this is a clone
-        # hide the vertical header
-        self.verticalHeader().hide()
-        # make the header columns as small as possible
-        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
-        # center align the header text
-        self.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
-        # hide the horizontal scrollbar (we don't need it)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        self.updateSize()
-
-    def getCurrentWidth(self) -> int:
-        # TODO: this is a clone
-        """Get the column width accounting for the scrollbar."""
-        width = self.frameWidth() * 2
-
-        model = self.model()
-        if model is not None:
-            if model.rowCount() > self.MAX_VISIBLE_ROWS:
-                # this means the scrollbar is visible
-                vertical_scrollbar = self.verticalScrollBar()
-                if vertical_scrollbar is not None:
-                    width += vertical_scrollbar.sizeHint().width()
-            for i in range(model.columnCount()):
-                width += self.columnWidth(i)
-
-        return width
-
-    def getCurrentHeight(self) -> int:
-        # TODO: this is a clone
-        """Get the current table height based on how many rows there are."""
-        height = self.frameWidth() * 2
-
-        horizontal_header = self.horizontalHeader()
-        if horizontal_header is not None:
-            height += horizontal_header.sizeHint().height()
-
-        model = self.model()
-        if model is not None:
-            for i in range(model.columnCount()):
-                height += self.rowHeight(i)
-
-        return height
-
-    def updateSize(self):
-        # TODO: this is a clone
-        """
-        Update the table size to show either **MAX_VISIBLE_ROWS** rows or the current number of
-        rows, whichever is smaller.
-        """
-        self.resizeColumnsToContents()
-        self.setFixedSize(
-            QSize(self.getCurrentWidth(), min(self.getCurrentHeight(), self.getMaxHeight()))
-        )

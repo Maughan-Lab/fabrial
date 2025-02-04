@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QRunnable, pyqtSignal, pyqtSlot, QObject
-from .table_model import TableModel, Column
+from .tablemodel import TableModel, Column
 import time
 from os import path
 import os
