@@ -119,3 +119,10 @@ def row_pair(
     COLUMN1 is 0 and COLUMN2 is 1. This can be unpacked for use with **add_to_layout_grid()**.
     """
     return ((widget1, row, 0), (widget2, row, 1))
+
+
+def clear_layout(layout: QLayout):
+    """Deletes all widgets in the layout."""
+    for i in reversed(range(layout.count())):
+        # setting a widget's parent to None schedules it for deletion
+        layout.takeAt(i).widget().setParent(None)
