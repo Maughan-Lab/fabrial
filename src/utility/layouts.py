@@ -35,9 +35,9 @@ def add_sublayout(
     """
     try:
         inner_layout = layout_fn()
-        inner_layout.setContentsMargins(0, 0, 0, 0)
+        inner_layout.setContentsMargins(0, 0, 0, 0)  # type: ignore
         container = QWidget()
-        container.setLayout(inner_layout)
+        container.setLayout(inner_layout)  # type: ignore
         container.setSizePolicy(size_policy, size_policy)
         outer_layout.addWidget(container)
         return inner_layout
@@ -75,9 +75,9 @@ def add_sublayout_to_grid(
     """
     try:
         inner_layout = layout_fn()
-        inner_layout.setContentsMargins(0, 0, 0, 0)
+        inner_layout.setContentsMargins(0, 0, 0, 0)  # type: ignore
         container = QWidget()
-        container.setLayout(inner_layout)
+        container.setLayout(inner_layout)  # type: ignore
         container.setSizePolicy(size_policy, size_policy)
         outer_layout.addWidget(container, row, column)
         return inner_layout
@@ -125,4 +125,4 @@ def clear_layout(layout: QLayout):
     """Deletes all widgets in the layout."""
     for i in reversed(range(layout.count())):
         # setting a widget's parent to None schedules it for deletion
-        layout.takeAt(i).widget().setParent(None)
+        layout.takeAt(i).widget().setParent(None)  # type: ignore
