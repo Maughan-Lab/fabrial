@@ -148,7 +148,8 @@ class SequenceThread(QRunnable):
         temperature_variances: list[float] = []
         stable = False
         while not stable:
-            while True:
+            # when this is false, we want to check for stability
+            while len(temperature_variances) < self.MINIMUM_MEASUREMENTS:
                 temperature = self.oven.read_temp()
                 if temperature is not None:
                     temperature_variances.append(abs(temperature - setpoint))
@@ -160,9 +161,6 @@ class SequenceThread(QRunnable):
                 proceed = self.wait()
                 if not proceed:
                     return False
-
-                if len(temperature_variances) >= self.MINIMUM_MEASUREMENTS:
-                    break  # we're good to check the stability
 
             stable = True
             # start from the end of the list and search for the first instance of an "unstable"
@@ -182,7 +180,7 @@ class SequenceThread(QRunnable):
                         temperature_variances = []
                     else:
                         # otherwise remove the "unstable" point and everything before
-                        temperature_variances = temperature_variances[index+1:]
+                        temperature_variances = temperature_variances[index + 1 :]
                     break
 
         self.record_stabilization_time()
