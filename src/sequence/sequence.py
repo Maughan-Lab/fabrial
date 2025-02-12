@@ -17,6 +17,7 @@ from .constants import (
 )
 from instruments import InstrumentSet  # ../instruments.py
 from enums.status import StabilityStatus, SequenceStatus  # ../enums
+from classes.points import TemperaturePoint  # ../classes
 from utility.graph import graph_from_folder  # ../utility
 
 
@@ -180,7 +181,9 @@ class SequenceThread(QRunnable):
                         temperature_variances = []
                     else:
                         # otherwise remove the "unstable" point and everything before
-                        temperature_variances = temperature_variances[index + 1 :]
+                        # fmt: off
+                        temperature_variances = temperature_variances[index+1:]
+                        # fmt: on
                     break
 
         self.record_stabilization_time()
@@ -264,7 +267,7 @@ class SequenceThread(QRunnable):
         """Write temperature data to **file**."""
         seconds_since_start, datetime = get_times(self.starting_time)
         self.write_csv_line(file, datetime, seconds_since_start, temperature)
-        self.signals.newDataAquired.emit(seconds_since_start, temperature)
+        self.signals.newDataAquired.emit(TemperaturePoint(seconds_since_start, temperature))
 
     def record_cycle_time(self):
         """Record the current cycle's start time."""
@@ -358,7 +361,7 @@ class SequenceThread(QRunnable):
 class Signals(QObject):
     """Signals for the SequenceThread."""
 
-    newDataAquired = pyqtSignal(float, float)
+    newDataAquired = pyqtSignal(TemperaturePoint)
     cycleNumberChanged = pyqtSignal(int)
     stabilityChanged = pyqtSignal(StabilityStatus)
     statusChanged = pyqtSignal(SequenceStatus)

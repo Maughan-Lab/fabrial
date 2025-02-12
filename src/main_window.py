@@ -49,7 +49,7 @@ class MainWindow(QMainWindow):
         self.setpoint_widget = SetpointWidget(instruments)
         self.stability_check_widget = StabilityCheckWidget(instruments)
         self.sequence_widget = SequenceWidget(instruments)
-        self.graph_widget = GraphWidget(instruments)
+        self.graph_widget = GraphWidget()
         # do not move these two above the other ones
         self.passive_monitoring_widget = PassiveMonitoringWidget(instruments)
         self.instrument_connection_widget = InstrumentConnectionWidget(instruments)

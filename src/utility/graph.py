@@ -3,7 +3,7 @@ from matplotlib.axes import Axes
 import polars as pl
 from os import path
 from sequence.constants import PRE_STABLE_FILE, BUFFER_FILE, STABLE_FILE, TIME, TEMPERATURE
-from graph.constants import XLABEL, YLABEL
+from graph.widgets import GraphWidget
 from enums.status import StabilityStatus
 
 
@@ -18,8 +18,8 @@ def graph_from_folder(data_folder: str) -> Figure:
     """
     figure = Figure((6, 5))
     ax = figure.add_subplot()
-    ax.set_xlabel(XLABEL)
-    ax.set_ylabel(YLABEL)
+    ax.set_xlabel(GraphWidget.XLABEL)
+    ax.set_ylabel(GraphWidget.YLABEL)
     plot(ax, data_folder, PRE_STABLE_FILE, StabilityStatus.CHECKING.to_color())
     plot(ax, data_folder, BUFFER_FILE, StabilityStatus.BUFFERING.to_color())
     plot(ax, data_folder, STABLE_FILE, StabilityStatus.STABLE.to_color())
