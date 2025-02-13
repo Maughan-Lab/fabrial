@@ -208,14 +208,6 @@ class DeveloperSequenceThread(SequenceThread):
 
 # --------------------------------------------------------------------------------------------------
 
-try:
-    from ctypes import windll  # Only exists on Windows.
-
-    myappid = "maughangroup.quincy.1"
-    windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-except ImportError:
-    pass
-
 FOLDERS_TO_CREATE = (file_locations.SAVED_SETTINGS_LOCATION, DATA_FILES_LOCATION)
 
 
