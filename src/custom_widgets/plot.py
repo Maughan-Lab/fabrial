@@ -10,6 +10,7 @@ from matplotlib.backends.backend_qtagg import (
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch
 
+
 matplotlib.use("QtAgg")
 
 
