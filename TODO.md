@@ -1,6 +1,12 @@
-Investigate using a TreeView to make the sequence wizard.
+# Plotting
+- If these both fail, use the pyqtgraph system instead. It should be faster.
+    - You could still use matplotlib for the final image and for the on-demand graph if pyqtgraph does not work for these tasks.
+    - Ok SIKE you should use this for sure, it's amazing.
+    - I would add buttons to restore the default view (just set **auto** for the x and y axes) and to save the figure (there's probably a function somewhere).
+- ~~Look into making matplotlib run faster using quality options.~~
+- ~~See if it is faster to store data, clear the axes, and re-plot the data instead of creating new `Line2D` instances with every call to `plot()`.~~
 
-Mess around with Jinja for writing your Python files with the sequence wizard.
+Finish implementing the TreeView system.
 
 Implement the sequence wizard by writing a Python file that gets run during a sequence.
 Use the exec(open("FILENAME.py").read()) function for this.
