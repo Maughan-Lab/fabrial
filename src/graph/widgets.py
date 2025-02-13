@@ -1,26 +1,11 @@
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
-from PyQt6.QtCore import QRunnable, QThreadPool, pyqtSlot
+from PyQt6.QtCore import QThreadPool
 from matplotlib.patches import Patch
 from custom_widgets.plot import PlotWidget  # ../custom_widgets
 from custom_widgets.frame import Frame  # ../custom_widgets
 from enums.status import StabilityStatus  # ../enums
 from classes.points import TemperaturePoint  # ../classes
-
-
-class GraphingThread(QRunnable):
-    def __init__(self, plot: PlotWidget, point: TemperaturePoint, point_color: str):
-        super().__init__()
-        self.plot = plot
-        self.point = point
-        self.point_color = point_color
-
-    @pyqtSlot()
-    def run(self):
-        self.plot.scatter(
-            self.point.time, self.point.temperature, color=self.point_color, marker="."
-        )
-        self.plot.tight_layout()
-        self.plot.draw()
+from .thread import GraphingThread
 
 
 class GraphWidget(Frame):

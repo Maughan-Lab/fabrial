@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QMenu, QMenuBar, QFileDialog
 from polars.exceptions import ColumnNotFoundError
-from actions import Action  # ../actions.py
+from classes.actions import Action  # ../actions.py
 from instruments import InstrumentSet  # ../instruments.py
 from sequence.widgets import SequenceWidget  # ../sequence
 from sequence.constants import DATA_FILES_LOCATION  # ../sequence

@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QMenu, QMenuBar
 from PyQt6.QtCore import pyqtSignal
-from actions import Action
+from classes.actions import Action
 
 from typing import TYPE_CHECKING
 

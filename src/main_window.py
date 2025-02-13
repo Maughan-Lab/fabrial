@@ -8,7 +8,7 @@ from sequence.widgets import SequenceWidget
 from graph.widgets import GraphWidget
 from custom_widgets.dialog import YesCancelDialog
 from instruments import InstrumentSet
-from actions import Shortcut
+from classes.actions import Shortcut
 from secondary_window import SecondaryWindow
 from utility.layouts import add_to_layout_grid
 from menu.menu_bar import MenuBar

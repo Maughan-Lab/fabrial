@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QMenu, QMenuBar
-from actions import Action
+from classes.actions import Action
 from stability_check.widgets import StabilityCheckWidget
 
 

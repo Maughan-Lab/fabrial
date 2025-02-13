@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QMenu, QMenuBar, QApplication
 from sequence.constants import DATA_FILES_LOCATION  # ../sequence
-from actions import Action
+from classes.actions import Action
 from custom_widgets.dialog import OkCancelDialog
 from showinfm import show_in_file_manager  # TODO: find a better file manager solution
 from os import path

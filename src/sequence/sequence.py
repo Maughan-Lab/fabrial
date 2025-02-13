@@ -18,6 +18,7 @@ from .constants import (
 from instruments import InstrumentSet  # ../instruments.py
 from enums.status import StabilityStatus, SequenceStatus  # ../enums
 from classes.points import TemperaturePoint  # ../classes
+from classes.datamutex import DataMutex  # ../classes
 from utility.graph import graph_from_folder  # ../utility
 
 
@@ -50,10 +51,10 @@ class SequenceThread(QRunnable):
 
         self.cycle_number = 0
 
-        self.pause = False
-        self.cancel = False
-        self.skip = False
-        self.buffer_skip = False
+        self.pause = DataMutex(False)
+        self.cancel = DataMutex(False)
+        self.skip = DataMutex(False)
+        self.buffer_skip = DataMutex(False)
         self.connection_problem = False
         self.stability = StabilityStatus.NULL
         self.old_stability = StabilityStatus.NULL
@@ -66,7 +67,7 @@ class SequenceThread(QRunnable):
         try:
             self.pre_run()
 
-            while self.cycle_number < self.model.rowCount() and not self.cancel:
+            while self.cycle_number < self.model.rowCount() and not self.cancel.get():
                 self.increment_cycle_number()
                 self.record_cycle_time()
 
@@ -90,10 +91,10 @@ class SequenceThread(QRunnable):
                     str(Column.BUFFER_HOURS), str(Column.BUFFER_MINUTES), self.buffer_file
                 )
                 if not proceed:
-                    if not self.buffer_skip:
+                    if not self.buffer_skip.get():
                         continue
                     else:
-                        self.buffer_skip = False
+                        self.buffer_skip.set(False)
 
                 # data collection while stable
                 self.update_stability(StabilityStatus.STABLE)
@@ -116,7 +117,7 @@ class SequenceThread(QRunnable):
 
     def post_run(self):
         """Post-run tasks."""
-        if self.cancel:
+        if self.cancel.get():
             final_status = SequenceStatus.CANCELED
         else:
             if self.file_error_count >= self.MAX_FILE_ERRORS:
@@ -213,14 +214,14 @@ class SequenceThread(QRunnable):
         True if the cycle should proceed, False otherwise (i.e. the cycle is canceled or skipped).
         """
         end_time = time.time() + self.MEASUREMENT_INTERVAL
-        while time.time() < end_time or self.pause:
+        while time.time() < end_time or self.pause.get():
             time.sleep(self.WAIT_INTERVAL)
-            if self.cancel:
+            if self.cancel.get():
                 return False
-            elif self.skip:
-                self.skip = False
+            elif self.skip.get():
+                self.skip.set(False)
                 return False
-            elif self.buffer_skip:
+            elif self.buffer_skip.get():
                 return False
             if self.connection_problem:
                 if self.oven.is_connected():
@@ -337,25 +338,25 @@ class SequenceThread(QRunnable):
     # external command handlers
     def cancel_sequence(self):
         """Cancel the sequence."""
-        self.cancel = True
+        self.cancel.set(True)
 
     def pause_sequence(self):
         """Pause the sequence."""
-        self.pause = True
+        self.pause.set(True)
         self.update_status(SequenceStatus.PAUSED)
 
     def unpause_sequence(self):
         """Unpause the sequence."""
-        self.pause = False
+        self.pause.set(False)
         self.update_status(SequenceStatus.ACTIVE)
 
     def skip_cycle(self):
         """Skip the current cycle."""
-        self.skip = True
+        self.skip.set(True)
 
     def skip_buffer(self):
         """Skip just the current buffer."""
-        self.buffer_skip = True
+        self.buffer_skip.set(True)
 
 
 class Signals(QObject):
