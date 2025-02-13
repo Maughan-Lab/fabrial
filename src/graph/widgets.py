@@ -1,11 +1,9 @@
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
-from PyQt6.QtCore import QThreadPool
 from matplotlib.patches import Patch
 from custom_widgets.plot import PlotWidget  # ../custom_widgets
 from custom_widgets.frame import Frame  # ../custom_widgets
 from enums.status import StabilityStatus  # ../enums
 from classes.points import TemperaturePoint  # ../classes
-from .thread import GraphingThread
 
 
 class GraphWidget(Frame):
@@ -16,8 +14,6 @@ class GraphWidget(Frame):
 
     def __init__(self):
         """:param instruments: Container for instruments."""
-        self.threadpool = QThreadPool()
-
         super().__init__(QVBoxLayout, 0)
         layout = self.layout()
         if layout is not None:
@@ -47,8 +43,11 @@ class GraphWidget(Frame):
         )
 
     def add_point(self, point: TemperaturePoint):
-        thread = GraphingThread(self.plot, point, self.point_color)
-        self.threadpool.start(thread)
+        self.plot.plot(
+            point.time, point.temperature, color=self.point_color, marker="."
+        )
+        self.plot.tight_layout()
+        self.plot.draw()
 
     def move_to_next_cycle(self, cycle_number: int):
         self.plot.clean()
