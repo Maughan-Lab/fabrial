@@ -18,7 +18,7 @@ def add_sublayout(
     size_policy: QSizePolicy.Policy = QSizePolicy.Policy.Preferred,
 ) -> Layout:
     """
-    Function for adding inner layouts to outer layouts.
+    Add an inner layout to an outer layout.
 
     :param outer_layout: The outer layout to add an inner layout to.
 
@@ -54,7 +54,7 @@ def add_sublayout_to_grid(
     size_policy: QSizePolicy.Policy = QSizePolicy.Policy.Preferred,
 ) -> Layout:
     """
-    Function for adding inner layouts to outer grid layouts.
+    Add an inner layout to an outer grid layout.
 
     :param outer_layout: The grid layout to add an inner layout to.
 

@@ -14,11 +14,10 @@ from sequence.sequence import SequenceThread
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from utility.layouts import add_to_layout, add_sublayout  # ../utility
-import file_locations
-from sequence.constants import DATA_FILES_LOCATION
 import sys
 import os
 import time
+import Files
 
 BASEDIR = os.path.dirname(__file__)
 try:
@@ -208,7 +207,7 @@ class DeveloperSequenceThread(SequenceThread):
 
 # --------------------------------------------------------------------------------------------------
 
-FOLDERS_TO_CREATE = (file_locations.SAVED_SETTINGS_LOCATION, DATA_FILES_LOCATION)
+FOLDERS_TO_CREATE = (Files.SAVED_SETTINGS_FOLDER, Files.Sequence.DATA_FOLDER)
 
 
 def main():
@@ -218,7 +217,7 @@ def main():
     instruments = InstrumentSet(DeveloperOven(), None)
     # pass in any provided system arguments
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(file_locations.ICON_FILE))
+    app.setWindowIcon(QIcon(Files.ICON))
 
     main_window = DeveloperMainWindow(instruments)
     main_window.show()

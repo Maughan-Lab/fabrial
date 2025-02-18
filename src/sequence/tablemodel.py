@@ -4,7 +4,8 @@ from custom_widgets.tablemodel import TableModel
 from polars import col
 import polars as pl
 from enum import Enum
-from .constants import SAVED_SETTINGS_FILE
+import Files
+
 
 from instruments import Oven  # ../instruments.py
 
@@ -45,7 +46,7 @@ class SequenceTableModel(TableModel):
 
     def save_data(self):
         """Overridden method. Write the sequence settings to a file."""
-        self.parameter_data.write_csv(SAVED_SETTINGS_FILE)
+        self.parameter_data.write_csv(Files.Sequence.SAVED_SETTINGS)
 
     def load_data(self):
         """
@@ -53,10 +54,10 @@ class SequenceTableModel(TableModel):
         showing a dialog on failure.
         """
         try:
-            self.parameter_data = pl.scan_csv(SAVED_SETTINGS_FILE).collect()
+            self.parameter_data = pl.scan_csv(Files.Sequence.SAVED_SETTINGS).collect()
         except Exception:
             OkDialog("Error", "Unable to load saved settings.").exec()
-            return
+            self.parameter_data = self.generate_new_rows(1, 1)
         self.dataLoaded.emit(self.rowCount())
         self.layoutChanged.emit()
 

@@ -2,8 +2,7 @@ from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
 from main_window import MainWindow
 from instruments import Oven, InstrumentSet
-import file_locations
-from sequence.constants import DATA_FILES_LOCATION
+import Files
 import sys
 import os
 
@@ -17,7 +16,7 @@ try:
 except ImportError:
     pass
 
-FOLDERS_TO_CREATE = (file_locations.SAVED_SETTINGS_LOCATION, DATA_FILES_LOCATION)
+FOLDERS_TO_CREATE = (Files.SAVED_SETTINGS_FOLDER, Files.Sequence.DATA_FOLDER)
 
 
 def main():
@@ -29,7 +28,7 @@ def main():
     # pass in any provided system arguments
     app = QApplication(sys.argv)
 
-    app.setWindowIcon(QIcon(file_locations.ICON_FILE))
+    app.setWindowIcon(QIcon(Files.ICON))
 
     main_window = MainWindow(instruments)
     main_window.show()

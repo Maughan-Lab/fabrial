@@ -3,23 +3,12 @@ from .tablemodel import TableModel, Column
 import time
 from os import path
 import os
-from .constants import (
-    DATE_FORMAT,
-    DATA_FILES_LOCATION,
-    PRE_STABLE_FILE,
-    BUFFER_FILE,
-    STABLE_FILE,
-    CYCLE_TIMES_FILE,
-    STABILIZATON_TIMES_FILE,
-    GRAPH_FILE,
-    TIME,
-    TEMPERATURE,
-)
 from instruments import InstrumentSet  # ../instruments.py
 from enums.status import StabilityStatus, SequenceStatus  # ../enums
 from classes.points import TemperaturePoint  # ../classes
 from classes.datamutex import DataMutex  # ../classes
 from utility.graph import graph_from_folder  # ../utility
+import Files
 
 
 class SequenceThread(QRunnable):
@@ -36,11 +25,21 @@ class SequenceThread(QRunnable):
     MAX_FILE_ERRORS = 10
 
     # headers
-    TEMPERATURE_DATA_HEADER = f"Time ({DATE_FORMAT}),{TIME},{TEMPERATURE}"
-    STABILIZATION_TIMES_HEADER = (
-        f"Cycle Number,Time to Stabilize ({DATE_FORMAT}),Time to Stabilize (seconds)"
+    TEMPERATURE_DATA_HEADER = (
+        f"Time ({Files.Sequence.Headers.DATE_FORMAT}),"
+        f"{Files.Sequence.Headers.TIME},"
+        f"{Files.Sequence.Headers.TEMPERATURE}"
     )
-    CYCLE_TIMES_HEADER = f"Cycle Number,Time Cycle Began ({DATE_FORMAT}),Time Cycle Began (seconds)"
+    STABILIZATION_TIMES_HEADER = (
+        f"Cycle Number,"
+        f"Time to Stabilize ({Files.Sequence.Headers.DATE_FORMAT}),"
+        f"Time to Stabilize (seconds)"
+    )
+    CYCLE_TIMES_HEADER = (
+        f"Cycle Number,"
+        f"Time Cycle Began ({Files.Sequence.Headers.DATE_FORMAT}),"
+        f"Time Cycle Began (seconds)"
+    )
 
     def __init__(self, instruments: InstrumentSet, model: TableModel):
         super().__init__()
@@ -242,16 +241,18 @@ class SequenceThread(QRunnable):
         """Initialize this sequence's data files."""
         # replace semicolons for the folder name
         datetime = convert_to_datetime(starting_time).replace(":", "ː")
-        self.data_folder = path.join(DATA_FILES_LOCATION, datetime)
+        self.data_folder = path.join(Files.Sequence.DATA_FOLDER, datetime)
         # create a timestamped folder to store the data files in
         os.makedirs(self.data_folder, exist_ok=True)
 
         # get the names of the files where this sequence will record its data
-        self.pre_stable_file = path.join(self.data_folder, PRE_STABLE_FILE)
-        self.buffer_file = path.join(self.data_folder, BUFFER_FILE)
-        self.stable_file = path.join(self.data_folder, STABLE_FILE)
-        self.cycle_times_file = path.join(self.data_folder, CYCLE_TIMES_FILE)
-        self.stabilization_times_file = path.join(self.data_folder, STABILIZATON_TIMES_FILE)
+        self.pre_stable_file = path.join(self.data_folder, Files.Sequence.PRE_STABLE)
+        self.buffer_file = path.join(self.data_folder, Files.Sequence.BUFFER)
+        self.stable_file = path.join(self.data_folder, Files.Sequence.STABLE)
+        self.cycle_times_file = path.join(self.data_folder, Files.Sequence.CYCLE_TIMES)
+        self.stabilization_times_file = path.join(
+            self.data_folder, Files.Sequence.STABILIZATON_TIMES
+        )
 
         self.write_file_headers()  # write the file headers
 
@@ -313,7 +314,7 @@ class SequenceThread(QRunnable):
         """Graph the sequence on one plot and save the figure."""
         try:
             graph_from_folder(self.data_folder).savefig(
-                path.join(self.data_folder, GRAPH_FILE), dpi=1000
+                path.join(self.data_folder, Files.Sequence.GRAPH), dpi=1000
             )
         except Exception:
             self.signals.graphFailed.emit()

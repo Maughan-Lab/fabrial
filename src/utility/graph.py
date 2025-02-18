@@ -2,9 +2,9 @@ from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 import polars as pl
 from os import path
-from sequence.constants import PRE_STABLE_FILE, BUFFER_FILE, STABLE_FILE, TIME, TEMPERATURE
 from graph.widgets import GraphWidget
 from enums.status import StabilityStatus
+import Files
 
 
 def graph_from_folder(data_folder: str) -> Figure:
@@ -20,9 +20,9 @@ def graph_from_folder(data_folder: str) -> Figure:
     ax = figure.add_subplot()
     ax.set_xlabel(GraphWidget.XLABEL)
     ax.set_ylabel(GraphWidget.YLABEL)
-    plot(ax, data_folder, PRE_STABLE_FILE, StabilityStatus.CHECKING.to_color())
-    plot(ax, data_folder, BUFFER_FILE, StabilityStatus.BUFFERING.to_color())
-    plot(ax, data_folder, STABLE_FILE, StabilityStatus.STABLE.to_color())
+    plot(ax, data_folder, Files.Sequence.PRE_STABLE, StabilityStatus.CHECKING.to_color())
+    plot(ax, data_folder, Files.Sequence.BUFFER, StabilityStatus.BUFFERING.to_color())
+    plot(ax, data_folder, Files.Sequence.STABLE, StabilityStatus.STABLE.to_color())
 
     return figure
 
@@ -36,6 +36,9 @@ def plot(ax: Axes, folder: str, filename: str, color: str):
     :param folder: The folder that contains **filename**.
     :param color: The color of points on the graph.
     """
+    TIME = Files.Sequence.Headers.TIME
+    TEMPERATURE = Files.Sequence.Headers.TEMPERATURE
+
     file = path.join(folder, filename)
     df = pl.scan_csv(file).select(TIME, TEMPERATURE).collect()
     ax.scatter(df[TIME], df[TEMPERATURE], c=color, marker=".")

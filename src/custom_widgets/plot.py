@@ -1,7 +1,8 @@
-from PyQt6.QtWidgets import QVBoxLayout
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget
 from PyQt6.QtGui import QResizeEvent
+import matplotlib.pyplot
 from .container import Container
-from utility.layouts import add_to_layout  # ../utility
+from utility.layouts import add_to_layout, add_sublayout  # ../utility
 import matplotlib
 from matplotlib.backends.backend_qtagg import (
     FigureCanvasQTAgg,
@@ -9,6 +10,9 @@ from matplotlib.backends.backend_qtagg import (
 )
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch
+import pyqtgraph as pg
+from custom_widgets.button import Button
+from typing import Literal
 
 
 matplotlib.use("QtAgg")
@@ -25,7 +29,7 @@ class Toolbar(NavigationToolbar2QT):
         super().home(*args)
 
 
-class PlotWidget(Container):
+class TempPlotWidget(Container):
     """Plot class for displaying **matplotlib** plots."""
 
     def __init__(
@@ -90,3 +94,46 @@ class PlotWidget(Container):
 
     def legend(self, handles: tuple[Patch], fontsize: int | str):
         self.axes.legend(handles=handles, fontsize=fontsize)
+
+
+class PlotWidget(QWidget):
+    """Plot widget for displaying data."""
+
+    def __init__(self):
+        """Create a new PlotWidget."""
+        super().__init__()
+
+        self.text_color = self.palette().windowText().color().name()
+        self.background_color = self.palette().window().color().name()
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        self.plot = self.create_plot()
+        self.plot_item = self.plot.plotItem
+        layout.addWidget(self.plot)
+
+        autoscale_button = Button("Autoscale", self.autoscale)
+        save_button = Button("Save", self.save)
+        button_layout = add_sublayout(layout, QHBoxLayout)
+        add_to_layout(button_layout, autoscale_button, save_button)
+
+    def create_plot(self) -> pg.PlotWidget:
+        plot = pg.PlotWidget()
+        plot.setBackground(self.background_color)
+        self.recolor_axis(plot.plotItem.getAxis("left"))
+        self.recolor_axis(plot.plotItem.getAxis("bottom"))
+        return plot
+
+    def recolor_axis(self, axis: pg.AxisItem):
+        color = self.text_color
+        axis.setPen(color)
+        axis.setTextPen(color)
+
+    def autoscale(self):
+        """Autoscale the graph."""
+        pass
+
+    def save(self):
+        """Save the figure to an image file."""
+        pass

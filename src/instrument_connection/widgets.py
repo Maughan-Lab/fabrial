@@ -5,8 +5,8 @@ from custom_widgets.groupbox import GroupBox
 from instruments import InstrumentSet, to_str, to_color  # ../instruments.py
 from utility.layouts import add_sublayout, add_to_layout  # ../utility
 from .ports import get_ports_list
-from .constants import PORTS_FILE
 from os import path
+import Files
 
 
 class InstrumentConnectionWidget(GroupBox):
@@ -78,13 +78,13 @@ class InstrumentConnectionWidget(GroupBox):
     def save_ports(self, index: int):
         """Writes the current port selections to a file."""
         port = self.oven_combobox.currentText()
-        with open(PORTS_FILE, "w") as f:
+        with open(Files.InstrumentConnection.PORTS, "w") as f:
             f.write(port)
 
     def load_ports(self):
         """Loads saved port selections."""
-        if path.exists(PORTS_FILE):
-            with open(PORTS_FILE, "r") as f:
+        if path.exists(Files.InstrumentConnection.PORTS):
+            with open(Files.InstrumentConnection.PORTS, "r") as f:
                 port = f.read()
             # if the combobox contains the previously stored port
             if self.oven_combobox.findText(port) != -1:
