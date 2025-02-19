@@ -33,6 +33,16 @@ class Sequence:
         TIME = "Time (seconds)"
         TEMPERATURE = "Oven Temperature (degrees C)"
 
+    DATETIME_FORMAT_SPECIFIER = (
+        Headers.DATE_FORMAT.replace("Day", "%d")
+        .replace("Month", "%B")
+        .replace("Year", "%Y")
+        .replace("Hours", "%I")
+        .replace("Minutes", "%M")
+        .replace("Seconds", "%S")
+        .replace("AM/PM", "%p")
+    )  # keep the DATE_FORMAT and its specifier for the `time` module in sync
+
 
 @dataclass
 class InstrumentConnection:

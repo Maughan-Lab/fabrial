@@ -376,8 +376,9 @@ def convert_to_datetime(time_since_epoch: float) -> str:
     Converts a float (as returned by **time.time()**) to a string in
     Day Month Year Hours:Minutes:Seconds AM/PM format.
     """
-    return time.strftime("%d %B %Y %I:%M:%S %p", time.localtime(time_since_epoch))
+    return time.strftime(Files.Sequence.DATETIME_FORMAT_SPECIFIER, time.localtime(time_since_epoch))
 
+print(Files.Sequence.DATETIME_FORMAT_SPECIFIER)
 
 def get_times(starting_time: float) -> tuple[float, str]:
     current_time = time.time()
