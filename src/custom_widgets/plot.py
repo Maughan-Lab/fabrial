@@ -1,15 +1,18 @@
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget
 from PyQt6.QtGui import QResizeEvent
-import matplotlib.pyplot
 from .container import Container
 from utility.layouts import add_to_layout, add_sublayout  # ../utility
+
+# TODO: remove these
 import matplotlib
+import matplotlib.pyplot
 from matplotlib.backends.backend_qtagg import (
     FigureCanvasQTAgg,
     NavigationToolbar2QT,
 )
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch
+
 import pyqtgraph as pg
 from custom_widgets.button import Button
 from typing import Literal

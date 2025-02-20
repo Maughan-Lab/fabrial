@@ -13,6 +13,8 @@ from secondary_window import SecondaryWindow
 from utility.layouts import add_to_layout_grid
 from menu.menu_bar import MenuBar
 
+from custom_widgets.dialog import OkDialog  # TODO: remove
+
 
 class MainWindow(QMainWindow):
     def __init__(self, instruments: InstrumentSet):
@@ -23,6 +25,9 @@ class MainWindow(QMainWindow):
         self.create_widgets(instruments)
         self.connect_signals()
         self.create_menu(instruments)
+
+        # TODO: remove
+        OkDialog("Notice", "Graphing is temporarily disabled due to matplotlib being slow.").exec()
 
     def create_widgets(self, instruments):
         """Create subwidgets."""
@@ -104,7 +109,8 @@ class MainWindow(QMainWindow):
         # close the window on "Ctrl+g"
         Shortcut(self.popped_graph, "Ctrl+g", self.popped_graph.close)
         # save the graph on "Ctrl+s"
-        Shortcut(self.popped_graph, "Ctrl+s", plot.toolbar.save_figure)
+        # TODO: remedy the below line
+        # Shortcut(self.popped_graph, "Ctrl+s", plot.toolbar.save_figure)
         # return the graph widget to its previous state on PoppedGraph destruction
         self.popped_graph.closed.connect(lambda: self.graph_widget.give_widget(plot))
         self.popped_graph.closed.connect(self.menu_bar.view.handle_popped_graph_destruction)

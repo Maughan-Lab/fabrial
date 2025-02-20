@@ -26,11 +26,13 @@ class GraphWidget(Frame):
         self.plot_item.addLegend()
 
     def add_point(self, point: TemperaturePoint):
+        return  # TODO: remove
         self.plot.plot(point.time, point.temperature, color=self.point_color, marker=".")
         self.plot.tight_layout()
         self.plot.draw()
 
     def move_to_next_cycle(self, cycle_number: int):
+        return  # TODO: remove
         self.plot_item.clear()
         self.plot_item.setTitle(
             f"Cycle {str(cycle_number)}", color=self.plot.text_color, size="20pt"
@@ -38,6 +40,7 @@ class GraphWidget(Frame):
         # TODO: see if you need to re-add the legend
 
     def handle_stability_change(self, status: StabilityStatus):
+        return  # TODO: remove
         match status:
             case StabilityStatus.CHECKING | StabilityStatus.BUFFERING | StabilityStatus.STABLE:
                 self.point_color = status.to_color()
