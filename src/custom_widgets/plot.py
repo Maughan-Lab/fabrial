@@ -1,142 +1,128 @@
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget
-from PyQt6.QtGui import QResizeEvent
-from .container import Container
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, QGraphicsScene
 from utility.layouts import add_to_layout, add_sublayout  # ../utility
-
-# TODO: remove these
-import matplotlib
-import matplotlib.pyplot
-from matplotlib.backends.backend_qtagg import (
-    FigureCanvasQTAgg,
-    NavigationToolbar2QT,
-)
-from matplotlib.figure import Figure
-from matplotlib.patches import Patch
-
 import pyqtgraph as pg
+import pyqtgraph.exporters as exporters
 from custom_widgets.button import Button
 from typing import Literal
 
 
-matplotlib.use("QtAgg")
+class PlotItem(pg.PlotItem):
+    """Plot item that automatically uses the OS color theme. This is not the widget."""
 
+    LABEL_SIZE = "14pt"
+    TITLE_SIZE = "20pt"
 
-class Toolbar(NavigationToolbar2QT):
-    """Toolbar with some altered commands."""
+    def __init__(self) -> None:
+        """Create a new PlotWidget."""
+        super().__init__()
+        self.text_color = self.palette().windowText().color().name()
+        self.background_color = self.palette().window().color().name()
 
-    def __init__(self, canvas, parent=None, coordinates=True):
-        super().__init__(canvas, parent, coordinates)
+        self.create_plot()
 
-    def home(self, *args):  # overridden method
-        self.canvas.figure.tight_layout()
-        super().home(*args)
+    def create_plot(self):
+        self.getViewBox().setBackgroundColor(self.background_color)
+        self.addLegend()
+        self.legend.setLabelTextColor(self.text_color)
+        self.recolor_axis("left")
+        self.recolor_axis("bottom")
 
+    def recolor_axis(self, axis_name: Literal["left", "right", "bottom", "top"]):
+        axis: pg.AxisItem = self.getAxis(axis_name)
+        axis.setPen(self.text_color)
+        axis.setTextPen(self.text_color)
 
-class TempPlotWidget(Container):
-    """Plot class for displaying **matplotlib** plots."""
+    def label(self, axis_name: Literal["left", "right", "bottom", "top"], label: str, **args):
+        axis: pg.AxisItem = self.getAxis(axis_name)
+        axis.setLabel(label, **{"font-size": self.LABEL_SIZE}, **args)
 
-    def __init__(
-        self, figure: Figure | None = None, figsize: tuple[int, int] = (6, 5), dpi: int = 100
-    ):
+    def set_title(self, title: str, **args):
+        self.setTitle(title, size=self.TITLE_SIZE, color=self.text_color, **args)
+
+    def scatter(
+        self,
+        x_data: list[float | int],
+        y_data: list[float | int],
+        name: str,
+        point_size: int,
+        point_color: str,
+        **args,
+    ) -> pg.PlotDataItem:
         """
-        :param figure: The figure to use inside this widget. Optional.
-        :param figsize: Figure size in inches (width, height). Defaults to 6x5.
-        :param dpi: The dots per inch of the figure. Defaults to 100.
+        Plot a scatterplot on a **PlotItem**.
+
+        :param plot_item: The PlotItem to plot on.
+        :param x_data: The x-data.
+        :param y_data: The y-data.
+        :param name: The label for this line in the legend.
+        :param point_size: The point size.
+        :param point_color: The color of the points. Can be a hex string (i.e. "#112233") or a standard
+        color name (i.e. "green").
+        :param args: Additional arguments to pass to **PlotItem.plot()**.
+
+        :returns: A reference to the plotted line.
         """
-        super().__init__(QVBoxLayout)
+        line = self.plot(
+            x_data,
+            y_data,
+            name=name,
+            pen=None,
+            symbol="o",
+            symbolSize=point_size,
+            symbolBrush=point_color,
+            symbolPen=pg.mkPen(color=point_color),
+        )
+        return line
 
-        if figure is None:
-            self.figure = Figure(figsize=figsize, dpi=dpi)
-            self.axes = self.figure.add_subplot()
-        else:
-            self.figure = figure
-            self.axes = figure.gca()
-        self.canvas = FigureCanvasQTAgg(self.figure)
-        self.toolbar = Toolbar(self.canvas)
 
-        layout = self.layout()
-        layout.setSpacing(0)
-        add_to_layout(layout, self.canvas, self.toolbar)
+class PlotContainer(pg.PlotWidget):
+    """Container for a PlotItem. Capable of exporting itself as an image."""
 
-    def resizeEvent(self, event: QResizeEvent | None):  # overridden method
-        self.figure.tight_layout()
-        return super().resizeEvent(event)
+    def __init__(self, plot_item: PlotItem):
+        """Create a new PlotContainer."""
+        super().__init__(background=plot_item.background_color, plotItem=plot_item)
 
-    def clean(self):
-        """Remove the data without modifying the axes labels or legend."""
-        xlabel = self.axes.get_xlabel()
-        ylabel = self.axes.get_ylabel()
-        handles = self.axes.get_legend().get_patches()
-        self.axes.clear()
-        self.axes.set_xlabel(xlabel)
-        self.axes.set_ylabel(ylabel)
-        self.axes.legend(handles=handles)
-
-    # ----------------------------------------------------------------------------------------------
-    # reexported methods
-    def plot(self, *args, **kwargs):
-        return self.axes.plot(*args, **kwargs)
-
-    def scatter(self, x: float, y: float, **kwargs):
-        return self.axes.scatter(x, y, **kwargs)
-
-    def draw(self):
-        self.canvas.draw()
-
-    def set_title(self, title: str):
-        self.axes.set_title(title)
-
-    def set_xlabel(self, label: str):
-        self.axes.set_xlabel(label)
-
-    def set_ylabel(self, label: str):
-        self.axes.set_ylabel(label)
-
-    def tight_layout(self):
-        self.figure.tight_layout()
-
-    def legend(self, handles: tuple[Patch], fontsize: int | str):
-        self.axes.legend(handles=handles, fontsize=fontsize)
+    def export_to_image(self, filename: str):
+        exporter = exporters.ImageExporter(self.plotItem)
+        exporter.export(filename)
 
 
 class PlotWidget(QWidget):
-    """Plot widget for displaying data."""
+    """Plot widget for displaying data. This is the widget."""
 
-    def __init__(self):
-        """Create a new PlotWidget."""
+    def __init__(self, plot_container: PlotContainer | None = None):
+        """
+        Create a new PlotWidget. Optionally provide a **PlotContainer** to initialize this widget
+        with.
+        """
         super().__init__()
+        self.plot_item: PlotItem
+        self.plot_container: PlotContainer
 
-        self.text_color = self.palette().windowText().color().name()
-        self.background_color = self.palette().window().color().name()
+        if plot_container is not None:
+            self.plot_container = plot_container
+            self.plot_item = plot_container.plotItem
+        else:
+            self.plot_item = PlotItem()
+            self.plot_container = PlotContainer(self.plot_item)
 
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        self.plot = self.create_plot()
-        self.plot_item = self.plot.plotItem
-        layout.addWidget(self.plot)
+        layout.addWidget(self.plot_container)
 
         autoscale_button = Button("Autoscale", self.autoscale)
-        save_button = Button("Save", self.save)
+        save_button = Button("Save", self.save_as_image)
         button_layout = add_sublayout(layout, QHBoxLayout)
         add_to_layout(button_layout, autoscale_button, save_button)
 
-    def create_plot(self) -> pg.PlotWidget:
-        plot = pg.PlotWidget()
-        plot.setBackground(self.background_color)
-        self.recolor_axis(plot.plotItem.getAxis("left"))
-        self.recolor_axis(plot.plotItem.getAxis("bottom"))
-        return plot
-
-    def recolor_axis(self, axis: pg.AxisItem):
-        color = self.text_color
-        axis.setPen(color)
-        axis.setTextPen(color)
-
     def autoscale(self):
         """Autoscale the graph."""
-        pass
+        self.plot_item.getViewBox().enableAutoRange(pg.ViewBox.XYAxes)
 
-    def save(self):
-        """Save the figure to an image file."""
-        pass
+    def save_as_image(self):
+        filename, _ = QFileDialog.getSaveFileName(
+            None, "Save Graph", "", "Portable Network Graphics (*.png)"
+        )
+        if filename != "":
+            self.plot_container.export_to_image(filename)

@@ -5,7 +5,7 @@ from os import path
 import os
 from instruments import InstrumentSet  # ../instruments.py
 from enums.status import StabilityStatus, SequenceStatus  # ../enums
-from classes.points import TemperaturePoint  # ../classes
+from classes.plotting import TemperaturePoint  # ../classes
 from classes.datamutex import DataMutex  # ../classes
 from utility.graph import graph_from_folder  # ../utility
 import Files
@@ -312,12 +312,12 @@ class SequenceThread(QRunnable):
 
     def graph_and_save(self):
         """Graph the sequence on one plot and save the figure."""
-        try:
-            graph_from_folder(self.data_folder).savefig(
-                path.join(self.data_folder, Files.Sequence.GRAPH), dpi=1000
-            )
-        except Exception:
-            self.signals.graphFailed.emit()
+        # try:
+        graph_from_folder(self.data_folder).export_to_image(
+            path.join(self.data_folder, Files.Sequence.GRAPH)
+        )
+        # except Exception:
+        # self.signals.graphFailed.emit()
 
     # ----------------------------------------------------------------------------------------------
     # signals

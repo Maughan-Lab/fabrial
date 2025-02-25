@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QMainWindow, QGridLayout, QWidget
+from PyQt6.QtWidgets import QMainWindow, QGridLayout, QWidget, QApplication
 from PyQt6.QtGui import QCloseEvent
 from setpoint.widgets import SetpointWidget
 from passive_monitoring.widgets import PassiveMonitoringWidget
@@ -12,8 +12,7 @@ from classes.actions import Shortcut
 from secondary_window import SecondaryWindow
 from utility.layouts import add_to_layout_grid
 from menu.menu_bar import MenuBar
-
-from custom_widgets.dialog import OkDialog  # TODO: remove
+import time
 
 
 class MainWindow(QMainWindow):
@@ -25,9 +24,6 @@ class MainWindow(QMainWindow):
         self.create_widgets(instruments)
         self.connect_signals()
         self.create_menu(instruments)
-
-        # TODO: remove
-        OkDialog("Notice", "Graphing is temporarily disabled due to matplotlib being slow.").exec()
 
     def create_widgets(self, instruments):
         """Create subwidgets."""
@@ -140,5 +136,12 @@ class MainWindow(QMainWindow):
         # this will run if either of the first two conditions triggered
         if YesCancelDialog("Are you sure you want to exit?", message).run():
             signal.emit()
-            return True
-        return False
+            # NOTE: the below line forces PyQt to run all queued tasks (like handling signals), so
+            # it will cancel whatever sequence is going. DO NOT use this is normal code. It is fine
+            # here because we are about to close the application
+            QApplication.processEvents()
+            # wait until the sequence actually stops
+            while self.stability_check_widget.is_running() or self.sequence_widget.is_running():
+                time.sleep(0.01)
+            return True  # close
+        return False  # do not close

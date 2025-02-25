@@ -1,44 +1,57 @@
-from matplotlib.figure import Figure
-from matplotlib.axes import Axes
 import polars as pl
 from os import path
 from graph.widgets import GraphWidget
 from enums.status import StabilityStatus
 import Files
+from custom_widgets.plot import PlotItem, PlotContainer
 
 
-def graph_from_folder(data_folder: str) -> Figure:
+def graph_from_folder(data_folder: str) -> PlotContainer:
     """
-    Graph the temperature data in data_folder.
+    Graph the temperature data in **data_folder**.
 
     :param data_folder: The folder to read data from.
     :returns A figure with the plotted data.
     :raises FileNotFoundError: The selected folder does not contain data.
     :raises polars.exceptions.ColumnNotFoundError: The data is formatted incorrectly.
+
+    :returns: A PlotContainer containing a PlotItem with the graphed data. This is necessary
+    so that the PlotItem's data is rendered and can be exported as an image.
     """
-    figure = Figure((6, 5))
-    ax = figure.add_subplot()
-    ax.set_xlabel(GraphWidget.XLABEL)
-    ax.set_ylabel(GraphWidget.YLABEL)
-    plot(ax, data_folder, Files.Sequence.PRE_STABLE, StabilityStatus.CHECKING.to_color())
-    plot(ax, data_folder, Files.Sequence.BUFFER, StabilityStatus.BUFFERING.to_color())
-    plot(ax, data_folder, Files.Sequence.STABLE, StabilityStatus.STABLE.to_color())
 
-    return figure
+    plot_item = PlotItem()
+    plot_item.label("bottom", GraphWidget.XLABEL)
+    plot_item.label("left", GraphWidget.YLABEL)
+    plot_item.set_title("Temperature Graph")
+
+    plot_from_file(plot_item, data_folder, Files.Sequence.PRE_STABLE, StabilityStatus.CHECKING)
+    plot_from_file(plot_item, data_folder, Files.Sequence.BUFFER, StabilityStatus.BUFFERING)
+    plot_from_file(plot_item, data_folder, Files.Sequence.STABLE, StabilityStatus.STABLE)
+
+    return PlotContainer(plot_item)
 
 
-def plot(ax: Axes, folder: str, filename: str, color: str):
+def plot_from_file(
+    plot_item: PlotItem, folder: str, filename: str, stability_status: StabilityStatus
+):
     """
-    Plot data from a file on an axis.
+    Plot data from a file on a **PlotItem**.
 
-    :param ax: The axes to plot on.
+    :param plot_item: The PlotItem to plot on.
     :param filename: The file to read data from.
     :param folder: The folder that contains **filename**.
-    :param color: The color of points on the graph.
+    :param stability_status: The stability status associated with **filename**.
     """
     TIME = Files.Sequence.Headers.TIME
     TEMPERATURE = Files.Sequence.Headers.TEMPERATURE
 
     file = path.join(folder, filename)
     df = pl.scan_csv(file).select(TIME, TEMPERATURE).collect()
-    ax.scatter(df[TIME], df[TEMPERATURE], c=color, marker=".")
+    if df[TIME].len() != 0:  # don't plot empty files
+        plot_item.scatter(
+            df[TIME],
+            df[TEMPERATURE],
+            stability_status.to_legend_text(),
+            GraphWidget.POINT_SIZE,
+            stability_status.to_color(),
+        )

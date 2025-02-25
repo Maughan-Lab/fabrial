@@ -96,10 +96,9 @@ class SequenceMenu(QMenu):
         )
         if folder != "":
             try:
-                figure = graph_from_folder(folder)
-                # show the figure
-                plot = PlotWidget(figure)
-                main_window.new_window("Sequence Graph", plot)
+                plot_container = graph_from_folder(folder)
+                plot_widget = PlotWidget(plot_container)
+                main_window.new_window("Sequence Graph", plot_widget)
                 return
             except FileNotFoundError:
                 message = "Folder contains no data."

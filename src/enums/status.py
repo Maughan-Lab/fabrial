@@ -25,6 +25,17 @@ class StabilityStatus(Enum):
             case StabilityStatus.NULL:
                 return ""
 
+    def to_legend_text(self) -> str:
+        match self:
+            case StabilityStatus.STABLE:
+                return "Stable"
+            case StabilityStatus.BUFFERING:
+                return "Buffer"
+            case StabilityStatus.CHECKING:
+                return "Pre-Stable"
+        print(f"BUG: We called to_legend_text() on StabilityStatus: {self}")
+        return ""
+
     def __str__(self):
         """Return a text representation."""
         match self:

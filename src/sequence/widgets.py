@@ -15,7 +15,7 @@ from custom_widgets.tableview import TableView
 from instruments import InstrumentSet  # ../instruments.py
 from utility.layouts import add_sublayout, add_to_layout  # ../helper_functions
 from enums.status import StabilityStatus, SequenceStatus  # ../enums
-from classes.points import TemperaturePoint  # ../classes
+from classes.plotting import TemperaturePoint  # ../classes
 from .tablemodel import SequenceTableModel
 from .sequence import SequenceThread
 from typing import Type

@@ -22,7 +22,7 @@ class Sequence:
     STABLE = "Post-Stabilization Temperature Data.csv"
     CYCLE_TIMES = "Cycle Times.csv"
     STABILIZATON_TIMES = "Stabilization Times.csv"
-    GRAPH = "Sequence Graph.jpeg"
+    GRAPH = "Sequence Graph.png"
 
     # yes this should be nested
     @dataclass
