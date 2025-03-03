@@ -15,16 +15,17 @@ class GraphWidget(Frame):
 
     def __init__(self) -> None:
         super().__init__(QVBoxLayout, 0)
+        self.plot: PlotWidget
         self.plot_item: PlotItem
         self.line_data: LineData
 
         self.create_widgets()
 
     def create_widgets(self):
-        plot = PlotWidget()
-        self.plot_item = plot.plot_item
+        self.plot = PlotWidget()
+        self.plot_item = self.plot.plot_item
         self.add_labels()
-        self.layout().addWidget(plot)
+        self.layout().addWidget(self.plot)
 
     def add_labels(self):
         self.plot_item.label("bottom", self.XLABEL)

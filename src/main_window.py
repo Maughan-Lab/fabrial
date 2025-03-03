@@ -105,8 +105,7 @@ class MainWindow(QMainWindow):
         # close the window on "Ctrl+g"
         Shortcut(self.popped_graph, "Ctrl+g", self.popped_graph.close)
         # save the graph on "Ctrl+s"
-        # TODO: remedy the below line
-        # Shortcut(self.popped_graph, "Ctrl+s", plot.toolbar.save_figure)
+        Shortcut(self.popped_graph, "Ctrl+s", plot.save_as_image)
         # return the graph widget to its previous state on PoppedGraph destruction
         self.popped_graph.closed.connect(lambda: self.graph_widget.give_widget(plot))
         self.popped_graph.closed.connect(self.menu_bar.view.handle_popped_graph_destruction)

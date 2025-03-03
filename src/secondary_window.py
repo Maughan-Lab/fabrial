@@ -8,6 +8,10 @@ class SecondaryWindow(QMainWindow):
     closed = pyqtSignal()
 
     def __init__(self, title: str, parent=None):
+        """
+        Create a secondary window. If **parent** is specified, the created window will always be
+        displayed on top of the parent.
+        """
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
