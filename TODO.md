@@ -1,8 +1,5 @@
-# Plotting
-Finish implementing the plotting system in graph/widgets.py.
-
 # General TODO
-Finish implementing the TreeView system.
+Implement drag-and-drop for the TreeView system. Use the reference you bookmarked on FireFox.
 
 Implement the sequence wizard by writing a Python file that gets run during a sequence.
 Use the exec(open("FILENAME.py").read()) function for this.

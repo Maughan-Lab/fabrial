@@ -60,25 +60,12 @@ class MainWindow(QMainWindow):
         # connect the graph
         self.sequence_widget.newDataAquired.connect(self.graph_widget.add_point)
         self.sequence_widget.cycleNumberChanged.connect(self.graph_widget.move_to_next_cycle)
-        self.sequence_widget.stabilityChanged.connect(self.graph_widget.handle_stability_change)
+        self.sequence_widget.stageChanged.connect(self.graph_widget.handle_stage_change)
 
     def create_menu(self, instruments: InstrumentSet):
         """Create the menu bar."""
         self.menu_bar = MenuBar(self, instruments)
         self.setMenuBar(self.menu_bar)
-
-    def new_window(self, title: str, central_widget: QWidget) -> SecondaryWindow:
-        """
-        Create a new window owned by the main window.
-
-        :param title: The window title.
-        :param central_widget: The widget to show inside the secondary window.
-        :returns: The created window.
-        """
-        window = SecondaryWindow(title, self)
-        window.setCentralWidget(central_widget)
-        window.show()
-        return window
 
     # ----------------------------------------------------------------------------------------------
     # resizing
@@ -95,13 +82,26 @@ class MainWindow(QMainWindow):
             self.showNormal()
         self.resize(self.minimumSize())
 
+    def new_window(self, title: str, central_widget: QWidget) -> SecondaryWindow:
+        """
+        Create a new window owned by the main window.
+
+        :param title: The window title.
+        :param central_widget: The widget to show inside the secondary window.
+        :returns: The created window.
+        """
+        window = SecondaryWindow(title, central_widget)
+        self.secondary_windows.append(window)
+        window.closed.connect(lambda: self.secondary_windows.remove(window))
+        return window
+
     # ----------------------------------------------------------------------------------------------
     # pop the graph
     def pop_graph(self):
         """Pop the sequence graph into a new window."""
         self.graph_widget.hide()
         plot = self.graph_widget.plot
-        self.popped_graph = self.new_window("Quincy - Popped Graph", plot)
+        self.popped_graph = SecondaryWindow("Quincy - Popped Graph", plot)
         # close the window on "Ctrl+g"
         Shortcut(self.popped_graph, "Ctrl+g", self.popped_graph.close)
         # save the graph on "Ctrl+s"

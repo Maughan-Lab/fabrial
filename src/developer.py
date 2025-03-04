@@ -201,7 +201,7 @@ class DeveloperStabilityCheckThread(StabilityCheckThread):
 class DeveloperSequenceThread(SequenceThread):
     """Faster stabilization."""
 
-    MEASUREMENT_INTERVAL = 5
+    MEASUREMENT_INTERVAL = 1
     MINIMUM_MEASUREMENTS = 10
 
 

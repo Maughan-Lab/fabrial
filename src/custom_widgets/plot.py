@@ -1,8 +1,9 @@
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, QGraphicsScene
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QFileDialog
 from utility.layouts import add_to_layout, add_sublayout  # ../utility
 import pyqtgraph as pg
 import pyqtgraph.exporters as exporters
 from custom_widgets.button import Button
+from custom_widgets.widget import Widget
 from typing import Literal
 
 
@@ -87,7 +88,7 @@ class PlotContainer(pg.PlotWidget):
         exporter.export(filename)
 
 
-class PlotWidget(QWidget):
+class PlotWidget(Widget):
     """Plot widget for displaying data. This is the widget."""
 
     def __init__(self, plot_container: PlotContainer | None = None):

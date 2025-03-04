@@ -79,13 +79,13 @@ class SequenceThread(QRunnable):
                     continue
 
                 # stabilizing
-                self.update_stability(StabilityStatus.CHECKING)
+                self.update_stage(StabilityStatus.CHECKING)
                 proceed = self.stabilize(setpoint)
                 if not proceed:
                     continue
 
                 # buffering
-                self.update_stability(StabilityStatus.BUFFERING)
+                self.update_stage(StabilityStatus.BUFFERING)
                 proceed = self.collect_data(
                     str(Column.BUFFER_HOURS), str(Column.BUFFER_MINUTES), self.buffer_file
                 )
@@ -96,7 +96,7 @@ class SequenceThread(QRunnable):
                         self.buffer_skip.set(False)
 
                 # data collection while stable
-                self.update_stability(StabilityStatus.STABLE)
+                self.update_stage(StabilityStatus.STABLE)
                 self.collect_data(
                     str(Column.HOLD_HOURS), str(Column.HOLD_MINUTES), self.stable_file
                 )
@@ -335,6 +335,14 @@ class SequenceThread(QRunnable):
         self.stability = stability
         self.signals.stabilityChanged.emit(stability)
 
+    def update_stage(self, stability: StabilityStatus):
+        """
+        Tell other parts of the program that the sequence stage has moved (i.e. from pre-stable to
+        buffering). This automatically updates the sequence stability status.
+        """
+        self.signals.stageChanged.emit(stability)
+        self.update_stability(stability)
+
     # ----------------------------------------------------------------------------------------------
     # external command handlers
     def cancel_sequence(self):
@@ -366,6 +374,7 @@ class Signals(QObject):
     newDataAquired = pyqtSignal(TemperaturePoint)
     cycleNumberChanged = pyqtSignal(int)
     stabilityChanged = pyqtSignal(StabilityStatus)
+    stageChanged = pyqtSignal(StabilityStatus)
     statusChanged = pyqtSignal(SequenceStatus)
     graphFailed = pyqtSignal()
 

@@ -1,18 +1,22 @@
 from PyQt6.QtWidgets import QWidget
+from typing import Union
+import random
 
 
 class TreeItem:
     """Class to represent items on a tree model."""
 
-    def __init__(self, parent: "TreeItem" | None = None):
+    def __init__(self, parent: Union["TreeItem", None] = None):
         self.linked_widget: QWidget
         self.parent_item = parent
+        self.display_name = random.randint(0, 1000)
         self.children: list["TreeItem"] = []
 
     def link_widget(self, widget: QWidget):
         """Link **widget** to this item (for data storage)."""
+        self.linked_widget = widget
 
-    def child(self, index: int) -> "TreeItem" | None:
+    def child(self, index: int) -> Union["TreeItem", None]:
         """Get the child item at **index**."""
         try:
             return self.children[index]
@@ -39,7 +43,7 @@ class TreeItem:
     def name(self) -> str:
         """Get the display text for this item."""
         # TODO: implement based off of the linked_widget's name
-        return ""
+        return self.display_name
 
     def insert_children(self, starting_row_index: int, count: int) -> bool:
         """

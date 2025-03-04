@@ -40,7 +40,7 @@ class GraphWidget(Frame):
         self.plot_item.clear()
         self.plot_item.set_title(f"Cycle {str(cycle_number)}")
 
-    def handle_stability_change(self, status: StabilityStatus):
+    def handle_stage_change(self, status: StabilityStatus):
         """Add a new line to the graph that will get updated."""
         name: str
         match status:
@@ -60,3 +60,4 @@ class GraphWidget(Frame):
         """Transfer ownership of a widget to this widget."""
         widget.setParent(self)
         self.layout().addWidget(widget)  # type: ignore
+        widget.show()

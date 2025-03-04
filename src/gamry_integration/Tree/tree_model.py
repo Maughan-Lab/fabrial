@@ -1,5 +1,7 @@
 from PyQt6.QtCore import Qt, QModelIndex, QAbstractItemModel, QObject
-from .tree_item import TreeItem
+from PyQt6.QtWidgets import QFileDialog
+from tree_item import TreeItem
+from typing import Any
 
 
 class TreeModel(QAbstractItemModel):
@@ -8,9 +10,10 @@ class TreeModel(QAbstractItemModel):
     def __init__(self, name: str, parent: QObject | None = None):
         super().__init__(parent)
         self.name = name
+        self.root_item = TreeItem()
         self.items: list[TreeItem] = []
 
-    def item(self, index: QModelIndex | None) -> TreeItem | None:
+    def item(self, index: QModelIndex | None) -> TreeItem:
         """Get the item at the provided **index**. Returns **None** if **index** is **None**."""
         if index is not None:
             # this uses C++ witchcraft to get the item at the index
@@ -19,7 +22,7 @@ class TreeModel(QAbstractItemModel):
             item: TreeItem = index.internalPointer()
             if item is not None:
                 return item
-        return None
+        return self.root_item
 
     # ----------------------------------------------------------------------------------------------
     # overridden methods
@@ -27,6 +30,8 @@ class TreeModel(QAbstractItemModel):
         item = self.item(index)
         if item is not None:
             parent_item = item.parent()
+            if not parent_item:
+                return QModelIndex()
         else:
             return QModelIndex()
         return self.createIndex(parent_item.child_index(), 0, parent_item)
@@ -35,17 +40,23 @@ class TreeModel(QAbstractItemModel):
         return 1
 
     def rowCount(self, parent_index: QModelIndex | None = None) -> int:
-        # TODO: implement
-        pass
+        parent_item = self.item(parent_index)
+        if not parent_item:
+            return 0
+        return parent_item.child_count()
 
-    def data(self, index: QModelIndex, role: int | None = None):
+    def data(self, index: QModelIndex, role: int | None = None) -> str | None:
         match role:
             case Qt.ItemDataRole.DisplayRole | Qt.ItemDataRole.EditRole:
                 item = self.item(index)
                 return item.name()  # type: ignore
+        return None
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlag:
-        return super().flags(index)  # default implementation
+        flags = super().flags(index)  # default implementation
+        if index.isValid():
+            return flags | Qt.ItemFlag.ItemIsDragEnabled | Qt.ItemFlag.ItemIsDropEnabled
+        return flags | Qt.ItemFlag.ItemIsDropEnabled
 
     def headerData(
         self, section: int, orientation: Qt.Orientation, role: int | None = None
@@ -79,16 +90,16 @@ class TreeModel(QAbstractItemModel):
         # TreeItem to associate the data.
 
     def removeRows(self, row: int, count: int, parent_index: QModelIndex | None = None) -> bool:
-        parent_item = self.item(parent_index)
-        if parent_item is None:
+        if not parent_index.isValid():  # type: ignore
             return False
+        parent_item = self.item(parent_index)
 
         self.beginRemoveRows(parent_index, row, row + count - 1)  # type: ignore
         success = parent_item.remove_children(row, count)
         self.endRemoveRows()
         return success
 
-    # TODO: implement RowCount() (above), maybe setData() (to open the widget to edit data)
-    # TODO: implement drag and drop and deleting with the Delete key or a button
+    def supportedDropActions(self) -> Qt.DropAction:
+        return Qt.DropAction.CopyAction
 
-    # ----------------------------------------------------------------------------------------------
+    # TODO: implement drag and drop and deleting with the Delete key or a button

@@ -26,7 +26,7 @@ class SequenceWidget(GroupBox):
 
     # signals
     newDataAquired = pyqtSignal(TemperaturePoint)
-    stabilityChanged = pyqtSignal(StabilityStatus)
+    stageChanged = pyqtSignal(StabilityStatus)
     statusChanged = pyqtSignal(bool)  # True if running else False
     cycleNumberChanged = pyqtSignal(int)
     # pausing
@@ -180,7 +180,6 @@ class SequenceWidget(GroupBox):
     # stabilityChanged
     def handle_stability_change(self, status: StabilityStatus):
         self.update_label(self.stability_label, str(status), status.to_color())
-        self.stabilityChanged.emit(status)
 
     # ----------------------------------------------------------------------------------------------
     # sequence completion
@@ -225,6 +224,7 @@ class SequenceWidget(GroupBox):
             )
             # the following gets sent to external widgets
             thread.signals.newDataAquired.connect(self.newDataAquired.emit)
+            thread.signals.stageChanged.connect(self.stageChanged.emit)
             # the following are sent to the thread
             self.pauseSequence.connect(thread.pause_sequence)
             self.unpauseSequence.connect(thread.unpause_sequence)

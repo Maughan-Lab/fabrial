@@ -70,7 +70,7 @@ class SequenceMenu(QMenu):
         self.widget.statusChanged.connect(
             lambda running: self.update_action_states(running, self.oven.is_connected())
         )
-        self.widget.stabilityChanged.connect(self.handle_stability_change)
+        self.widget.stageChanged.connect(self.handle_stage_change)
         self.oven.connectionChanged.connect(
             lambda connected: self.update_action_states(self.widget.is_running(), connected)
         )
@@ -82,7 +82,7 @@ class SequenceMenu(QMenu):
         if not running or not connected:
             self.skip_current_buffer.setEnabled(False)
 
-    def handle_stability_change(self, status: StabilityStatus):
+    def handle_stage_change(self, status: StabilityStatus):
         match status:
             case StabilityStatus.BUFFERING:
                 enabled = True
