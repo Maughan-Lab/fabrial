@@ -1,7 +1,17 @@
-from PyQt6.QtCore import Qt, QModelIndex, QAbstractItemModel, QObject
-from PyQt6.QtWidgets import QFileDialog
+from PyQt6.QtCore import (
+    Qt,
+    QModelIndex,
+    QAbstractItemModel,
+    QObject,
+    QMimeData,
+    QByteArray,
+    QDataStream,
+    QIODevice,
+)
 from tree_item import TreeItem
-from typing import Any
+from typing import Iterable
+
+JSON = "application/json"
 
 
 class TreeModel(QAbstractItemModel):
@@ -13,9 +23,11 @@ class TreeModel(QAbstractItemModel):
         self.root_item = TreeItem()
         self.items: list[TreeItem] = []
 
-    def item(self, index: QModelIndex | None) -> TreeItem:
-        """Get the item at the provided **index**. Returns **None** if **index** is **None**."""
-        if index is not None:
+    def item(self, index: QModelIndex) -> TreeItem:
+        """
+        Get the item at the provided **index**. Returns the root item is **index** is invalid.
+        """
+        if index.isValid():
             # this uses C++ witchcraft to get the item at the index
             # look up the docs for QModelIndex
             # I think it is related to the index() function
@@ -39,15 +51,15 @@ class TreeModel(QAbstractItemModel):
     def columnCount(self, parent: QModelIndex | None = None) -> int:
         return 1
 
-    def rowCount(self, parent_index: QModelIndex | None = None) -> int:
+    def rowCount(self, parent_index: QModelIndex = QModelIndex()) -> int:
         parent_item = self.item(parent_index)
-        if not parent_item:
-            return 0
         return parent_item.child_count()
 
     def data(self, index: QModelIndex, role: int | None = None) -> str | None:
+        if not index.isValid():
+            return None
         match role:
-            case Qt.ItemDataRole.DisplayRole | Qt.ItemDataRole.EditRole:
+            case Qt.ItemDataRole.DisplayRole:
                 item = self.item(index)
                 return item.name()  # type: ignore
         return None
@@ -65,7 +77,9 @@ class TreeModel(QAbstractItemModel):
             return self.name
         return None
 
-    def index(self, row: int, column: int, parent_index: QModelIndex | None = None) -> QModelIndex:
+    def index(
+        self, row: int, column: int, parent_index: QModelIndex = QModelIndex()
+    ) -> QModelIndex:
         parent_item = self.item(parent_index)
         if parent_item is None:
             return QModelIndex()
@@ -75,13 +89,13 @@ class TreeModel(QAbstractItemModel):
             return self.createIndex(row, column, child_item)
         return QModelIndex()
 
-    def insertRows(self, row: int, count: int, index: QModelIndex | None = None) -> bool:
-        parent_item = self.item(index)
+    def insertRows(self, row: int, count: int, parent_index: QModelIndex = QModelIndex()) -> bool:
+        parent_item = self.item(parent_index)
         if parent_item is None:
             return False
-        # beginInsertRows() is defined by QAbstractItemModel and it notifies other components a row
-        # is being added
-        self.beginInsertRows(index, row, row + count - 1)  # type: ignore
+        # beginInsertRows() is defined by QAbstractItemModel and it notifies other components rows
+        # are being added
+        self.beginInsertRows(parent_index, row, row + count - 1)  # type: ignore
         success = parent_item.insert_children(row, count)
         self.endInsertRows()
         return success
@@ -89,7 +103,7 @@ class TreeModel(QAbstractItemModel):
         # NOTE: the function that triggers this method MUST call link_widget() on the newly created
         # TreeItem to associate the data.
 
-    def removeRows(self, row: int, count: int, parent_index: QModelIndex | None = None) -> bool:
+    def removeRows(self, row: int, count: int, parent_index: QModelIndex = QModelIndex()) -> bool:
         if not parent_index.isValid():  # type: ignore
             return False
         parent_item = self.item(parent_index)
@@ -100,6 +114,70 @@ class TreeModel(QAbstractItemModel):
         return success
 
     def supportedDropActions(self) -> Qt.DropAction:
-        return Qt.DropAction.CopyAction
+        return Qt.DropAction.MoveAction | Qt.DropAction.CopyAction
+
+    def mimeTypes(self):
+        return [JSON]
+
+    def mimeData(self, indexes: Iterable[QModelIndex]):
+        mime_data = QMimeData()
+        encoded_data = QByteArray()
+        stream = QDataStream(encoded_data, QIODevice.OpenModeFlag.WriteOnly)
+        for index in indexes:
+            if index.isValid():
+                text = self.data(index, Qt.ItemDataRole.DisplayRole)
+                stream.writeQString(text)
+
+        mime_data.setData(JSON, encoded_data)
+        return mime_data
+
+    def canDropMimeData(
+        self,
+        data: QMimeData | None,
+        action: Qt.DropAction,
+        row: int,
+        column: int,
+        parent_index: QModelIndex,
+    ):
+        if data is None or not data.hasFormat(JSON):
+            return False
+        match action:
+            case Qt.DropAction.CopyAction | Qt.DropAction.MoveAction:
+                return True
+        return False
+
+    def dropMimeData(
+        self,
+        data: QMimeData | None,
+        action: Qt.DropAction,
+        row: int,
+        column: int,
+        parent_index: QModelIndex,
+    ) -> bool:
+        if not self.canDropMimeData(data, action, row, column, parent_index):
+            return False
+
+        begin_row: int
+        if row != -1:  # the drop occurred above/below an item, insert appropriately
+            begin_row = row
+        elif parent_index.isValid():  # the drop occurred on an item, insert a child
+            begin_row = 0
+        else:  # the drop didn't occur on an item, so insert at the end
+            begin_row = self.rowCount(parent_index)
+
+        # NOTE: do not set the OpenModeFlag for this stream, it causes weird issues
+        stream = QDataStream(data.data(JSON))  # type: ignore
+        item_data: list[str] = []
+        while not stream.atEnd():
+            text = stream.readQString()
+            item_data.append(text)
+
+        self.insertRows(begin_row, len(item_data), parent_index)
+        for text in item_data:
+            index = self.index(begin_row, 0, parent_index)
+            item = self.item(index)
+            item.display_name = text
+            begin_row += 1
+        return True
 
     # TODO: implement drag and drop and deleting with the Delete key or a button

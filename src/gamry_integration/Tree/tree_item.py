@@ -9,7 +9,7 @@ class TreeItem:
     def __init__(self, parent: Union["TreeItem", None] = None):
         self.linked_widget: QWidget
         self.parent_item = parent
-        self.display_name = random.randint(0, 1000)
+        self.display_name: str = str(random.randint(0, 1000))
         self.children: list["TreeItem"] = []
 
     def link_widget(self, widget: QWidget):
@@ -69,3 +69,18 @@ class TreeItem:
         except Exception:
             return False
         return True
+
+    def initialize_from_dict(self, parameters: dict) -> bool:
+        """
+        Parse a JSON-like dictionary to update this item's data based on the contents.
+
+        :param parameters: The dictionary containing the parameters.
+        :returns: True if successful, False otherwise.
+        """
+        return True
+
+    def to_dict(self) -> dict:
+        """
+        Convert all of this item's data into a JSON-like dictionary.
+        """
+        return dict()
