@@ -14,7 +14,6 @@ class TestWidget(Container):
         self.average_cries_label = Label("")
         add_to_layout(layout, self.cry_count_label, self.average_cries_label)
         self.display_name: str
-        print("f")
 
     @classmethod
     def from_dict(cls: type["TestWidget"], data_as_dict: dict) -> "TestWidget":
