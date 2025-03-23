@@ -23,7 +23,6 @@ class TreeModel(QAbstractItemModel):
         self.name = name
         data = json.load(open("src/gamry_integration/Tree/example_tree_item_encoding.json", "r"))
         self.root_item = TreeItem.from_dict(None, data)
-        json.dump(self.root_item.to_dict(), open("src/gamry_integration/Tree/poop.json", "w"))
 
     def item(self, index: QModelIndex) -> TreeItem:
         """
