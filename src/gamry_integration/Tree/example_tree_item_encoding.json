@@ -1,25 +1,38 @@
 {
-    "linked-widget-type": 2,
+    "linked-widget-type": 1,
     "linked-widget-data": {
-        "parameter1": "some value",
-        "parameter2": "another value"
+        "display-name": "something",
+        "cry-count": 10,
+        "average-cries": 1.44
     },
     "children": [
         {
             "linked-widget-type": 1,
             "linked-widget-data": {
-                "parameter1": "some value",
-                "parameter2": "another value"
+                "display-name": "something else",
+                "cry-count": 40,
+                "average-cries": 53.81111
             },
             "children": []
         },
         {
-            "linked-widget-type": 3,
+            "linked-widget-type": 1,
             "linked-widget-data": {
-                "parameter1": "some value",
-                "parameter2": "another value"
+                "display-name": "something even different",
+                "cry-count": 18943,
+                "average-cries": 12.2
             },
-            "children": []
+            "children": [
+                {
+                    "linked-widget-type": 1,
+                    "linked-widget-data": {
+                        "display-name": "death and despair",
+                        "cry-count": 32,
+                        "average-cries": 4.0
+                    },
+                    "children": []
+                }
+            ]
         }
     ]
 }

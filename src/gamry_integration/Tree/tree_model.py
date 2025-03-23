@@ -8,8 +8,9 @@ from PyQt6.QtCore import (
     QDataStream,
     QIODevice,
 )
-from tree_item import TreeItem
+from .tree_item import TreeItem
 from typing import Iterable
+import json
 
 JSON = "application/json"
 
@@ -20,8 +21,9 @@ class TreeModel(QAbstractItemModel):
     def __init__(self, name: str, parent: QObject | None = None):
         super().__init__(parent)
         self.name = name
-        self.root_item = TreeItem()
-        self.items: list[TreeItem] = []
+        data = json.load(open("src/gamry_integration/Tree/example_tree_item_encoding.json", "r"))
+        self.root_item = TreeItem.from_dict(None, data)
+        json.dump(self.root_item.to_dict(), open("src/gamry_integration/Tree/poop.json", "w"))
 
     def item(self, index: QModelIndex) -> TreeItem:
         """
@@ -35,6 +37,15 @@ class TreeModel(QAbstractItemModel):
             if item is not None:
                 return item
         return self.root_item
+
+    def insert_rows(self, row: int, parent_index: QModelIndex, items: list[TreeItem]) -> bool:
+        """Insert items into the model. Returns True on success, False on failure."""
+        parent_item = self.item(parent_index)
+        self.beginInsertRows(parent_index, row, row + len(items) - 1)
+        success = parent_item.insert_children(row, items)
+        self.endInsertRows()
+
+        return success
 
     # ----------------------------------------------------------------------------------------------
     # overridden methods
@@ -89,23 +100,7 @@ class TreeModel(QAbstractItemModel):
             return self.createIndex(row, column, child_item)
         return QModelIndex()
 
-    def insertRows(self, row: int, count: int, parent_index: QModelIndex = QModelIndex()) -> bool:
-        parent_item = self.item(parent_index)
-        if parent_item is None:
-            return False
-        # beginInsertRows() is defined by QAbstractItemModel and it notifies other components rows
-        # are being added
-        self.beginInsertRows(parent_index, row, row + count - 1)  # type: ignore
-        success = parent_item.insert_children(row, count)
-        self.endInsertRows()
-        return success
-
-        # NOTE: the function that triggers this method MUST call link_widget() on the newly created
-        # TreeItem to associate the data.
-
     def removeRows(self, row: int, count: int, parent_index: QModelIndex = QModelIndex()) -> bool:
-        if not parent_index.isValid():  # type: ignore
-            return False
         parent_item = self.item(parent_index)
 
         self.beginRemoveRows(parent_index, row, row + count - 1)  # type: ignore
@@ -114,18 +109,19 @@ class TreeModel(QAbstractItemModel):
         return success
 
     def supportedDropActions(self) -> Qt.DropAction:
-        return Qt.DropAction.MoveAction | Qt.DropAction.CopyAction
+        return Qt.DropAction.MoveAction  # | Qt.DropAction.CopyAction
 
-    def mimeTypes(self):
+    def mimeTypes(self) -> list[str]:
         return [JSON]
 
-    def mimeData(self, indexes: Iterable[QModelIndex]):
+    def mimeData(self, indexes: Iterable[QModelIndex]) -> QMimeData:
         mime_data = QMimeData()
         encoded_data = QByteArray()
         stream = QDataStream(encoded_data, QIODevice.OpenModeFlag.WriteOnly)
         for index in indexes:
             if index.isValid():
-                text = self.data(index, Qt.ItemDataRole.DisplayRole)
+                item = self.item(index)
+                text = json.dumps(item.to_dict())
                 stream.writeQString(text)
 
         mime_data.setData(JSON, encoded_data)
@@ -138,7 +134,7 @@ class TreeModel(QAbstractItemModel):
         row: int,
         column: int,
         parent_index: QModelIndex,
-    ):
+    ) -> bool:
         if data is None or not data.hasFormat(JSON):
             return False
         match action:
@@ -167,17 +163,15 @@ class TreeModel(QAbstractItemModel):
 
         # NOTE: do not set the OpenModeFlag for this stream, it causes weird issues
         stream = QDataStream(data.data(JSON))  # type: ignore
-        item_data: list[str] = []
+        items: list[TreeItem] = []
+        parent_item = self.item(parent_index)
         while not stream.atEnd():
-            text = stream.readQString()
-            item_data.append(text)
+            raw_text = stream.readQString()
+            item_as_dict = json.loads(raw_text)
+            item = TreeItem.from_dict(parent_item, item_as_dict)
+            items.append(item)
 
-        self.insertRows(begin_row, len(item_data), parent_index)
-        for text in item_data:
-            index = self.index(begin_row, 0, parent_index)
-            item = self.item(index)
-            item.display_name = text
-            begin_row += 1
+        self.insert_rows(begin_row, parent_index, items)
         return True
 
     # TODO: implement drag and drop and deleting with the Delete key or a button

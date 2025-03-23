@@ -2,15 +2,12 @@
 # SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 from __future__ import annotations
 
-import sys
-from pathlib import Path
 
 from PyQt6.QtCore import QAbstractItemModel, QItemSelectionModel, QModelIndex, Qt, pyqtSlot
-from PyQt6.QtWidgets import QAbstractItemView, QMainWindow, QTreeView, QWidget, QHBoxLayout
-from PyQt6.QtTest import QAbstractItemModelTester
+from PyQt6.QtWidgets import QAbstractItemView, QMainWindow, QWidget, QHBoxLayout
 
-from tree_model import TreeModel
-from tree_view import SequenceTreeView
+from .tree_model import TreeModel
+from .tree_view import SequenceTreeView
 
 
 class MainWindow(QMainWindow):

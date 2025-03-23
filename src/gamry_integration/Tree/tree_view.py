@@ -1,7 +1,8 @@
-from PyQt6.QtCore import Qt, QModelIndex, QAbstractItemModel, QObject
+from PyQt6.QtCore import Qt, QModelIndex
 from PyQt6.QtGui import QKeyEvent, QDropEvent
-from PyQt6.QtWidgets import QFileDialog, QTreeView, QWidget, QAbstractItemView
-from tree_item import TreeItem
+from PyQt6.QtWidgets import QTreeView, QWidget
+from .tree_item import TreeItem
+from .tree_model import TreeModel
 
 
 class SequenceTreeView(QTreeView):
@@ -10,6 +11,7 @@ class SequenceTreeView(QTreeView):
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self.doubleClicked.connect(self.handle_double_click)
+        self.setExpandsOnDoubleClick(False)
 
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
@@ -17,9 +19,8 @@ class SequenceTreeView(QTreeView):
 
     def handle_double_click(self, index: QModelIndex):
         """On a double click event."""
-        # TODO: this needs to grab the TreeItem and show its widget in a new (secondary) window
-        item: TreeItem = index.internalPointer()
-        print(index.internalPointer())
+        model: TreeModel = self.model()  # type: ignore
+        model.item(index).show_widget()
 
     # ----------------------------------------------------------------------------------------------
     # overridden methods
@@ -33,12 +34,7 @@ class SequenceTreeView(QTreeView):
                     model.removeRow(index.row(), index.parent())  # type: ignore
                 case Qt.Key.Key_Return | Qt.Key.Key_Enter:
                     item: TreeItem = index.internalPointer()
-                    # TODO: show the item's linked widget
-                    # this will involve either creating a new window and putting the widget there,
-                    # or using the widget as the window itself. I'm not sure if closing the widget
-                    # deletes it
-                    print("Enter pressed, this should show the widget.")
-
+                    item.show_widget()
         super().keyPressEvent(event)
 
     def dropEvent(self, event: QDropEvent | None):
@@ -46,3 +42,7 @@ class SequenceTreeView(QTreeView):
             # event.setDropAction(Qt.DropAction.MoveAction)
             super().dropEvent(event)
             self.model().layoutChanged.emit()  # type: ignore
+            # expand one level so the dropped data is more visible
+            index = self.indexAt(event.position().toPoint())
+            self.expandRecursively(index, 1)
+            # TODO: change the dropAction depending on if Ctrl is held (if it is, do a copy, not a move)

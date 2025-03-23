@@ -5,10 +5,10 @@ from __future__ import annotations
 
 import sys
 from PyQt6.QtWidgets import QApplication
-from mainwindow import MainWindow
+from gamry_integration.Tree.mainwindow import MainWindow
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
