@@ -1,28 +1,10 @@
 from typing import Union, Any
-from . import Encoding
-from enum import Enum
-from .test_widget import TestWidget
+from .widgets.test import TestWidget
+from widgets.widget_type import WidgetType
 
-
-class WidgetType(Enum):
-    POTENTIOSTATIC_EIS = 0
-    TEST = 1
-
-    def to_class(self) -> type[TestWidget]:
-        """Return a widget class."""
-        match self:
-            case WidgetType.POTENTIOSTATIC_EIS:
-                return TestWidget
-            case WidgetType.TEST:
-                return TestWidget
-
-    @staticmethod
-    def from_class_object(class_object: object) -> "WidgetType":
-        match class_object:
-            case TestWidget():  # this does not create a new instance, so no wasted time!
-                return WidgetType.TEST
-        print("should have already returned, ERROR")
-        return WidgetType.TEST
+TYPE = "linked-widget-type"
+DATA = "linked-widget-data"
+CHILDREN = "children"
 
 
 class TreeItem:
@@ -104,13 +86,13 @@ class TreeItem:
 
         :param item_as_dict: A dictionary representing the item's data in JSON format.
         """
-        widget_class = WidgetType(item_as_dict[Encoding.TreeItem.TYPE]).to_class()
-        widget = widget_class.from_dict(item_as_dict[Encoding.TreeItem.DATA])
+        widget_class = WidgetType(item_as_dict[TYPE]).to_class()
+        widget = widget_class.from_dict(item_as_dict[DATA])
 
         # cls is the Class, TreeItem in this case. It is passed implicitly
         item = cls(parent, widget)
 
-        for child_item_as_dict in item_as_dict[Encoding.TreeItem.CHILDREN]:
+        for child_item_as_dict in item_as_dict[CHILDREN]:
             child_item = cls.from_dict(item, child_item_as_dict)
             item.append_children([child_item])
 
@@ -122,11 +104,9 @@ class TreeItem:
         """
         item_as_dict: dict[str, Any] = dict()  # empty dictionary
         # convert the widget type to a number
-        item_as_dict[Encoding.TreeItem.TYPE] = WidgetType.from_class_object(
-            self.linked_widget
-        ).value
+        item_as_dict[TYPE] = WidgetType.from_class_object(self.linked_widget).value
         # convert the widget data to a dictionary
-        item_as_dict[Encoding.TreeItem.DATA] = self.linked_widget.to_dict()
+        item_as_dict[DATA] = self.linked_widget.to_dict()
         # recursively create a list of dictionaries representing each child
-        item_as_dict[Encoding.TreeItem.CHILDREN] = [child.to_dict() for child in self.children]
+        item_as_dict[CHILDREN] = [child.to_dict() for child in self.children]
         return item_as_dict

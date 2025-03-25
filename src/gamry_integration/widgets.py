@@ -68,6 +68,7 @@ class EISOptionsWidget(Container):
         # get the device list from GamryCOM
         # clear the widgets in self.devices_layout
         # remake the widgets with the available list of devices
+        # TODO: figure out if this is fast or slow
         clear_layout(self.devices_layout)
         print("start")
         devices = client.CreateObject(GamryCOM.GamryDeviceList)
