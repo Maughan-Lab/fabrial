@@ -1,32 +1,17 @@
 from PyQt6.QtWidgets import (
-    QApplication,
     QVBoxLayout,
     QHBoxLayout,
     QPushButton,
 )
-from PyQt6.QtGui import QIcon
 from main_window import MainWindow
 from instruments import Oven, InstrumentSet, ConnectionStatus
-from stability_check.widgets import StabilityCheckWidget
 from stability_check.stability_check import StabilityCheckThread
-from sequence.widgets import SequenceWidget
 from sequence.sequence import SequenceThread
 from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from custom_widgets.groupbox import GroupBox
 from utility.layouts import add_to_layout, add_sublayout  # ../utility
-import sys
-import os
 import time
-import Files
-
-BASEDIR = os.path.dirname(__file__)
-try:
-    from ctypes import windll  # Only exists on Windows.
-
-    myappid = "maughangroup.quincy.1"
-    windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-except ImportError:
-    pass
+from main import main
 
 
 class DeveloperOven(Oven):
@@ -81,7 +66,7 @@ class DeveloperOven(Oven):
     def get_setpoint(self) -> float | None:
         if self.is_connected():
             self.setpointChanged.emit(self.developer_setpoint)
-            return self.setpoint
+            return self.developer_setpoint
         else:
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
         return None
@@ -176,19 +161,16 @@ class DeveloperMainWindow(MainWindow):
 
     def __init__(self, instruments):
         super().__init__(instruments)
-        layout = self.centralWidget().layout()
+        layout = self.oven_control_tab.layout()
         layout.addWidget(DeveloperWidget(instruments), 0, 3)
-
-    def initialize_widgets(self, instruments):
-        """Use Developer versions of widgets."""
-        super().initialize_widgets(instruments)
-        # # reinitialize the oven's connection status to emit the proper signals
-        # instruments.oven.connected = ConnectionStatus.NULL
-
-        self.stability_check_widget = StabilityCheckWidget(
-            instruments, DeveloperStabilityCheckThread
+        # use the developer versions of threads
+        stability_check_widget = self.oven_control_tab.stability_check_widget
+        sequence_widget = self.oven_control_tab.sequence_widget
+        stability_check_widget.thread_type = DeveloperStabilityCheckThread
+        stability_check_widget.progressbar.setMaximum(
+            stability_check_widget.thread_type.MINIMUM_MEASUREMENTS
         )
-        self.sequence_widget = SequenceWidget(instruments, DeveloperSequenceThread)
+        sequence_widget.thread_type = DeveloperSequenceThread
 
 
 class DeveloperStabilityCheckThread(StabilityCheckThread):
@@ -207,23 +189,6 @@ class DeveloperSequenceThread(SequenceThread):
 
 # --------------------------------------------------------------------------------------------------
 
-FOLDERS_TO_CREATE = (Files.SAVED_SETTINGS_FOLDER, Files.Sequence.DATA_FOLDER)
-
-
-def main():
-    for folder in FOLDERS_TO_CREATE:
-        os.makedirs(folder, exist_ok=True)
-    # create instruments
-    instruments = InstrumentSet(DeveloperOven(), None)
-    # pass in any provided system arguments
-    app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(Files.ICON))
-
-    main_window = DeveloperMainWindow(instruments)
-    main_window.show()
-
-    app.exec()
-
 
 if __name__ == "__main__":
-    main()
+    main(DeveloperOven, DeveloperMainWindow)

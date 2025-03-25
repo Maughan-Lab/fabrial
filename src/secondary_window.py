@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import QMainWindow, QWidget, QSizePolicy
 from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtGui import QCloseEvent
 
 
 class SecondaryWindow(QMainWindow):
@@ -12,7 +13,7 @@ class SecondaryWindow(QMainWindow):
     ):
         """
         Create a secondary window. If **parent** is specified, the created window will always be
-        displayed on top of the parent.
+        displayed on top of the parent. You must call **show()** on the window as normal.
 
         :param title: The window title text.
         :param central_widget: The widget to set as the central widget (optional).
@@ -22,9 +23,8 @@ class SecondaryWindow(QMainWindow):
         self.setWindowTitle(title)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.setCentralWidget(central_widget)
-        self.show()
 
-    def closeEvent(self, a0):  # overridden method
-        if a0 is not None:
+    def closeEvent(self, event: QCloseEvent | None):  # overridden method
+        if event is not None:
             self.closed.emit()
-        super().closeEvent(a0)
+        super().closeEvent(event)

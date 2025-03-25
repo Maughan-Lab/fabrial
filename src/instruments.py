@@ -106,10 +106,7 @@ class Oven(Instrument):
 
     def __init__(self, oven_port: str = ""):
         super().__init__()
-        # the __ before variables just means they should not be read directly (private)
         self.port = oven_port
-        self.temperature: float = -1
-        self.setpoint: float = -1
 
         self.temperature_timer = Timer(self, 1000, self.read_temp)
         self.setpoint_timer = Timer(self, 1000, self.get_setpoint)
@@ -125,8 +122,6 @@ class Oven(Instrument):
         else:
             self.temperature_timer.stop()
             self.setpoint_timer.stop()
-            self.temperature = -1
-            self.setpoint = -1
             self.connection_timer.start()
 
     def read_temp(self) -> float | None:
@@ -139,9 +134,7 @@ class Oven(Instrument):
             temperature = float(
                 self.device.read_register(self.TEMPERATURE_REGISTER, self.NUMBER_OF_DECIMALS)
             )
-            if temperature != self.temperature:
-                self.temperature = temperature
-                self.temperatureChanged.emit(temperature)
+            self.temperatureChanged.emit(temperature)
         except Exception:
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
             return None
@@ -161,7 +154,6 @@ class Oven(Instrument):
         success = False
         try:
             self.device.write_register(self.SETPOINT_REGISTER, setpoint, self.NUMBER_OF_DECIMALS)
-            self.setpoint = setpoint
             self.setpointChanged.emit(setpoint)
             success = True
         except Exception:
@@ -181,9 +173,7 @@ class Oven(Instrument):
             setpoint = float(
                 self.device.read_register(self.SETPOINT_REGISTER, self.NUMBER_OF_DECIMALS)
             )
-            if setpoint != self.setpoint:
-                self.setpoint = setpoint
-                self.setpointChanged.emit(setpoint)
+            self.setpointChanged.emit(setpoint)
         except Exception:
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
         finally:

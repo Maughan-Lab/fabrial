@@ -10,7 +10,7 @@ class Action(QAction):
         self,
         parent: QObject,
         name: str,
-        action: Callable[[], Any] | None = None,
+        action: Callable[..., Any] | None = None,
         status_tip: str | None = None,
         shortcut: str | None = None,
     ):
@@ -34,13 +34,14 @@ class Action(QAction):
 class Shortcut(QShortcut):
     """Easy QShortcut class."""
 
-    def __init__(self, parent: QObject, key: str, action: Callable[[], Any]):
+    def __init__(self, parent: QObject, key: str, *actions: Callable[[], Any]):
         """
         Creates a QShortcut tied to **parent**.
 
         :param parent: The QObject to tie this shortcut to.
         :param key: A keyboard shortcut in the form of "Ctrl+A".
-        :param action: The function this shortcut executes.
+        :param *actions: The function(s) this shortcut executes.
         """
         super().__init__(QKeySequence(key), parent)
-        self.activated.connect(action)
+        for action in actions:
+            self.activated.connect(action)

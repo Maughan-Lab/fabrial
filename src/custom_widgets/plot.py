@@ -18,6 +18,7 @@ class PlotItem(pg.PlotItem):
         super().__init__()
         self.text_color = self.palette().windowText().color().name()
         self.background_color = self.palette().window().color().name()
+        # self.background_color = self.palette().window().color().name()
 
         self.create_plot()
 

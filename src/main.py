@@ -6,31 +6,36 @@ import Files
 import sys
 import os
 
-# on windows, this will make the application icon show up in the task bar
-# it does nothing on other platforms
-try:
-    from ctypes import windll  # Only exists on Windows.
-
-    myappid = "maughangroup.quincy.1"
-    windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-except ImportError:
-    pass
-
 FOLDERS_TO_CREATE = (Files.SAVED_SETTINGS_FOLDER, Files.Sequence.DATA_FOLDER)
 
 
-def main():
-    # create any folders that need to exist
+def update_id():
+    # on windows, this will make the application icon show up in the task bar
+    # it does nothing on other platforms
+    try:
+        from ctypes import windll  # Only exists on Windows.
+
+        myappid = "maughangroup.quincy.1"
+        windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    except ImportError:
+        pass
+
+
+def make_application_folders():
     for folder in FOLDERS_TO_CREATE:
         os.makedirs(folder, exist_ok=True)
-    # create instruments
-    instruments = InstrumentSet(Oven(), None)
-    # pass in any provided system arguments
+
+
+def main(oven_type: type[Oven] = Oven, main_window_type: type[MainWindow] = MainWindow):
+    update_id()
+    make_application_folders()
+
     app = QApplication(sys.argv)
-
     app.setWindowIcon(QIcon(Files.ICON))
-
-    main_window = MainWindow(instruments)
+    # create the instrument using `oven_type`
+    instruments = InstrumentSet(oven_type(), None)  # necessary for testing
+    # create the main window using `main_window_type`
+    main_window = main_window_type(instruments)  # necessary for testing
     main_window.show()
 
     app.exec()
