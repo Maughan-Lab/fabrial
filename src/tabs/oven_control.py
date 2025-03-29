@@ -13,7 +13,9 @@ from custom_widgets.plot import PlotWidget
 
 
 class OvenControlTab(QWidget):
-    def __init__(self, instruments: InstrumentSet) -> None:
+    """First tab in the application, used for directly controlling the oven."""
+
+    def __init__(self, parent: QWidget, instruments: InstrumentSet) -> None:
         # data members
         self.setpoint_widget: SetpointWidget
         self.stability_check_widget: StabilityCheckWidget
@@ -23,13 +25,13 @@ class OvenControlTab(QWidget):
         self.instrument_connection_widget: InstrumentConnectionWidget
         self.popped_graph: SecondaryWindow
 
-        super().__init__()
+        super().__init__(parent)
 
         self.create_widgets(instruments)
         self.create_popped_graph(self.graph_widget.plot)
         self.connect_signals()
 
-    def create_widgets(self, instruments):
+    def create_widgets(self, instruments: InstrumentSet):
         """Create subwidgets."""
         # create the layout
         layout = QGridLayout()
