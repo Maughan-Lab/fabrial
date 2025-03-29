@@ -1,10 +1,10 @@
 from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication
 from PyQt6.QtGui import QCloseEvent
-from tabs.tab_widget import TabWidget
-from custom_widgets.dialog import YesCancelDialog
-from instruments import InstrumentSet
-from secondary_window import SecondaryWindow
-from menu.menu_bar import MenuBar
+from .tabs.tab_widget import TabWidget
+from .custom_widgets.dialog import YesCancelDialog
+from .instruments import InstrumentSet
+from .secondary_window import SecondaryWindow
+from .menu.menu_bar import MenuBar
 import time
 
 

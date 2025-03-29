@@ -3,12 +3,12 @@ from .tablemodel import TableModel, Column
 import time
 from os import path
 import os
-from instruments import InstrumentSet  # ../instruments.py
-from enums.status import StabilityStatus, SequenceStatus  # ../enums
-from classes.plotting import TemperaturePoint  # ../classes
-from classes.datamutex import DataMutex  # ../classes
-from utility.graph import graph_from_folder  # ../utility
-import Files
+from ..instruments import InstrumentSet  # ../instruments.py
+from ..enums.status import StabilityStatus, SequenceStatus  # ../enums
+from ..classes.plotting import TemperaturePoint  # ../classes
+from ..classes.datamutex import DataMutex  # ../classes
+from ..utility.graph import graph_from_folder  # ../utility
+from .. import Files
 
 
 class SequenceThread(QRunnable):

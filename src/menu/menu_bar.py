@@ -3,8 +3,7 @@ from .file import FileMenu
 from .view import ViewMenu
 from .stability import StabilityMenu
 from .sequence import SequenceMenu
-from instruments import InstrumentSet  # ../instruments.py
-
+from ..instruments import InstrumentSet
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

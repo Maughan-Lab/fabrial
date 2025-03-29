@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QVBoxLayout, QDialog, QDialogButtonBox
 from .label import Label
-from utility.layouts import add_to_layout  # ../utility
+from ..utility.layouts import add_to_layout
 
 
 class Dialog(QDialog):

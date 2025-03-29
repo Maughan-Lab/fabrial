@@ -1,9 +1,9 @@
 from PyQt6.QtWidgets import QGridLayout
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
-from custom_widgets.label import Label  # ../custom_widgets
-from custom_widgets.groupbox import GroupBox
-from instruments import InstrumentSet  # ../instruments.py
+from ..custom_widgets.label import Label
+from ..custom_widgets.groupbox import GroupBox
+from ..instruments import InstrumentSet
 
 
 class PassiveMonitoringWidget(GroupBox):

@@ -1,6 +1,6 @@
 from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QRunnable
-from instruments import InstrumentSet  # ../instruments.py
-from enums.status import StabilityStatus  # ../enums
+from ..instruments import InstrumentSet
+from ..enums.status import StabilityStatus
 import time
 
 

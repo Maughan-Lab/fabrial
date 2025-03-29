@@ -1,15 +1,15 @@
 from PyQt6.QtWidgets import QGridLayout, QWidget
-from setpoint.widgets import SetpointWidget
-from passive_monitoring.widgets import PassiveMonitoringWidget
-from instrument_connection.widgets import InstrumentConnectionWidget
-from stability_check.widgets import StabilityCheckWidget
-from sequence.widgets import SequenceWidget
-from graph.widgets import GraphWidget
-from utility.layouts import add_to_layout_grid
-from instruments import InstrumentSet
-from secondary_window import SecondaryWindow
-from classes.actions import Shortcut
-from custom_widgets.plot import PlotWidget
+from ..setpoint.widgets import SetpointWidget
+from ..passive_monitoring.widgets import PassiveMonitoringWidget
+from ..instrument_connection.widgets import InstrumentConnectionWidget
+from ..stability_check.widgets import StabilityCheckWidget
+from ..sequence.widgets import SequenceWidget
+from ..graph.widgets import GraphWidget
+from ..utility.layouts import add_to_layout_grid
+from ..instruments import InstrumentSet
+from ..secondary_window import SecondaryWindow
+from ..classes.actions import Shortcut
+from ..custom_widgets.plot import PlotWidget
 
 
 class OvenControlTab(QWidget):

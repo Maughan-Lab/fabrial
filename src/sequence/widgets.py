@@ -6,16 +6,16 @@ from PyQt6.QtWidgets import (
     QSizePolicy,
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThreadPool
-from custom_widgets.label import Label  # ../custom_widgets
-from custom_widgets.combo_box import ComboBox  # ../custom_widgets
-from custom_widgets.groupbox import GroupBox
-from custom_widgets.separator import HSeparator
-from custom_widgets.dialog import OkDialog
-from custom_widgets.tableview import TableView
-from instruments import InstrumentSet  # ../instruments.py
-from utility.layouts import add_sublayout, add_to_layout  # ../helper_functions
-from enums.status import StabilityStatus, SequenceStatus  # ../enums
-from classes.plotting import TemperaturePoint  # ../classes
+from ..custom_widgets.label import Label
+from ..custom_widgets.combo_box import ComboBox
+from ..custom_widgets.groupbox import GroupBox
+from ..custom_widgets.separator import HSeparator
+from ..custom_widgets.dialog import OkDialog
+from ..custom_widgets.tableview import TableView
+from ..instruments import InstrumentSet
+from ..utility.layouts import add_sublayout, add_to_layout
+from ..enums.status import StabilityStatus, SequenceStatus
+from ..classes.plotting import TemperaturePoint
 from .tablemodel import SequenceTableModel
 from .sequence import SequenceThread
 from typing import Type

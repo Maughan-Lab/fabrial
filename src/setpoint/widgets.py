@@ -1,10 +1,10 @@
 from PyQt6.QtWidgets import QVBoxLayout, QPushButton
-from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
-from custom_widgets.label import Label  # ../custom_widgets
-from custom_widgets.groupbox import GroupBox
-from custom_widgets.dialog import OkDialog
-from instruments import InstrumentSet  # ../instruments.py
-from utility.layouts import add_to_layout  # ../utility
+from ..custom_widgets.spin_box import TemperatureSpinBox
+from ..custom_widgets.label import Label
+from ..custom_widgets.groupbox import GroupBox
+from ..custom_widgets.dialog import OkDialog
+from ..instruments import InstrumentSet
+from ..utility.layouts import add_to_layout
 
 
 class SetpointWidget(GroupBox):

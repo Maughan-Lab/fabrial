@@ -2,9 +2,9 @@ from dataclasses import dataclass
 from enum import Enum
 from PyQt6.QtCore import pyqtSignal, QObject, QMutex
 import minimalmodbus as modbus  # type: ignore
-from classes.mutex import SignalMutex
+from .classes.mutex import SignalMutex
 from typing import Union, TYPE_CHECKING
-from utility.timers import Timer
+from .utility.timers import Timer
 import time
 
 if TYPE_CHECKING:

@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QMenu, QMenuBar
-from classes.actions import Action
-from stability_check.widgets import StabilityCheckWidget
+from ..classes.actions import Action
+from ..stability_check.widgets import StabilityCheckWidget
 
 
 class StabilityMenu(QMenu):

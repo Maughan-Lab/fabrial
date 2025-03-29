@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QPushButton
-from instruments import Oven  # ../instruments.py
+from ..instruments import Oven
 
 
 class DoubleSpinBox(QDoubleSpinBox):

@@ -1,10 +1,10 @@
 from PyQt6.QtWidgets import QMenu, QMenuBar, QApplication
-from classes.actions import Action
-from custom_widgets.dialog import OkCancelDialog
+from ..classes.actions import Action
+from ..custom_widgets.dialog import OkCancelDialog
 from showinfm import show_in_file_manager  # TODO: find a better file manager solution
 from os import path
 import os
-import Files
+from .. import Files
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

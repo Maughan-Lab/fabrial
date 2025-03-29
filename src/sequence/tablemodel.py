@@ -1,13 +1,11 @@
 from PyQt6.QtCore import Qt, pyqtSignal
-from custom_widgets.dialog import OkDialog
-from custom_widgets.tablemodel import TableModel
+from ..custom_widgets.dialog import OkDialog
+from ..custom_widgets.tablemodel import TableModel
 from polars import col
 import polars as pl
 from enum import Enum
-import Files
-
-
-from instruments import Oven  # ../instruments.py
+from .. import Files
+from ..instruments import Oven
 
 
 class Column(Enum):

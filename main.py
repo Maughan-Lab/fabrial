@@ -1,8 +1,8 @@
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
-from main_window import MainWindow
-from instruments import Oven, InstrumentSet
-import Files
+from src.main_window import MainWindow
+from src.instruments import Oven, InstrumentSet
+from src import Files
 import sys
 import os
 

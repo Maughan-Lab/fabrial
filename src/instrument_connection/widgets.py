@@ -1,12 +1,12 @@
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout
-from custom_widgets.label import Label  # ../custom_widgets
-from custom_widgets.combo_box import ComboBox  # ../custom_widgets
-from custom_widgets.groupbox import GroupBox
-from instruments import InstrumentSet, to_str, to_color  # ../instruments.py
-from utility.layouts import add_sublayout, add_to_layout  # ../utility
+from ..custom_widgets.label import Label
+from ..custom_widgets.combo_box import ComboBox
+from ..custom_widgets.groupbox import GroupBox
+from ..instruments import InstrumentSet, to_str, to_color
+from ..utility.layouts import add_sublayout, add_to_layout
 from .ports import get_ports_list
 from os import path
-import Files
+from .. import Files
 
 
 class InstrumentConnectionWidget(GroupBox):

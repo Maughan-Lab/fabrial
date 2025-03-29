@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QTabWidget, QWidget
 from .oven_control import OvenControlTab
 from .sequence import SequenceTab
-from instruments import InstrumentSet
+from ..instruments import InstrumentSet
 
 
 class TabWidget(QTabWidget):

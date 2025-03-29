@@ -3,13 +3,13 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
 )
-from main_window import MainWindow
-from instruments import Oven, InstrumentSet, ConnectionStatus
-from stability_check.stability_check import StabilityCheckThread
-from sequence.sequence import SequenceThread
-from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
-from custom_widgets.groupbox import GroupBox
-from utility.layouts import add_to_layout, add_sublayout  # ../utility
+from src.main_window import MainWindow
+from src.instruments import Oven, InstrumentSet, ConnectionStatus
+from src.stability_check.stability_check import StabilityCheckThread
+from src.sequence.sequence import SequenceThread
+from src.custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
+from src.custom_widgets.groupbox import GroupBox
+from src.utility.layouts import add_to_layout, add_sublayout  # ../utility
 import time
 from main import main
 

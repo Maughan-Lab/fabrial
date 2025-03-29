@@ -1,9 +1,9 @@
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
-from custom_widgets.plot import PlotWidget  # ../custom_widgets
-from custom_widgets.frame import Frame  # ../custom_widgets
-from enums.status import StabilityStatus  # ../enums
-from classes.plotting import TemperaturePoint, LineData  # ../classes
-from custom_widgets.plot import PlotItem
+from ..custom_widgets.plot import PlotWidget
+from ..custom_widgets.frame import Frame
+from ..enums.status import StabilityStatus
+from ..classes.plotting import TemperaturePoint, LineData
+from ..custom_widgets.plot import PlotItem
 
 
 class GraphWidget(Frame):

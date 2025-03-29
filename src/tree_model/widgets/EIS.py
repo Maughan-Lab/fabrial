@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout, QCheckBox
-from utility.layouts import (
+from ...utility.layouts import (
     add_sublayout,
     add_sublayout_to_grid,
     add_to_layout,
@@ -7,12 +7,13 @@ from utility.layouts import (
     row_pair,
     clear_layout,
 )
-from custom_widgets.spin_box import SpinBox, DoubleSpinBox
-from custom_widgets.container import Container
-from custom_widgets.button import Button
-from custom_widgets.label import Label
+from ...custom_widgets.spin_box import SpinBox, DoubleSpinBox
+from ...custom_widgets.container import Container
+from ...custom_widgets.button import Button
+from ...custom_widgets.label import Label
+from typing import Self
 
-from .constants import GamryCOM
+from ...gamry_integration.GamryCOM import GamryCOM
 import comtypes.client as client
 
 
@@ -24,8 +25,6 @@ class EISOptionsWidget(Container):
         super().__init__(QVBoxLayout)
         self.devices_list = []
         self.create_widgets()
-        # self.connect_widgets()
-        # self.connect_signals()
 
     def create_widgets(self):
         """Create subwidgets."""
@@ -79,9 +78,14 @@ class EISOptionsWidget(Container):
 
     def restore_defaults(self):
         """Set all values to their default value."""
-        # TODO: implement this
+        # TODO: implement this or delete it if you don't need it
         pass
 
+    @classmethod
+    def from_dict(cls: type[Self], data_as_dict: dict) -> Self:
+        # TODO: implement
+        return cls()
+
     def to_dict(self) -> dict:
-        # TODO: implement this
-        return {}
+        # TODO: implement
+        return dict()

@@ -2,7 +2,7 @@
 
 from PyQt6.QtWidgets import QLayout
 from typing import Self, Callable
-from custom_widgets.container import Container
+from ...custom_widgets.container import Container
 
 
 class BaseWidget(Container):

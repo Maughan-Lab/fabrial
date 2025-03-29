@@ -1,18 +1,18 @@
 from PyQt6.QtWidgets import QMenu, QMenuBar, QFileDialog
 from polars.exceptions import ColumnNotFoundError
-from classes.actions import Action  # ../actions.py
-from instruments import InstrumentSet  # ../instruments.py
-from sequence.widgets import SequenceWidget  # ../sequence
-from custom_widgets.dialog import OkDialog
-from custom_widgets.plot import PlotWidget
-from enums.status import StabilityStatus  # ../enums
-from utility.graph import graph_from_folder  # ../utility
+from ..classes.actions import Action
+from ..instruments import InstrumentSet
+from ..sequence.widgets import SequenceWidget
+from ..custom_widgets.dialog import OkDialog
+from ..custom_widgets.plot import PlotWidget
+from ..enums.status import StabilityStatus
+from ..utility.graph import graph_from_folder
 from typing import TYPE_CHECKING
-import Files
+from .. import Files
 
 
 if TYPE_CHECKING:
-    from main_window import MainWindow  # ../main_window.py
+    from ..main_window import MainWindow
 
 
 class SequenceMenu(QMenu):

@@ -1,8 +1,7 @@
 from PyQt6.QtWidgets import QMenu, QMenuBar
-from classes.actions import Action
-from tabs.oven_control import OvenControlTab
-from tabs.tab_widget import TabWidget
-
+from ..classes.actions import Action
+from ..tabs.oven_control import OvenControlTab
+from ..tabs.tab_widget import TabWidget
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

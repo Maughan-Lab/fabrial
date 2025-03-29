@@ -1,9 +1,9 @@
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QFileDialog
-from utility.layouts import add_to_layout, add_sublayout  # ../utility
+from ..utility.layouts import add_to_layout, add_sublayout
 import pyqtgraph as pg
 import pyqtgraph.exporters as exporters
-from custom_widgets.button import Button
-from custom_widgets.widget import Widget
+from ..custom_widgets.button import Button
+from ..custom_widgets.widget import Widget
 from typing import Literal
 
 

@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QGroupBox, QSizePolicy, QLayout
-from instruments import InstrumentSet  # ../instruments.py
+from ..instruments import InstrumentSet
 from typing import Callable
 
 

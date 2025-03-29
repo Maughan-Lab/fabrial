@@ -1,17 +1,13 @@
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QGridLayout, QPushButton, QSizePolicy
 from PyQt6.QtCore import pyqtSignal, QThreadPool
-from custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
-from custom_widgets.label import Label  # ../custom_widgets
-from custom_widgets.groupbox import GroupBox
-from custom_widgets.dialog import OkDialog
-from custom_widgets.progressbar import ProgressBar
-from instruments import InstrumentSet  # ../instruments.py
-from utility.layouts import (
-    add_sublayout,
-    add_to_layout,
-    add_to_layout_grid,
-)  # ../utility
-from enums.status import StabilityStatus  # ../enums
+from ..custom_widgets.spin_box import TemperatureSpinBox
+from ..custom_widgets.label import Label
+from ..custom_widgets.groupbox import GroupBox
+from ..custom_widgets.dialog import OkDialog
+from ..custom_widgets.progressbar import ProgressBar
+from ..instruments import InstrumentSet
+from ..utility.layouts import add_sublayout, add_to_layout, add_to_layout_grid
+from ..enums.status import StabilityStatus
 from .stability_check import StabilityCheckThread
 from typing import Type
 
