@@ -1,0 +1,15 @@
+{
+    "linked-widget-type": 0,
+    "linked-widget-data": {},
+    "children": [
+        {
+            "linked-widget-type": 1,
+            "linked-widget-data": {
+                "display-name": "Test Widget",
+                "cry-count": 40,
+                "average-cries": 53.81111
+            },
+            "children": []
+        }
+    ]
+}
