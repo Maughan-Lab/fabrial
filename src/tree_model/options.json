@@ -5,9 +5,23 @@
         {
             "linked-widget-type": 1,
             "linked-widget-data": {
-                "display-name": "Test Widget",
+                "display-name": "Test",
                 "cry-count": 40,
                 "average-cries": 53.81111
+            },
+            "children": []
+        },
+        {
+            "linked-widget-type": 2,
+            "linked-widget-data": {
+                "display-name": "EIS",
+                "initial-frequency": 0,
+                "final-frequency": 0,
+                "points-per-decade": 10,
+                "AC-voltage": 0,
+                "DC-voltage": 0,
+                "area": 0,
+                "estimated-impedance": 0
             },
             "children": []
         }

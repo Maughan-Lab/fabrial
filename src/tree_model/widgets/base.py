@@ -13,8 +13,11 @@ class BaseWidget(Container):
     (put them in Encoding.py), and you need to update the **WidgetType** enumerator.
     """
 
-    def __init__(self, display_name: str, layout_fn: Callable[[], QLayout]):
+    def __init__(self, layout_fn: Callable[[], QLayout]):
         super().__init__(layout_fn)
+        self.display_name: str
+
+    def set_display_name(self, display_name: str):
         self.display_name = display_name
         self.setWindowTitle(display_name)
 
@@ -25,7 +28,7 @@ class BaseWidget(Container):
 
         :param data_as_dict: A dictionary representing the widget's data in JSON format.
         """
-        return cls("", QLayout)
+        return cls(QLayout)
 
     def to_dict(self) -> dict:
         """

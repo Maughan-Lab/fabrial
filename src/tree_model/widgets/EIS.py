@@ -8,16 +8,18 @@ from ...utility.layouts import (
     clear_layout,
 )
 from ...custom_widgets.spin_box import SpinBox, DoubleSpinBox
-from ...custom_widgets.container import Container
 from ...custom_widgets.button import Button
 from ...custom_widgets.label import Label
 from typing import Self
+from ..data_encodings import EIS as DATA
+from ..data_encodings.display_name import DISPLAY_NAME
+from .base import BaseWidget
 
 from ...gamry_integration.GamryCOM import GamryCOM
 import comtypes.client as client
 
 
-class EISOptionsWidget(Container):
+class EISWidget(BaseWidget):
     """Contains entries for EIS experiments."""
 
     def __init__(self):
@@ -28,6 +30,8 @@ class EISOptionsWidget(Container):
 
     def create_widgets(self):
         """Create subwidgets."""
+        # TODO: use a table instead of a bunch of spin boxes
+
         layout = self.layout()
 
         button_layout = add_sublayout(layout, QHBoxLayout)
@@ -69,10 +73,8 @@ class EISOptionsWidget(Container):
         # remake the widgets with the available list of devices
         # TODO: figure out if this is fast or slow
         clear_layout(self.devices_layout)
-        print("start")
         devices = client.CreateObject(GamryCOM.GamryDeviceList)
         names = devices.EnumSections()
-        print("finish")
         for name in names:
             self.devices_layout.addWidget(QCheckBox(name))
 
@@ -83,9 +85,26 @@ class EISOptionsWidget(Container):
 
     @classmethod
     def from_dict(cls: type[Self], data_as_dict: dict) -> Self:
-        # TODO: implement
-        return cls()
+        widget = cls()
+        widget.set_display_name(data_as_dict[DISPLAY_NAME])
+        widget.initial_frequency_spinbox.setValue(data_as_dict[DATA.INITIAL_FREQUENCY])
+        widget.final_frequency_spinbox.setValue(data_as_dict[DATA.FINAL_FREQUENCY])
+        widget.points_per_decade_spinbox.setValue(data_as_dict[DATA.POINTS_PER_DECADE])
+        widget.AC_voltage_spinbox.setValue(data_as_dict[DATA.AC_VOLTAGE])
+        widget.DC_voltage_spinbox.setValue(data_as_dict[DATA.DC_voltage])
+        widget.area_spinbox.setValue(data_as_dict[DATA.AREA])
+        widget.estimated_impedance_spinbox.setValue(data_as_dict[DATA.ESTIMATED_IMPEDANCE])
+        return widget
 
     def to_dict(self) -> dict:
-        # TODO: implement
-        return dict()
+        data = {
+            DISPLAY_NAME: self.display_name,
+            DATA.INITIAL_FREQUENCY: self.initial_frequency_spinbox.value(),
+            DATA.FINAL_FREQUENCY: self.final_frequency_spinbox.value(),
+            DATA.POINTS_PER_DECADE: self.points_per_decade_spinbox.value(),
+            DATA.AC_VOLTAGE: self.AC_voltage_spinbox.value(),
+            DATA.DC_voltage: self.DC_voltage_spinbox.value(),
+            DATA.AREA: self.area_spinbox.value(),
+            DATA.ESTIMATED_IMPEDANCE: self.estimated_impedance_spinbox.value(),
+        }
+        return data
