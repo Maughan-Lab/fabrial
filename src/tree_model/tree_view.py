@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt, QModelIndex, QItemSelectionModel
 from PyQt6.QtGui import QKeyEvent, QDropEvent
-from PyQt6.QtWidgets import QTreeView, QWidget
+from PyQt6.QtWidgets import QTreeView, QWidget, QAbstractItemView
 from .tree_item import TreeItem
 from .tree_model import TreeModel
 
@@ -15,6 +15,7 @@ class SequenceTreeView(QTreeView):
         self.setAcceptDrops(True)
         self.setDefaultDropAction(Qt.DropAction.MoveAction)
         self.setDropIndicatorShown(True)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
 
         self.doubleClicked.connect(self.handle_double_click)
 
