@@ -1,9 +1,5 @@
 # Python virtual environment
-/bin/
-/lib/
-/include/
-/lib64/
-pyvenv.cfg
+/venv/
 # Quincy files
 **/__pycache__/
 **/.mypy_cache/

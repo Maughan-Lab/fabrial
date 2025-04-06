@@ -169,7 +169,13 @@ class TreeModel(QAbstractItemModel):
         column: int,
         parent_index: QModelIndex,
     ) -> bool:
-        if data is None or not data.hasFormat(JSON) or not action & self.supportedDropActions():
+        parent_item = self.item(parent_index)
+        if (
+            not parent_item.supports_subitems()
+            or data is None
+            or not data.hasFormat(JSON)
+            or not action & self.supportedDropActions()
+        ):
             return False
         return True
 
@@ -208,5 +214,3 @@ class TreeModel(QAbstractItemModel):
             self.dropOccurred.emit(self.createIndex(begin_row + i, 0, item))
 
         return True
-
-    # TODO: implement drag and drop and deleting with the Delete key or a button

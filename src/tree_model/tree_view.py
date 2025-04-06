@@ -66,7 +66,7 @@ class OptionsTreeView(QTreeView):
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         # TODO: do not do the path like this
-        model = TreeModel.from_file("Options", "src/tree_model/options.json")
+        model = TreeModel.from_file("Options", "initialization/options.json")
         self.setModel(model)
 
         self.setDragEnabled(True)

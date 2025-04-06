@@ -1,90 +1,47 @@
-from enum import Enum
+from enum import Enum, unique, auto
 
 
 class StabilityStatus(Enum):
     """States representing stability."""
 
-    STABLE = 0
-    BUFFERING = 1
-    UNSTABLE = 2
-    CHECKING = 3
-    ERROR = 4
-    NULL = 5
+    # non-specified values will be filled in by the constructor
 
-    def to_color(self) -> str:
-        """Return a color (string) representation."""
-        match self:
-            case StabilityStatus.STABLE:
-                return "green"
-            case StabilityStatus.BUFFERING:
-                return "cyan"
-            case StabilityStatus.UNSTABLE | StabilityStatus.ERROR:
-                return "red"
-            case StabilityStatus.CHECKING:
-                return "orange"
-            case StabilityStatus.NULL:
-                return ""
+    # NAME = color, status text, legend text (optional), truth value (optional)
+    STABLE = "green", "Stable", "Stable", True
+    BUFFERING = "cyan", "Buffering", "Buffer"
+    UNSTABLE = "red", "Unstable"
+    CHECKING = "orange", "Checking...", "Pre-Stable"
+    ERROR = "red", "Error"
+    NULL = "", "-----------"
 
-    def to_legend_text(self) -> str:
-        match self:
-            case StabilityStatus.STABLE:
-                return "Stable"
-            case StabilityStatus.BUFFERING:
-                return "Buffer"
-            case StabilityStatus.CHECKING:
-                return "Pre-Stable"
-        print(f"BUG: We called to_legend_text() on StabilityStatus: {self}")
-        return ""
-
-    def __str__(self):
-        """Return a text representation."""
-        match self:
-            case StabilityStatus.CHECKING:
-                return "Checking..."
-            case StabilityStatus.NULL:
-                return "-----------"
-            case _:
-                return self.name.capitalize()
+    def __init__(
+        self, color: str, status_text: str, legend_text: str = "", truth_value: bool = False
+    ):
+        self.color = color
+        self.status_text = status_text
+        self.legend_text = legend_text
+        self.truth_value = truth_value
 
     def __bool__(self):
         """Return a boolean representation of stability."""
-        match self:
-            case StabilityStatus.STABLE:
-                return True
-            case _:
-                return False
+        return self.truth_value
 
 
 class SequenceStatus(Enum):
     """States representing the status of a sequence."""
 
-    INACTIVE = 0
-    ACTIVE = 1
-    COMPLETED = 2
-    CANCELED = 3
-    PAUSED = 4
-    ERROR = 5
+    INACTIVE = "gray", "Inactive"
+    ACTIVE = "green", "Active", True
+    COMPLETED = "gray", "Completed"
+    CANCELED = "gray", "Cancelled"
+    PAUSED = "cyan", "Paused", True
+    ERROR = "red", "Error"
 
-    def to_color(self) -> str:
-        """Return a color (string) representation."""
-        match self:
-            case SequenceStatus.INACTIVE | SequenceStatus.COMPLETED | SequenceStatus.CANCELED:
-                return "gray"
-            case SequenceStatus.ACTIVE:
-                return "green"
-            case SequenceStatus.PAUSED:
-                return "cyan"
-            case SequenceStatus.ERROR:
-                return "red"
-
-    def __str__(self):
-        """Return a text representation."""
-        return self.name.capitalize()
+    def __init__(self, color: str, status_text: str, truth_value: bool = False):
+        self.color = color
+        self.status_text = status_text
+        self.truth_value = truth_value
 
     def __bool__(self):
         """Return a boolean representing the running state."""
-        match self:
-            case SequenceStatus.ACTIVE | SequenceStatus.PAUSED:
-                return True
-            case _:
-                return False
+        return self.truth_value

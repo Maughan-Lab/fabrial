@@ -1,0 +1,7 @@
+INITIAL_FREQUENCY = "initial-frequency"
+FINAL_FREQUENCY = "final-frequency"
+POINTS_PER_DECADE = "points-per-decade"
+AC_VOLTAGE = "AC-voltage"
+DC_voltage = "DC-voltage"
+AREA = "area"
+ESTIMATED_IMPEDANCE = "estimated-impedance"

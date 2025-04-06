@@ -1,6 +1,5 @@
-from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QWidget
 from ..utility.layouts import add_sublayout, add_to_layout
-from ..instruments import InstrumentSet
 from ..tree_model.tree_view import SequenceTreeView, OptionsTreeView
 
 

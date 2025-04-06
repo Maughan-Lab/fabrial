@@ -1,0 +1,20 @@
+from ..base.widget import BaseWidget
+from PyQt6.QtWidgets import QHBoxLayout, QLabel
+
+
+class LoopWidget(BaseWidget):
+    DISPLAY_NAME_PREFIX = "Loop"
+
+    def __init__(self):
+        # TODO: implement
+        super().__init__(QHBoxLayout, self.DISPLAY_NAME_PREFIX)
+        self.layout().addWidget(QLabel("TODO"))
+
+    @classmethod
+    def from_dict(cls, data_as_dict):
+        # TODO: implement
+        return cls()
+
+    def to_dict(self):
+        # TODO: implement
+        return dict()

@@ -1,17 +1,12 @@
-# General TODO
-Implement drag-and-drop for the TreeView system. Use the reference you bookmarked on FireFox.
-
-Implement the sequence wizard by writing a Python file that gets run during a sequence.
-Use the exec(open("FILENAME.py").read()) function for this.
-
-# Items to Shamelessly Steal from the Gamry Sequence Wizard
-1. Loop (Cycle)
-2. Potentiostatic EIS
-3. Define a variable
-4. Modify a variable by x
-
-# Original (Not Stolen) Items
-1. Temperature sequence
+# TODO
+## Implement Widgets
+- Enable constant temperature recording
+- Temperature set
+- Temperature modify
+- Hold (no temperature data collection)
+- Hold (with temperature data collection)
+- Electrochemical Impedance Spectroscopy
+- 
 
 # Implementing the Runtime Sequences
 - You will need to use the **locals** argument of `exec()` to run external code within the current scope of variables (i.e. getting access to instruments like the oven).

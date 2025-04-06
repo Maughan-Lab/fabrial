@@ -45,7 +45,7 @@ class StabilityCheckWidget(GroupBox):
         self.stability_check_button = QPushButton("Check Stability")
         self.detect_setpoint_button = QPushButton("Detect Setpoint")
         self.setpoint_spinbox = TemperatureSpinBox()
-        self.stability_label = Label(str(StabilityStatus.NULL))
+        self.stability_label = Label(StabilityStatus.NULL.status_text)
         self.progressbar = ProgressBar(0, self.thread_type.MINIMUM_MEASUREMENTS)
         # layout for the label, detect_setpoint_button, and setpoint_spinbox
         inner_layout = add_sublayout(layout, QGridLayout)
@@ -75,7 +75,7 @@ class StabilityCheckWidget(GroupBox):
     def handle_stability_change(self, status: StabilityStatus):
         """Handle a stability change."""
         self.stability_label.setText(str(status))
-        self.stability_label.setStyleSheet("color: " + status.to_color())
+        self.stability_label.setStyleSheet("color: " + status.color)
 
     def handle_status_change(self, running: bool):
         """Handle a status change."""

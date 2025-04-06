@@ -1,24 +1,36 @@
 from typing import Union, Any
-from .widgets.base import BaseWidget
-from .widgets.null import NullWidget
-from .widgets.widget_type import WidgetType
+from .items.base.widget import BaseWidget
+from .items.root.widget import NullWidget
+from .items.base.item_info import BaseItemInfo
+from .items.root.item_info import RootItemInfo
+from .items.base.process import BaseProcess
+from .items.type_info import TypeInfo
+
 
 TYPE = "linked-widget-type"
-DATA = "linked-widget-data"
+WIDGET_DATA = "linked-widget-data"
 CHILDREN = "children"
 
 
 class TreeItem:
-    """Class to represent items on a tree model."""
+    """
+    Class to represent items on a tree model. You must override:
+    - `widget_type()` as a static method
+    - `process_type()` as a static method
+    """
 
     def __init__(
         self,
+        item_info: type[BaseItemInfo] = RootItemInfo,
         parent: Union["TreeItem", None] = None,
         linked_widget: BaseWidget | NullWidget = NullWidget(),
     ):
+        self.item_info = item_info
+
         self.parent_item = parent
         self.linked_widget = linked_widget
         self.children: list["TreeItem"] = []
+        self.supports_children = item_info.SUPPORTS_SUBITEMS
 
     def show_widget(self):
         self.linked_widget.show()
@@ -49,7 +61,7 @@ class TreeItem:
 
     def name(self) -> str:
         """Get the display text for this item."""
-        return self.linked_widget.display_name
+        return self.linked_widget.display_name()
 
     def append_children(self, items: list["TreeItem"]):
         """Append all **items** to this item's list of children."""
@@ -80,6 +92,19 @@ class TreeItem:
             return False
         return True
 
+    def set_supports_subitems(self, supports_subitems: bool):
+        """Set whether the item supports subitems (i.e. children)."""
+        self.supports_children = supports_subitems
+
+    def supports_subitems(self) -> bool:
+        """Return whether the item supports subitems. By default, subitems are not supported."""
+        return self.supports_children
+
+    def process_type(self) -> type[BaseProcess]:
+        """Returns the type of the linked process."""
+        return self.item_info.PROCESS_TYPE
+
+    # ----------------------------------------------------------------------------------------------
     @classmethod
     def from_dict(
         cls: type["TreeItem"], parent: Union["TreeItem", None], item_as_dict: dict[str, Any]
@@ -87,14 +112,16 @@ class TreeItem:
         """
         Create a TreeItem from a JSON-style dictionary. This method is recursive.
 
+        :param parent: The item's parent. This should be `None` if the item is the root item.
         :param item_as_dict: A dictionary representing the item's data in JSON format.
         """
-        widget_class = WidgetType(item_as_dict[TYPE]).to_class()
-        widget = widget_class.from_dict(item_as_dict[DATA])
 
-        # cls is the Class, TreeItem in this case. It is passed implicitly
-        item = cls(parent, widget)
+        item_info = TypeInfo.from_name(item_as_dict[TYPE]).value
+        widget = item_info.WIDGET_TYPE.from_dict(item_as_dict[WIDGET_DATA])
+        # cls is the type of the class (TreeItem in this case) and is passed implicitly
+        item = cls(item_info, parent, widget)
 
+        # add children
         for child_item_as_dict in item_as_dict[CHILDREN]:
             child_item = cls.from_dict(item, child_item_as_dict)
             item.append_children([child_item])
@@ -102,14 +129,12 @@ class TreeItem:
         return item
 
     def to_dict(self) -> dict[str, Any]:
-        """
-        Convert all of this item's data into a JSON-like dictionary.
-        """
+        """Convert all of this item's data into a JSON-like dictionary."""
         item_as_dict: dict[str, Any] = dict()  # empty dictionary
-        # convert the widget type to a number
-        item_as_dict[TYPE] = WidgetType.from_class_object(self.linked_widget).value
+        # convert the item TypeInfo to a string
+        item_as_dict[TYPE] = TypeInfo.from_item_info(self.item_info).name
         # convert the widget data to a dictionary
-        item_as_dict[DATA] = self.linked_widget.to_dict()
+        item_as_dict[WIDGET_DATA] = self.linked_widget.to_dict()
         # recursively create a list of dictionaries representing each child
         item_as_dict[CHILDREN] = [child.to_dict() for child in self.children]
         return item_as_dict

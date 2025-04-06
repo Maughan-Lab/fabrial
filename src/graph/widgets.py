@@ -42,18 +42,14 @@ class GraphWidget(Frame):
 
     def handle_stage_change(self, status: StabilityStatus):
         """Add a new line to the graph that will get updated."""
-        name: str
+        legend_text: str
         match status:
-            case StabilityStatus.CHECKING:
-                name = "Pre-Stable"
-            case StabilityStatus.BUFFERING:
-                name = "Buffer"
-            case StabilityStatus.STABLE:
-                name = "Stable"
+            case StabilityStatus.CHECKING | StabilityStatus.BUFFERING | StabilityStatus.STABLE:
+                legend_text = status.legend_text
             case _:  # protect against irrelevant statuses
                 return
-        point_color = status.to_color()
-        line = self.plot_item.scatter([], [], name, self.POINT_SIZE, point_color)
+        point_color = status.color
+        line = self.plot_item.scatter([], [], legend_text, self.POINT_SIZE, point_color)
         self.line_data = LineData(line=line, x_data=[], y_data=[])
 
     def give_widget(self, widget: QWidget):

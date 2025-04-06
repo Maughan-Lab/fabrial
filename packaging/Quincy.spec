@@ -6,7 +6,7 @@ import shutil
 name = "Quincy"
 
 a = Analysis(
-    ["../src/main.py"],
+    ["../main.py"],
     pathex=[],
     binaries=[],
     datas=[],
@@ -51,3 +51,4 @@ coll = COLLECT(
 
 # copy the dependencies into dist/Quincy
 shutil.copytree("../icons", f"dist/{name}/icons")
+shutil.copytree("../initialization", f"dist/{name}/initialization")

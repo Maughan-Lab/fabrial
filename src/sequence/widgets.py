@@ -88,7 +88,7 @@ class SequenceWidget(GroupBox):
         add_to_layout(cycle_label_layout, Label("Cycle:"), self.cycle_label)
         # sequence status labels
         stability_label_layout = add_sublayout(layout, QHBoxLayout, QSizePolicy.Policy.Fixed)
-        self.stability_label = Label(str(StabilityStatus.NULL))
+        self.stability_label = Label(StabilityStatus.NULL.status_text)
         add_to_layout(stability_label_layout, Label("Stability Status:"), self.stability_label)
 
         # separator
@@ -171,7 +171,7 @@ class SequenceWidget(GroupBox):
                 self.update_button_visibility(self.unpause_button)
             case _:  # in case other SequenceStatus options are added
                 pass
-        self.update_label(self.status_label, str(status), status.to_color())
+        self.update_label(self.status_label, status.status_text, status.color)
 
     def update_button_visibility(self, button_to_show: QPushButton):
         self.button_layout.setCurrentWidget(button_to_show)
@@ -179,7 +179,7 @@ class SequenceWidget(GroupBox):
     # ----------------------------------------------------------------------------------------------
     # stabilityChanged
     def handle_stability_change(self, status: StabilityStatus):
-        self.update_label(self.stability_label, str(status), status.to_color())
+        self.update_label(self.stability_label, status.status_text, status.color)
 
     # ----------------------------------------------------------------------------------------------
     # sequence completion

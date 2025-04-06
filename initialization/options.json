@@ -1,0 +1,32 @@
+{
+    "linked-widget-type": "ROOT",
+    "linked-widget-data": {},
+    "children": [
+        {
+            "linked-widget-type": "TEST",
+            "linked-widget-data": {
+                "cry-count": 40,
+                "average-cries": 53.81111
+            },
+            "children": []
+        },
+        {
+            "linked-widget-type": "EIS",
+            "linked-widget-data": {
+                "initial-frequency": 0,
+                "final-frequency": 0,
+                "points-per-decade": 10,
+                "AC-voltage": 0,
+                "DC-voltage": 0,
+                "area": 0,
+                "estimated-impedance": 0
+            },
+            "children": []
+        },
+        {
+            "linked-widget-type": "LOOP",
+            "linked-widget-data": {},
+            "children": []
+        }
+    ]
+}
