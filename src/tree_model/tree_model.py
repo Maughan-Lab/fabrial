@@ -10,6 +10,7 @@ from PyQt6.QtCore import (
     pyqtSignal,
 )
 from .tree_item import TreeItem
+from .clipboard import CLIPBOARD
 from typing import Iterable, Self
 import json
 
@@ -77,6 +78,28 @@ class TreeModel(QAbstractItemModel):
     def set_supported_drop_actions(self, actions: Qt.DropAction):
         """Change the supported drop options (default CopyAction)."""
         self.supported_drop_actions = actions
+
+    def copy_items(self, indexes: Iterable[QModelIndex]):
+        """Copy items to the clipboard."""
+        pass
+
+    def cut_items(self, indexes: Iterable[QModelIndex]):
+        """Copy items to the clipboard and delete them from the model."""
+        self.copy_items(indexes)
+        self.delete_items(indexes)
+        pass
+
+    def paste_items(self, index: QModelIndex):
+        """
+        Paste items into the model from the clipboard.
+
+        :param index: The index of the item to paste directly below.
+        """
+        pass
+
+    def delete_items(self, indexes: Iterable[QModelIndex]):
+        """Delete items from the model."""
+        pass
 
     # ----------------------------------------------------------------------------------------------
     # overridden methods
