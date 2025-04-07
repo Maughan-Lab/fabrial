@@ -1,4 +1,4 @@
-from PyQt6.QtCore import QObject
+from PyQt6.QtCore import QObject, Qt
 from PyQt6.QtGui import QAction, QKeySequence, QShortcut
 from typing import Callable, Any
 
@@ -34,7 +34,13 @@ class Action(QAction):
 class Shortcut(QShortcut):
     """Easy QShortcut class."""
 
-    def __init__(self, parent: QObject, key: str, *actions: Callable[[], Any]):
+    def __init__(
+        self,
+        parent: QObject,
+        key: str,
+        *actions: Callable[[], Any],
+        context: Qt.ShortcutContext = Qt.ShortcutContext.WindowShortcut
+    ):
         """
         Creates a QShortcut tied to **parent**.
 
@@ -42,6 +48,6 @@ class Shortcut(QShortcut):
         :param key: A keyboard shortcut in the form of "Ctrl+A".
         :param *actions: The function(s) this shortcut executes.
         """
-        super().__init__(QKeySequence(key), parent)
+        super().__init__(QKeySequence(key), parent, context=context)
         for action in actions:
             self.activated.connect(action)

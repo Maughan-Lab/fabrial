@@ -3,17 +3,21 @@ from dataclasses import dataclass
 
 
 @dataclass
-class SequenceClipboard:
+class Clipboard:
     clipboard_contents: QMimeData = QMimeData()
     empty = True
 
     def set_contents(self, contents: QMimeData):
+        """Set the clipboard contents."""
         self.clipboard_contents = contents
         self.empty = False
 
-    def contents(self) -> QMimeData:
+    def contents(self) -> QMimeData | None:
+        """Get the clipboard contents. Returns None if the contents have not been set."""
+        if self.empty:
+            return None
         return self.clipboard_contents
 
 
 # this variable can be accessed by any TreeView/TreeModel
-CLIPBOARD = SequenceClipboard()
+CLIPBOARD = Clipboard()

@@ -1,6 +1,5 @@
 """File and folder locations for the whole application."""
 
-from dataclasses import dataclass
 from os import path
 
 
@@ -8,7 +7,6 @@ SAVED_SETTINGS_FOLDER = "saved_settings"
 ICON = "icons/oven_icon.png"
 
 
-@dataclass
 class Sequence:
     """File/folder names for the sequence."""
 
@@ -25,7 +23,6 @@ class Sequence:
     GRAPH = "Sequence Graph.png"
 
     # yes this should be nested
-    @dataclass
     class Headers:
         """Headers for sequence files."""
 
@@ -44,8 +41,16 @@ class Sequence:
     )  # keep the DATE_FORMAT and its specifier for the `time` module in sync
 
 
-@dataclass
 class InstrumentConnection:
     """File/folder names for instrument connection."""
 
     PORTS = path.join(SAVED_SETTINGS_FOLDER, "ports.csv")
+
+
+class SequenceBuilder:
+    """File/folder names for the sequence builder."""
+
+    OPTIONS_INITIALIZER = "initialization/options.json"
+
+
+FOLDERS_TO_CREATE = [SAVED_SETTINGS_FOLDER, Sequence.DATA_FOLDER]

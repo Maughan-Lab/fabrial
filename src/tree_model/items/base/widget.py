@@ -1,11 +1,11 @@
 from typing import Self, Callable, Any
 from PyQt6.QtWidgets import QLayout
-from ....custom_widgets.container import Container
+from ....custom_widgets.container import FixedContainer
 
 """This widget is a base class and so does not have a corresponding data encoding."""
 
 
-class BaseWidget(Container):
+class BaseWidget(FixedContainer):
     """
     Base class for all linked widgets in the tree view.
     You must override:

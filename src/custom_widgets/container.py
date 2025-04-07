@@ -3,7 +3,7 @@ from typing import Callable
 
 
 class Container(QWidget):
-    """QWidget that automatically sets the size policy and layout."""
+    """QWidget that automatically sets the layout and has no contents margins."""
 
     def __init__(self, layout_fn: Callable[[], QLayout]):
         """
@@ -12,8 +12,14 @@ class Container(QWidget):
         """
         super().__init__()
 
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-
         layout = layout_fn()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
+
+
+class FixedContainer(Container):
+    """Container with a fixed size."""
+
+    def __init__(self, layout_fn: Callable[[], QLayout]):
+        super().__init__(layout_fn)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)

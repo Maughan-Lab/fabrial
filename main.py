@@ -6,8 +6,6 @@ from src import Files
 import sys
 import os
 
-FOLDERS_TO_CREATE = (Files.SAVED_SETTINGS_FOLDER, Files.Sequence.DATA_FOLDER)
-
 
 def update_id():
     # on windows, this will make the application icon show up in the task bar
@@ -22,7 +20,7 @@ def update_id():
 
 
 def make_application_folders():
-    for folder in FOLDERS_TO_CREATE:
+    for folder in Files.FOLDERS_TO_CREATE:
         os.makedirs(folder, exist_ok=True)
 
 

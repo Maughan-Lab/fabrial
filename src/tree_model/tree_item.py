@@ -42,7 +42,7 @@ class TreeItem:
         except Exception:
             return None
 
-    def parent(self):
+    def parent(self) -> Union["TreeItem", None]:
         """Get the parent of this item."""
         return self.parent_item
 
@@ -91,6 +91,16 @@ class TreeItem:
         except Exception:
             return False
         return True
+
+    def sort_children(self):
+        """Sort this item's children by display name."""
+        self.children.sort(key=lambda item: item.name())
+
+    def recursively_sort_children(self):
+        """Sort ALL of this item's children (i.e. children, grandchildren, etc.) by display name."""
+        self.sort_children()
+        for child in self.children:
+            child.recursively_sort_children()
 
     def set_supports_subitems(self, supports_subitems: bool):
         """Set whether the item supports subitems (i.e. children)."""

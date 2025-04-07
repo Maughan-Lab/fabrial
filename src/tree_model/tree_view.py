@@ -1,125 +1,112 @@
-from PyQt6.QtCore import Qt, QModelIndex, QItemSelectionModel
+from PyQt6.QtCore import Qt, QModelIndex, QItemSelectionModel, QPersistentModelIndex
 from PyQt6.QtGui import QKeyEvent, QDropEvent
-from PyQt6.QtWidgets import QTreeView, QWidget, QAbstractItemView, QVBoxLayout, QHBoxLayout
-from .tree_item import TreeItem
+from PyQt6.QtWidgets import QTreeView, QWidget, QAbstractItemView, QVBoxLayout
 from .tree_model import TreeModel
 from ..custom_widgets.container import Container
-from ..custom_widgets.button import HiddenButton
-from ..utility.layouts import add_sublayout, add_to_layout
+from ..custom_widgets.button import FixedButton
+from ..classes.actions import Shortcut
+from ..utility.layouts import add_to_layout
+from .. import Files
 
 
-class TreeWidget(Container):
-    """Custom TreeView with support for copy, cut, paste, and delete."""
+class TreeView(QTreeView):
+    """Custom TreeView with support for copy, cut, paste, and delete (and drag and drop)."""
 
-    def __init__(self, parent: QWidget | None = None):
-        super().__init__(QVBoxLayout)
-        # add buttons
-        self.create_buttons()
-        # initialize the view
-        self.view = QTreeView(self)
-        self.view.setDragEnabled(True)
-        self.view.setDropIndicatorShown(True)
-        layout: QVBoxLayout = self.layout()  # type: ignore
-        layout.addWidget(self.view)
-
-    def create_buttons(self):
-        layout: QVBoxLayout = self.layout()  # type: ignore
-        button_layout = add_sublayout(layout, QHBoxLayout)
-        # NOTE: the visibility of these buttons is what determines whether the view supports
-        # cut/copy/paste/delete, since the button visibility and operation support need to always be
-        # in sync
-        self.copy_button = HiddenButton("Copy")
-        self.cut_button = HiddenButton("Cut")
-        self.paste_button = HiddenButton("Paste")
-        self.delete_button = HiddenButton("Delete")
-        add_to_layout(
-            button_layout, self.copy_button, self.cut_button, self.paste_button, self.delete_button
-        )
-
-    def set_model(self, model: TreeModel):
-        """
-        Set the view's model and connect it's button signals. This should only be called once.
-        """
-        self.view.setModel(model)
-        # TODO: connect button signals
-
-    def set_copy_enabled(self, enabled: bool):
-        """Set whether the view supports copying elements."""
-        self.copy_button.setVisible(enabled)
-
-    def copy_enabled(self) -> bool:
-        """Whether the view supports copying elements."""
-        return self.copy_button.isVisible()
-
-    def set_cut_enabled(self, enabled: bool):
-        """Set whether the view supports cutting elements."""
-        self.cut_button.setVisible(enabled)
-
-    def cut_enabled(self) -> bool:
-        """Whether the view supports cutting elements."""
-        return self.cut_button.isVisible()
-
-    def set_paste_enabled(self, enabled: bool):
-        """Set whether the view supports pasting elements."""
-        self.paste_button.setVisible(enabled)
-
-    def paste_enabled(self) -> bool:
-        """Whether the view supports pasting elements."""
-        return self.paste_button.isVisible()
-
-    def set_delete_enabled(self, enabled: bool):
-        """Set whether the view supports deleting elements."""
-        self.delete_button.setVisible(enabled)
-
-    def delete_enabled(self) -> bool:
-        """Whether the view supports deleting elements."""
-        return self.delete_button.isVisible()
-
-
-class SequenceTreeView(QTreeView):
-    """Custom QTreeView for displaying sequence settings."""
-
-    def __init__(self, parent: QWidget | None = None):
+    def __init__(self, parent: QWidget | None = None, model: TreeModel = TreeModel()):
         super().__init__(parent)
-        self.setExpandsOnDoubleClick(False)
+        # initialize
         self.setDragEnabled(True)
-        self.setAcceptDrops(True)
-        self.setDefaultDropAction(Qt.DropAction.MoveAction)
         self.setDropIndicatorShown(True)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setModel(model)
 
-        self.doubleClicked.connect(self.handle_double_click)
+    def model(self) -> TreeModel:
+        """Get this view's associated model."""
+        return super().model()  # type: ignore
 
+    def copy_event(self) -> None:
+        """Copy items to the clipboard."""
+        self.model().copy_items(self.selectedIndexes())
+
+    def cut_event(self) -> None:
+        """Move items to the clipboard."""
+        self.copy_event()
+        self.delete_event()
+
+    def paste_event(self) -> None:
+        """Paste items from the clipboard after the currently selected item."""
+        self.model().paste_items(self.currentIndex())
+
+    def delete_event(self) -> None:
+        """Delete currently selected items."""
+        next_selection_index = self.indexBelow(self.currentIndex())
+        persistent_new_selection_index = QPersistentModelIndex(next_selection_index)
+
+        self.model().delete_items(self.selectedIndexes())
+
+        # select the next available item after deleting
+        new_selection_index = QModelIndex(persistent_new_selection_index)
+        if not new_selection_index.isValid():
+            # try whatever is currently selected (usually the last item in this situation)
+            new_selection_index = self.currentIndex()
+            if not new_selection_index.isValid():
+                self.clearSelection()
+                return
+
+        self.selectionModel().select(  # type: ignore
+            new_selection_index, QItemSelectionModel.SelectionFlag.ClearAndSelect
+        )
+
+
+class SequenceTreeView(TreeView):
+    """Custom TreeView for displaying sequence settings."""
+
+    def __init__(self, parent: QWidget | None = None):
+        # initialize the model
         model = TreeModel("Sequence")
         model.set_supported_drag_actions(Qt.DropAction.MoveAction | Qt.DropAction.CopyAction)
         model.set_supported_drop_actions(Qt.DropAction.MoveAction | Qt.DropAction.CopyAction)
-        self.setModel(model)
+        # initialize the super class
+        super().__init__(parent, model)
+        # configure
+        self.setExpandsOnDoubleClick(False)
+        self.setAcceptDrops(True)
+        self.setDefaultDropAction(Qt.DropAction.MoveAction)
+        self.doubleClicked.connect(self.handle_double_click)
 
-        model.dropOccurred.connect(lambda index: self.expand(index))
+        self.connect_signals()
+        self.create_shortcuts()
 
     def connect_signals(self):
-        model: TreeModel = self.model()  # type: ignore
-        # expand one level so the dropped data is more visible
-        model.dropOccurred.connect(lambda index: self.expand(index))
+        # expand the view when drops occur so it's easier to see what changed
+        self.model().dropOccurred.connect(lambda index: self.expand(index))
+
+    def create_shortcuts(self):
+        Shortcut(
+            self, "Ctrl+C", self.copy_event, context=Qt.ShortcutContext.WidgetWithChildrenShortcut
+        )
+        Shortcut(
+            self, "Ctrl+X", self.cut_event, context=Qt.ShortcutContext.WidgetWithChildrenShortcut
+        )
+        Shortcut(
+            self, "Ctrl+V", self.paste_event, context=Qt.ShortcutContext.WidgetWithChildrenShortcut
+        )
 
     def handle_double_click(self, index: QModelIndex):
         """On a double click event."""
-        model: TreeModel = self.model()  # type: ignore
-        model.item(index).show_widget()
+        self.model().item(index).show_widget()  # show the selected item's widget
 
     # ----------------------------------------------------------------------------------------------
     # overridden methods
     def keyPressEvent(self, event: QKeyEvent | None):
         if event is not None:
-            model: TreeModel = self.model()  # type: ignore
-            selection_model: QItemSelectionModel = self.selectionModel()  # type: ignore
-            index = selection_model.currentIndex()
+            index = self.currentIndex()
+            model = self.model()
             match event.key():
                 case Qt.Key.Key_Delete:  # delete the current item
-                    model.removeRow(index.row(), index.parent())
+                    self.delete_event()
                 case Qt.Key.Key_Return | Qt.Key.Key_Enter:
-                    item: TreeItem = index.internalPointer()
-                    item.show_widget()
+                    model.item(index).show_widget()
         super().keyPressEvent(event)
 
     def dropEvent(self, event: QDropEvent | None):
@@ -129,17 +116,43 @@ class SequenceTreeView(QTreeView):
 
             super().dropEvent(event)  # process the event
 
-            self.model().layoutChanged.emit()  # type: ignore
+
+class SequenceTreeWidget(Container):
+    """SequenceTreeView with a delete button."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(QVBoxLayout)
+
+        self.view: SequenceTreeView
+        self.delete_button: FixedButton
+        self.create_widgets()
+        self.connect_signals()
+
+    def create_widgets(self):
+        layout: QVBoxLayout = self.layout()  # type: ignore
+        self.view = SequenceTreeView(self)
+        self.delete_button = FixedButton("Delete Selected Items", self.view.delete_event)
+        self.delete_button.setEnabled(False)
+        add_to_layout(layout, self.delete_button, self.view)
+
+    def connect_signals(self):
+        self.view.selectionModel().currentChanged.connect(self.handle_selection_change)
+
+    def handle_selection_change(self, current_index: QModelIndex, *args):
+        self.delete_button.setEnabled(current_index.isValid())
 
 
-class OptionsTreeView(QTreeView):
+class OptionsTreeView(TreeView):
     """Custom QTreeView containing the options for the sequence."""
 
     def __init__(self, parent: QWidget | None = None):
-        super().__init__(parent)
-        # TODO: do not do the path like this
-        model = TreeModel.from_file("Options", "initialization/options.json")
-        self.setModel(model)
+        model = TreeModel.from_file(
+            "Options", Files.SequenceBuilder.OPTIONS_INITIALIZER
+        ).alphabetize_all()
+        super().__init__(parent, model)
+        self.create_shortcuts()
 
-        self.setDragEnabled(True)
-        self.setDropIndicatorShown(True)
+    def create_shortcuts(self):
+        Shortcut(
+            self, "Ctrl+C", self.copy_event, context=Qt.ShortcutContext.WidgetWithChildrenShortcut
+        )

@@ -1,6 +1,7 @@
 from PyQt6.QtCore import (
     Qt,
     QModelIndex,
+    QPersistentModelIndex,
     QAbstractItemModel,
     QObject,
     QMimeData,
@@ -22,7 +23,7 @@ class TreeModel(QAbstractItemModel):
 
     dropOccurred = pyqtSignal(QModelIndex)
 
-    def __init__(self, name: str, parent: QObject | None = None):
+    def __init__(self, name: str = "", parent: QObject | None = None):
         """
         :param name: The name displayed at the top of the widget.
         :param parent: (optional) The owner of this widget.
@@ -35,6 +36,12 @@ class TreeModel(QAbstractItemModel):
         self.supported_drop_actions = Qt.DropAction.CopyAction
         self.supported_drag_actions = self.supported_drop_actions
 
+    def initialize_from_file(self, filename: str) -> Self:
+        """Initialize the model's data from a file."""
+        data = json.load(open(filename, "r"))
+        self.root_item = TreeItem.from_dict(None, data)
+        return self
+
     @classmethod
     def from_file(cls: type[Self], name: str, filename: str) -> Self:
         """
@@ -44,10 +51,13 @@ class TreeModel(QAbstractItemModel):
         :param filename: The name of the initialization file. Must be a .json file with the proper
         format.
         """
-        model = cls(name)
-        data = json.load(open(filename, "r"))
-        model.root_item = TreeItem.from_dict(None, data)
+        model = cls(name).initialize_from_file(filename)
         return model
+
+    def alphabetize_all(self) -> Self:
+        """Alphabetize all of this model's items by display name."""
+        self.root_item.recursively_sort_children()
+        return self
 
     def item(self, index: QModelIndex) -> TreeItem:
         """
@@ -79,27 +89,45 @@ class TreeModel(QAbstractItemModel):
         """Change the supported drop options (default CopyAction)."""
         self.supported_drop_actions = actions
 
-    def copy_items(self, indexes: Iterable[QModelIndex]):
-        """Copy items to the clipboard."""
-        pass
+    def copy_items(self, indexes: Iterable[QModelIndex]) -> bool:
+        """
+        Copy items to the clipboard. Returns whether the operation succeeded (currently we assume it
+        always succeeds).
+        """
+        data = self.mimeData(sorted(indexes))
+        CLIPBOARD.set_contents(data)
+        return True
 
-    def cut_items(self, indexes: Iterable[QModelIndex]):
-        """Copy items to the clipboard and delete them from the model."""
-        self.copy_items(indexes)
-        self.delete_items(indexes)
-        pass
-
-    def paste_items(self, index: QModelIndex):
+    def paste_items(self, index: QModelIndex) -> bool:
         """
         Paste items into the model from the clipboard.
 
         :param index: The index of the item to paste directly below.
+        :returns: Whether the operation succeeded.
         """
-        pass
+        data = CLIPBOARD.contents()
+        if data is not None:
+            success = self.dropMimeData(
+                data,
+                Qt.DropAction.CopyAction,
+                index.row() + 1,  # drop below instead of above
+                index.column(),
+                index.parent(),
+            )
+        else:
+            return False
+        return success
 
-    def delete_items(self, indexes: Iterable[QModelIndex]):
-        """Delete items from the model."""
-        pass
+    def delete_items(self, indexes: Iterable[QModelIndex]) -> bool:
+        """Delete items from the model. Returns whether the operation succeeded."""
+        success = True
+        # you need to use persistent indexes because you are modifying the model, so the indexes
+        # must be updated
+        persistent_indexes = [QPersistentModelIndex(index) for index in indexes]
+        for index in persistent_indexes:
+            if index.isValid():
+                success = self.removeRow(index.row(), index.parent())
+        return success
 
     # ----------------------------------------------------------------------------------------------
     # overridden methods
@@ -235,5 +263,7 @@ class TreeModel(QAbstractItemModel):
 
         for i, item in enumerate(items):
             self.dropOccurred.emit(self.createIndex(begin_row + i, 0, item))
+
+        self.layoutChanged.emit()
 
         return True
