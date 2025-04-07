@@ -1,3 +1,6 @@
+# Fix deletion issue
+- When selecting two items from the bottom-up, then deleting, the new selected index is wrong (it's above instead of below the last selected item)
+
 # Implement Widgets
 - Enable constant temperature recording
 - Temperature set

@@ -39,6 +39,7 @@ class TreeView(QTreeView):
 
     def delete_event(self) -> None:
         """Delete currently selected items."""
+        # store the index below the current index
         next_selection_index = self.indexBelow(self.currentIndex())
         persistent_new_selection_index = QPersistentModelIndex(next_selection_index)
 
@@ -47,11 +48,14 @@ class TreeView(QTreeView):
         # select the next available item after deleting
         new_selection_index = QModelIndex(persistent_new_selection_index)
         if not new_selection_index.isValid():
-            # try whatever is currently selected (usually the last item in this situation)
-            new_selection_index = self.currentIndex()
+            # try the item below the currently selected item
+            new_selection_index = self.indexBelow(self.currentIndex())
             if not new_selection_index.isValid():
-                self.clearSelection()
-                return
+                # try whatever is currently selected (usually the last item in this situation)
+                new_selection_index = self.currentIndex()
+                if not new_selection_index.isValid():
+                    self.clearSelection()
+                    return
 
         self.selectionModel().select(  # type: ignore
             new_selection_index, QItemSelectionModel.SelectionFlag.ClearAndSelect
