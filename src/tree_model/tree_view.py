@@ -68,7 +68,7 @@ class SequenceTreeView(TreeView):
 
     def __init__(self, parent: QWidget | None = None):
         # initialize the model
-        model = TreeModel("Sequence")
+        model = TreeModel("Sequence Builder")
         model.set_supported_drag_actions(Qt.DropAction.MoveAction | Qt.DropAction.CopyAction)
         model.set_supported_drop_actions(Qt.DropAction.MoveAction | Qt.DropAction.CopyAction)
         # initialize the super class
