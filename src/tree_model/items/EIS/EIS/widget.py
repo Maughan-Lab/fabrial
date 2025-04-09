@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout, QCheckBox
-from ....utility.layouts import (
+from .....utility.layouts import (
     add_sublayout,
     add_sublayout_to_grid,
     add_to_layout,
@@ -7,15 +7,15 @@ from ....utility.layouts import (
     row_pair,
     clear_layout,
 )
-from ....custom_widgets.spin_box import SpinBox, DoubleSpinBox
-from ....custom_widgets.button import Button
-from ....custom_widgets.label import Label
+from .....custom_widgets.spin_box import SpinBox, DoubleSpinBox
+from .....custom_widgets.button import Button
+from .....custom_widgets.label import Label
 from typing import Self
 from . import encoding as DATA
-from ..base.widget import BaseWidget
+from ...base.widget import BaseWidget
 
-from ....gamry_integration.GamryCOM import GamryCOM
-import comtypes.client as client
+from .....gamry_integration.GamryCOM import GamryCOM
+import comtypes.client as client  # type: ignore
 
 
 class EISWidget(BaseWidget):
@@ -24,7 +24,7 @@ class EISWidget(BaseWidget):
     def __init__(self):
         """Create a new instance."""
         super().__init__(QVBoxLayout, "Electrochemical Impedance Spectroscopy")
-        self.devices_list: list[str] = []
+        self.devices_list = []
         self.create_widgets()
 
     def create_widgets(self):

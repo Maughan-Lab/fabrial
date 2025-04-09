@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QTimer, QObject
-from typing import Callable, Any
+from typing import Callable, Any, Self
 
 
 class Timer(QTimer):
@@ -18,10 +18,11 @@ class Timer(QTimer):
         for slot in slots:
             self.timeout.connect(slot)
 
-    def start_fast(self):
+    def start_fast(self) -> Self:
         """Start the timer and instantly emit the timeout signal."""
         self.start()
         self.timeout.emit()
+        return self
 
 
 def new_timer(parent: QObject, interval_ms: int, *slots: Callable[[], Any]) -> QTimer:

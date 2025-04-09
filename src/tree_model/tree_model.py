@@ -12,7 +12,8 @@ from PyQt6.QtCore import (
 )
 from .tree_item import TreeItem
 from .clipboard import CLIPBOARD
-from typing import Iterable, Self
+from ..utility.sequence_builder import item_dict_from_directory
+from typing import Iterable, Self, Any
 import json
 
 JSON = "application/json"
@@ -35,12 +36,30 @@ class TreeModel(QAbstractItemModel):
         # don't access these directly
         self.supported_drop_actions = Qt.DropAction.CopyAction
         self.supported_drag_actions = self.supported_drop_actions
+        self.items_are_enabled = True
 
-    def initialize_from_file(self, filename: str) -> Self:
-        """Initialize the model's data from a file."""
-        data = json.load(open(filename, "r"))
-        self.root_item = TreeItem.from_dict(None, data)
+    def set_items_enabled(self, enabled: bool):
+        """Set whether the model's items are enabled."""
+        self.items_are_enabled = enabled
+
+    def items_enabled(self) -> bool:
+        """Whether the model's items are enabled."""
+        return self.items_are_enabled
+
+    def init_from_dict(self, root_item_as_dict: dict[str, Any]) -> Self:
+        """Initialize the model's data from a dictionary."""
+        self.root_item = TreeItem.from_dict(None, root_item_as_dict)
         return self
+
+    def init_from_file(self, filename: str) -> Self:
+        """Initialize the model's data from a file."""
+        with open(filename, "r") as f:
+            data: dict[str, Any] = json.load(f)
+        return self.init_from_dict(data)
+
+    def init_from_directory(self, directory: str) -> Self:
+        """Initialize the model's data from a directory."""
+        return self.init_from_dict(item_dict_from_directory(directory))
 
     @classmethod
     def from_file(cls: type[Self], name: str, filename: str) -> Self:
@@ -51,11 +70,24 @@ class TreeModel(QAbstractItemModel):
         :param filename: The name of the initialization file. Must be a .json file with the proper
         format.
         """
-        model = cls(name).initialize_from_file(filename)
-        return model
+        return cls(name).init_from_file(filename)
 
-    def alphabetize_all(self) -> Self:
-        """Alphabetize all of this model's items by display name."""
+    @classmethod
+    def from_directory(cls: type[Self], name: str, directory: str) -> Self:
+        """
+        Create a model from a properly formatted directory.
+
+        :param name: The name displayed at the top of the widget.
+        :param directory: The path to the base-level directory (i.e. the directory containing the
+        root item).
+        """
+        return cls(name).init_from_directory(directory)
+
+    def sort_all(self) -> Self:
+        """
+        Sort all of this model's items by display name. Items containing other items are listed
+        first.
+        """
         self.root_item.recursively_sort_children()
         return self
 
@@ -89,14 +121,16 @@ class TreeModel(QAbstractItemModel):
         """Change the supported drop options (default CopyAction)."""
         self.supported_drop_actions = actions
 
-    def copy_items(self, indexes: Iterable[QModelIndex]) -> bool:
+    def copy_items(self, indexes: list[QModelIndex]) -> bool:
         """
         Copy items to the clipboard. Returns whether the operation succeeded (currently we assume it
         always succeeds).
         """
-        data = self.mimeData(sorted(indexes))
-        CLIPBOARD.set_contents(data)
-        return True
+        if len(indexes) > 0:
+            data = self.mimeData(sorted(indexes))
+            CLIPBOARD.set_contents(data)
+            return True
+        return False
 
     def paste_items(self, index: QModelIndex) -> bool:
         """
@@ -118,7 +152,7 @@ class TreeModel(QAbstractItemModel):
             return False
         return success
 
-    def delete_items(self, indexes: Iterable[QModelIndex]) -> bool:
+    def delete_items(self, indexes: list[QModelIndex]) -> bool:
         """Delete items from the model. Returns whether the operation succeeded."""
         success = True
         # you need to use persistent indexes because you are modifying the model, so the indexes
@@ -158,10 +192,16 @@ class TreeModel(QAbstractItemModel):
         return None
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlag:
-        flags = super().flags(index)  # default implementation
-        if index.isValid():
-            return flags | Qt.ItemFlag.ItemIsDragEnabled | Qt.ItemFlag.ItemIsDropEnabled
-        return flags | Qt.ItemFlag.ItemIsDropEnabled
+        if not self.items_enabled():
+            return Qt.ItemFlag.NoItemFlags
+
+        flags = Qt.ItemFlag.ItemIsEnabled
+        item = self.item(index)
+        if item.supports_subitems():
+            flags |= Qt.ItemFlag.ItemIsDropEnabled
+        if item.supports_dragging():
+            flags |= Qt.ItemFlag.ItemIsDragEnabled | Qt.ItemFlag.ItemIsSelectable
+        return flags
 
     def headerData(
         self, section: int, orientation: Qt.Orientation, role: int | None = None
@@ -220,13 +260,7 @@ class TreeModel(QAbstractItemModel):
         column: int,
         parent_index: QModelIndex,
     ) -> bool:
-        parent_item = self.item(parent_index)
-        if (
-            not parent_item.supports_subitems()
-            or data is None
-            or not data.hasFormat(JSON)
-            or not action & self.supportedDropActions()
-        ):
+        if data is None or not data.hasFormat(JSON) or not action & self.supportedDropActions():
             return False
         return True
 

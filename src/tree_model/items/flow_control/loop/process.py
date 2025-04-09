@@ -1,4 +1,4 @@
-from ..base.process import BaseProcess
+from ...base.process import BaseProcess
 
 
 class LoopProcess(BaseProcess):

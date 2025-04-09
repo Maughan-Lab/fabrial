@@ -1,36 +1,26 @@
 from typing import Union, Any
-from .items.base.widget import BaseWidget
-from .items.root.widget import NullWidget
-from .items.base.item_info import BaseItemInfo
-from .items.root.item_info import RootItemInfo
+from .items.base.widget import BaseWidget, CategoryWidget
+from .items.base.item_info import BaseItemInfo, CategoryInfo
 from .items.base.process import BaseProcess
-from .items.type_info import TypeInfo
-
-
-TYPE = "linked-widget-type"
-WIDGET_DATA = "linked-widget-data"
-CHILDREN = "children"
+from .items.item_info_enum import ItemInfoType
+from .. import Files
+from functools import cmp_to_key
 
 
 class TreeItem:
-    """
-    Class to represent items on a tree model. You must override:
-    - `widget_type()` as a static method
-    - `process_type()` as a static method
-    """
+    """Class to represent items on a tree model."""
 
     def __init__(
         self,
-        item_info: type[BaseItemInfo] = RootItemInfo,
+        item_info: type[BaseItemInfo] = CategoryInfo,
         parent: Union["TreeItem", None] = None,
-        linked_widget: BaseWidget | NullWidget = NullWidget(),
+        linked_widget: BaseWidget | CategoryWidget = CategoryWidget(),
     ):
         self.item_info = item_info
 
         self.parent_item = parent
         self.linked_widget = linked_widget
         self.children: list["TreeItem"] = []
-        self.supports_children = item_info.SUPPORTS_SUBITEMS
 
     def show_widget(self):
         self.linked_widget.show()
@@ -49,6 +39,10 @@ class TreeItem:
     def child_count(self) -> int:
         """Get the number of child items."""
         return len(self.children)
+
+    def has_children(self) -> bool:
+        """Whether this item contains subitems."""
+        return not self.child_count() == 0
 
     def child_index(self) -> int:
         """
@@ -92,25 +86,57 @@ class TreeItem:
             return False
         return True
 
+    @staticmethod
+    def compare(left_item: "TreeItem", right_item: "TreeItem") -> int:
+        """
+        Compare two TreeItems. TreeItems with children take precedence. If both or neither have
+        children, they are compared alphabetically by display name.
+        """
+        LEFT = -1
+        RIGHT = 1
+        EQUAL = 0
+        if left_item.has_children():
+            if not right_item.has_children():
+                return LEFT
+            else:
+                if left_item.name() < right_item.name():
+                    return LEFT
+                else:  # if the names are the same order doesn't matter
+                    return RIGHT
+        else:
+            if right_item.has_children():
+                return RIGHT
+            else:
+                if right_item.name() < left_item.name():
+                    return RIGHT
+                else:  # if the names are the same order doesn't matter
+                    return LEFT
+        return EQUAL  # this shouldn't run but just in case
+
     def sort_children(self):
-        """Sort this item's children by display name."""
-        self.children.sort(key=lambda item: item.name())
+        """
+        Sort this item's children by display name. Items containing other items are listed first.
+        """
+        self.children.sort(key=cmp_to_key(self.compare))
 
     def recursively_sort_children(self):
-        """Sort ALL of this item's children (i.e. children, grandchildren, etc.) by display name."""
+        """
+        Sort ALL of this item's children (i.e. children, grandchildren, etc.) by display name. Items
+        containing other items are listed first.
+        """
         self.sort_children()
         for child in self.children:
             child.recursively_sort_children()
 
-    def set_supports_subitems(self, supports_subitems: bool):
-        """Set whether the item supports subitems (i.e. children)."""
-        self.supports_children = supports_subitems
-
     def supports_subitems(self) -> bool:
         """Return whether the item supports subitems. By default, subitems are not supported."""
-        return self.supports_children
+        return self.item_info.SUPPORTS_SUBITEMS
 
-    def process_type(self) -> type[BaseProcess]:
+    def supports_dragging(self) -> bool:
+        """Returns whether the item can be dragged."""
+        return self.item_info.DRAGGABLE
+
+    def process_type(self) -> type[BaseProcess] | None:
         """Returns the type of the linked process."""
         return self.item_info.PROCESS_TYPE
 
@@ -126,13 +152,13 @@ class TreeItem:
         :param item_as_dict: A dictionary representing the item's data in JSON format.
         """
 
-        item_info = TypeInfo.from_name(item_as_dict[TYPE]).value
-        widget = item_info.WIDGET_TYPE.from_dict(item_as_dict[WIDGET_DATA])
+        item_info = ItemInfoType.from_name(item_as_dict[Files.TreeItem.TYPE]).value
+        widget = item_info.WIDGET_TYPE.from_dict(item_as_dict[Files.TreeItem.WIDGET_DATA])
         # cls is the type of the class (TreeItem in this case) and is passed implicitly
         item = cls(item_info, parent, widget)
 
         # add children
-        for child_item_as_dict in item_as_dict[CHILDREN]:
+        for child_item_as_dict in item_as_dict[Files.TreeItem.CHILDREN]:
             child_item = cls.from_dict(item, child_item_as_dict)
             item.append_children([child_item])
 
@@ -141,10 +167,10 @@ class TreeItem:
     def to_dict(self) -> dict[str, Any]:
         """Convert all of this item's data into a JSON-like dictionary."""
         item_as_dict: dict[str, Any] = dict()  # empty dictionary
-        # convert the item TypeInfo to a string
-        item_as_dict[TYPE] = TypeInfo.from_item_info(self.item_info).name
+        # convert the item ItemInfoType to a string
+        item_as_dict[Files.TreeItem.TYPE] = ItemInfoType.from_item_info(self.item_info).name
         # convert the widget data to a dictionary
-        item_as_dict[WIDGET_DATA] = self.linked_widget.to_dict()
+        item_as_dict[Files.TreeItem.WIDGET_DATA] = self.linked_widget.to_dict()
         # recursively create a list of dictionaries representing each child
-        item_as_dict[CHILDREN] = [child.to_dict() for child in self.children]
+        item_as_dict[Files.TreeItem.CHILDREN] = [child.to_dict() for child in self.children]
         return item_as_dict

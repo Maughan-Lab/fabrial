@@ -1,19 +1,32 @@
 from enum import Enum, unique
 from typing import Self
-from .base.item_info import BaseItemInfo
-from .root.item_info import RootItemInfo
-from .EIS.item_info import EISItemInfo
+
+
+from .base.item_info import BaseItemInfo, CategoryInfo
 from .test.item_info import TestItemInfo
-from .loop.item_info import LoopItemInfo
+
+# flow control
+from .flow_control.category_info import FlowControlCategoryInfo
+from .flow_control.loop.item_info import LoopItemInfo
+
+# EIS
+from .EIS.EIS.item_info import EISItemInfo
+from .EIS.category_info import EISCategoryInfo
 
 
 @unique
-class TypeInfo(Enum):
+class ItemInfoType(Enum):
     """Class for bridging between file contents and actual TreeItems."""
 
-    ROOT = RootItemInfo
+    # root
+    ROOT = CategoryInfo
+    # EIS
+    EIS_CATEGORY = EISCategoryInfo
     EIS = EISItemInfo
+    # test
     TEST = TestItemInfo
+    # flow control
+    FLOW_CONTROL_CATEGORY = FlowControlCategoryInfo
     LOOP = LoopItemInfo
 
     @classmethod

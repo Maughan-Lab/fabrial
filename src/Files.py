@@ -47,10 +47,18 @@ class InstrumentConnection:
     PORTS = path.join(SAVED_SETTINGS_FOLDER, "ports.csv")
 
 
+class TreeItem:
+    """File/folder names for TreeItems."""
+
+    TYPE = "type"
+    WIDGET_DATA = "linked-widget-data"
+    CHILDREN = "children"
+
+
 class SequenceBuilder:
     """File/folder names for the sequence builder."""
 
-    OPTIONS_INITIALIZER = "initialization/options.json"
+    OPTIONS_INITIALIZER = "initialization"
 
 
 FOLDERS_TO_CREATE = [SAVED_SETTINGS_FOLDER, Sequence.DATA_FOLDER]

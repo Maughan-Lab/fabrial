@@ -54,6 +54,7 @@ class TreeView(QTreeView):
                 # try whatever is currently selected (usually the last item in this situation)
                 new_selection_index = self.currentIndex()
                 if not new_selection_index.isValid():
+                    # at this point there should be no items in the model
                     self.clearSelection()
                     return
 
@@ -124,7 +125,7 @@ class SequenceTreeView(TreeView):
 class SequenceTreeWidget(Container):
     """SequenceTreeView with a delete button."""
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(QVBoxLayout)
 
         self.view: SequenceTreeView
@@ -150,9 +151,9 @@ class OptionsTreeView(TreeView):
     """Custom QTreeView containing the options for the sequence."""
 
     def __init__(self, parent: QWidget | None = None):
-        model = TreeModel.from_file(
+        model = TreeModel.from_directory(
             "Options", Files.SequenceBuilder.OPTIONS_INITIALIZER
-        ).alphabetize_all()
+        ).sort_all()
         super().__init__(parent, model)
         self.create_shortcuts()
 
@@ -160,3 +161,27 @@ class OptionsTreeView(TreeView):
         Shortcut(
             self, "Ctrl+C", self.copy_event, context=Qt.ShortcutContext.WidgetWithChildrenShortcut
         )
+
+
+class OptionsTreeWidget(Container):
+    """OptionsTreeView with buttons for expanding and un-expanding all items."""
+
+    def __init__(self, parent: QWidget | None = None):
+        super().__init__(QVBoxLayout)
+        self.view: OptionsTreeView
+        self.expand_button: FixedButton
+        self.create_widgets()
+
+    def create_widgets(self):
+        layout: QVBoxLayout = self.layout()  # type: ignore
+        self.view = OptionsTreeView(self)
+        self.expand_button = FixedButton("Toggle Expansion")
+        self.expand_button.setCheckable(True)
+        self.expand_button.toggled.connect(self.handle_button_press)
+        add_to_layout(layout, self.expand_button, self.view)
+
+    def handle_button_press(self, checked: bool):
+        if checked:  # expand when pressed
+            self.view.expandAll()
+        else:  # un-expand when unpressed
+            self.view.collapseAll()

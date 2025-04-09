@@ -1,4 +1,4 @@
-from ..base.item_info import BaseItemInfo
+from ...base.item_info import BaseItemInfo
 from .widget import EISWidget
 from .process import EISProcess
 

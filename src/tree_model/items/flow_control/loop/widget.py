@@ -1,4 +1,4 @@
-from ..base.widget import BaseWidget
+from ...base.widget import BaseWidget
 from PyQt6.QtWidgets import QHBoxLayout, QLabel
 
 

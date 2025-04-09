@@ -1,10 +1,7 @@
-from dataclasses import dataclass
-from .widget import BaseWidget
-from ..root.widget import NullWidget
+from .widget import BaseWidget, CategoryWidget
 from .process import BaseProcess
 
 
-@dataclass
 class BaseItemInfo:
     """
     Base dataclass containing initialization information for the item. You must override:
@@ -14,6 +11,16 @@ class BaseItemInfo:
     container.
     """
 
-    WIDGET_TYPE: type[BaseWidget | NullWidget] = BaseWidget
-    PROCESS_TYPE: type[BaseProcess] = BaseProcess
+    WIDGET_TYPE: type[BaseWidget | CategoryWidget] = BaseWidget
+    PROCESS_TYPE: type[BaseProcess] | None = None
     SUPPORTS_SUBITEMS: bool = False
+    DRAGGABLE: bool = True
+
+
+class CategoryInfo(BaseItemInfo):
+    """Fake BaseItemInfo for category items."""
+
+    WIDGET_TYPE: type[CategoryWidget] = CategoryWidget
+    PROCESS_TYPE: None = None
+    SUPPORTS_SUBITEMS = True
+    DRAGGABLE = False

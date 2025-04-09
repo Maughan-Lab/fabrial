@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QHBoxLayout, QWidget
 from ..utility.layouts import add_sublayout, add_to_layout
-from ..tree_model.tree_view import SequenceTreeWidget, OptionsTreeView
+from ..tree_model.tree_view import SequenceTreeWidget, OptionsTreeWidget
 
 
 class SequenceTab(QWidget):
@@ -8,7 +8,7 @@ class SequenceTab(QWidget):
 
     def __init__(self, parent: QWidget):
         # data members
-        self.options_tree: OptionsTreeView
+        self.options_tree: OptionsTreeWidget
         self.sequence_tree: SequenceTreeWidget
         # TODO: add the graph, a start button, pause button, and any labels you need
 
@@ -20,7 +20,7 @@ class SequenceTab(QWidget):
         self.setLayout(layout)
 
         sequence_layout = add_sublayout(layout, QHBoxLayout)
-        self.options_tree = OptionsTreeView(self)
+        self.options_tree = OptionsTreeWidget(self)
         self.sequence_tree = SequenceTreeWidget(self)
         add_to_layout(sequence_layout, self.options_tree, self.sequence_tree)
 

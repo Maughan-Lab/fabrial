@@ -19,7 +19,7 @@ class BaseWidget(FixedContainer):
         self.set_display_name(display_name)
 
     def set_display_name(self, display_name: str):
-        """Set the text displayed on the window."""
+        """(private method) Set the text displayed on the window."""
         self.setWindowTitle(display_name)
 
     def display_name(self) -> str:
@@ -41,3 +41,31 @@ class BaseWidget(FixedContainer):
         empty dictionary.
         """
         return dict()
+
+
+class CategoryWidget:
+    """
+    Fake widget class for category items (i.e. non-sequence items). You must override:
+    - `DISPLAY_NAME`
+    """
+
+    DISPLAY_NAME = ""
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    def from_dict(cls: type[Self], data_as_dict: dict[str, Any]) -> Self:
+        return cls()
+
+    def to_dict(self) -> dict:
+        return dict()
+
+    def show(self):  # there is nothing to show
+        pass
+
+    def display_name(self) -> str:
+        return self.DISPLAY_NAME
+
+    def set_display_name(self, display_name: str):
+        pass
