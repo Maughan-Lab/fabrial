@@ -1,8 +1,12 @@
 from ...base.widget import BaseWidget
+from .process import LoopProcess
 from PyQt6.QtWidgets import QHBoxLayout, QLabel
 
 
 class LoopWidget(BaseWidget):
+    PROCESS_TYPE = LoopProcess
+    SUPPORTS_SUBITEMS = True
+
     DISPLAY_NAME_PREFIX = "Loop"
 
     def __init__(self):

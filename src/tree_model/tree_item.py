@@ -1,8 +1,7 @@
 from typing import Union, Any
 from .items.base.widget import BaseWidget, CategoryWidget
-from .items.base.item_info import BaseItemInfo, CategoryInfo
 from .items.base.process import BaseProcess
-from .items.item_info_enum import ItemInfoType
+from .items.item_types import ItemType
 from .. import Files
 from functools import cmp_to_key
 
@@ -12,12 +11,9 @@ class TreeItem:
 
     def __init__(
         self,
-        item_info: type[BaseItemInfo] = CategoryInfo,
         parent: Union["TreeItem", None] = None,
         linked_widget: BaseWidget | CategoryWidget = CategoryWidget(),
     ):
-        self.item_info = item_info
-
         self.parent_item = parent
         self.linked_widget = linked_widget
         self.children: list["TreeItem"] = []
@@ -129,16 +125,16 @@ class TreeItem:
             child.recursively_sort_children()
 
     def supports_subitems(self) -> bool:
-        """Return whether the item supports subitems. By default, subitems are not supported."""
-        return self.item_info.SUPPORTS_SUBITEMS
+        """Return whether the item supports subitems."""
+        return self.linked_widget.SUPPORTS_SUBITEMS
 
     def supports_dragging(self) -> bool:
         """Returns whether the item can be dragged."""
-        return self.item_info.DRAGGABLE
+        return self.linked_widget.DRAGGABLE
 
     def process_type(self) -> type[BaseProcess] | None:
         """Returns the type of the linked process."""
-        return self.item_info.PROCESS_TYPE
+        return self.linked_widget.PROCESS_TYPE
 
     # ----------------------------------------------------------------------------------------------
     @classmethod
@@ -152,10 +148,10 @@ class TreeItem:
         :param item_as_dict: A dictionary representing the item's data in JSON format.
         """
 
-        item_info = ItemInfoType.from_name(item_as_dict[Files.TreeItem.TYPE]).value
-        widget = item_info.WIDGET_TYPE.from_dict(item_as_dict[Files.TreeItem.WIDGET_DATA])
+        widget_type = ItemType.from_name(item_as_dict[Files.TreeItem.TYPE]).value
+        widget = widget_type.from_dict(item_as_dict[Files.TreeItem.WIDGET_DATA])
         # cls is the type of the class (TreeItem in this case) and is passed implicitly
-        item = cls(item_info, parent, widget)
+        item = cls(parent, widget)
 
         # add children
         for child_item_as_dict in item_as_dict[Files.TreeItem.CHILDREN]:
@@ -168,7 +164,8 @@ class TreeItem:
         """Convert all of this item's data into a JSON-like dictionary."""
         item_as_dict: dict[str, Any] = dict()  # empty dictionary
         # convert the item ItemInfoType to a string
-        item_as_dict[Files.TreeItem.TYPE] = ItemInfoType.from_item_info(self.item_info).name
+
+        item_as_dict[Files.TreeItem.TYPE] = ItemType.from_widget(self.linked_widget).name
         # convert the widget data to a dictionary
         item_as_dict[Files.TreeItem.WIDGET_DATA] = self.linked_widget.to_dict()
         # recursively create a list of dictionaries representing each child

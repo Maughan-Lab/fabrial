@@ -9,3 +9,4 @@ class ProcessInputs:
 
     instrument_set: InstrumentSet
     threadpool: QThreadPool
+    data_directory: str

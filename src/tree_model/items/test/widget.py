@@ -1,4 +1,5 @@
 from ..base.widget import BaseWidget
+from .process import TestProcess
 from PyQt6.QtWidgets import QVBoxLayout
 from ....utility.layouts import add_to_layout
 from ....custom_widgets.label import Label
@@ -8,6 +9,8 @@ from . import encoding as DATA
 
 class TestWidget(BaseWidget):
     """Test widget"""
+
+    PROCESS_TYPE = TestProcess
 
     def __init__(self):
         super().__init__(QVBoxLayout, "Test Widget")

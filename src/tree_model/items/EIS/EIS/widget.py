@@ -13,6 +13,7 @@ from .....custom_widgets.label import Label
 from typing import Self
 from . import encoding as DATA
 from ...base.widget import BaseWidget
+from .process import EISProcess
 
 from .....gamry_integration.GamryCOM import GamryCOM
 import comtypes.client as client  # type: ignore
@@ -20,6 +21,8 @@ import comtypes.client as client  # type: ignore
 
 class EISWidget(BaseWidget):
     """Contains entries for EIS experiments."""
+
+    PROCESS_TYPE = EISProcess
 
     def __init__(self):
         """Create a new instance."""

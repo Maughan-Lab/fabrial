@@ -1,18 +1,23 @@
 from typing import Self, Callable, Any
 from PyQt6.QtWidgets import QLayout
 from ....custom_widgets.container import FixedContainer
-
-"""This widget is a base class and so does not have a corresponding data encoding."""
+from .process import BaseProcess
 
 
 class BaseWidget(FixedContainer):
     """
     Base class for all linked widgets in the tree view.
     You must override:
+    - `PROCESS_TYPE`
+
     - `__init__()`: Call the base method.
     - `from_dict()`: Base method optional.
     - `to_dict()`: Base method optional.
     """
+
+    PROCESS_TYPE: type[BaseProcess] | None = None
+    SUPPORTS_SUBITEMS: bool = False
+    DRAGGABLE: bool = True
 
     def __init__(self, layout_fn: Callable[[], QLayout], display_name: str = ""):
         super().__init__(layout_fn)
@@ -48,6 +53,10 @@ class CategoryWidget:
     Fake widget class for category items (i.e. non-sequence items). You must override:
     - `DISPLAY_NAME`
     """
+
+    PROCESS_TYPE: None = None
+    SUPPORTS_SUBITEMS: bool = True
+    DRAGGABLE: bool = False
 
     DISPLAY_NAME = ""
 
