@@ -15,7 +15,10 @@ Layout = TypeVar("Layout")
 def add_sublayout(
     outer_layout: QLayout,
     layout_fn: Callable[[], Layout],
-    size_policy: QSizePolicy.Policy = QSizePolicy.Policy.Preferred,
+    size_policy: tuple[QSizePolicy.Policy, QSizePolicy.Policy] = (
+        QSizePolicy.Policy.Preferred,
+        QSizePolicy.Policy.Preferred,
+    ),
 ) -> Layout:
     """
     Add an inner layout to an outer layout.
@@ -25,8 +28,8 @@ def add_sublayout(
     :param layout_fn: A callable constructor for the inner layout (i.e. **QGridLayout**, not
     **QGridLayout()**)
 
-    :param size_policy: Optional policy for how the widgets inside the layout should expand. Use
-    **QSizePolicy.Fixed** to make sure labels do not expand.
+    :param size_policy: Optional policies (horizontal and vertical) for how the widgets inside the
+    layout should expand. Use **QSizePolicy.Fixed** to make sure labels do not expand.
 
     :returns: The inner layout added to **layout**. This layout will have a matching type to
     **type_of_layout_to_add**.
@@ -38,7 +41,7 @@ def add_sublayout(
         inner_layout.setContentsMargins(0, 0, 0, 0)  # type: ignore
         container = QWidget()
         container.setLayout(inner_layout)  # type: ignore
-        container.setSizePolicy(size_policy, size_policy)
+        container.setSizePolicy(*size_policy)
         outer_layout.addWidget(container)
         return inner_layout
     except Exception as e:

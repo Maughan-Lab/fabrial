@@ -9,7 +9,7 @@ class TabWidget(QTabWidget):
         super().__init__(parent)
         self.setDocumentMode(True)
         self.oven_control_tab = OvenControlTab(self, instruments)
-        self.sequence_tab = SequenceTab(self)
+        self.sequence_tab = SequenceTab(self, instruments)
         # TODO: figure out how to add a horizontal separator to make this look better
 
         self.addTab(self.oven_control_tab, "Oven Control")

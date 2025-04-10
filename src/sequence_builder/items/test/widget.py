@@ -13,9 +13,9 @@ class TestWidget(BaseWidget):
     PROCESS_TYPE = TestProcess
 
     def __init__(self):
-        super().__init__(QVBoxLayout, "Test Widget")
+        layout = QVBoxLayout()
+        super().__init__(layout, "Test Widget")
 
-        layout: QVBoxLayout = self.layout()  # type: ignore
         self.cry_count_label = Label("")
         self.average_cries_label = Label("")
         add_to_layout(layout, self.cry_count_label, self.average_cries_label)

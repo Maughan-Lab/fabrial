@@ -44,7 +44,7 @@ class SequenceWidget(GroupBox):
         :param instruments: Container for instruments.
         :param thread_type: The type of thread object to use when running sequences.
         """
-        super().__init__("Temperature Sequence", QVBoxLayout, instruments)
+        super().__init__("Temperature Sequence", QVBoxLayout(), instruments)
         self.thread_type = thread_type
 
         # variables
@@ -83,11 +83,15 @@ class SequenceWidget(GroupBox):
         add_to_layout(self.button_layout, self.start_button, self.pause_button, self.unpause_button)
 
         # cycle labels
-        cycle_label_layout = add_sublayout(layout, QHBoxLayout, QSizePolicy.Policy.Fixed)
+        cycle_label_layout = add_sublayout(
+            layout, QHBoxLayout, (QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        )
         self.cycle_label = Label("---")
         add_to_layout(cycle_label_layout, Label("Cycle:"), self.cycle_label)
         # sequence status labels
-        stability_label_layout = add_sublayout(layout, QHBoxLayout, QSizePolicy.Policy.Fixed)
+        stability_label_layout = add_sublayout(
+            layout, QHBoxLayout, (QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        )
         self.stability_label = Label(StabilityStatus.NULL.status_text)
         add_to_layout(stability_label_layout, Label("Stability Status:"), self.stability_label)
 

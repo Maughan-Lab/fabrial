@@ -82,9 +82,9 @@ class DeveloperOven(Oven):
 
 class DeveloperWidget(GroupBox):
     def __init__(self, instruments: InstrumentSet):
-        super().__init__("Developer", QVBoxLayout, instruments)
+        layout = QVBoxLayout()
+        super().__init__("Developer", layout, instruments)
         self.oven = instruments.oven
-        layout = self.layout()
         self.create_connection_widgets(layout)
         self.create_connection_signal_widgets(layout)
         self.create_lock_widgets(layout)

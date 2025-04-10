@@ -12,7 +12,7 @@ class SetpointWidget(GroupBox):
 
     def __init__(self, instruments: InstrumentSet):
         """:param instruments: Container for instruments."""
-        super().__init__("Setpoint", QVBoxLayout, instruments)
+        super().__init__("Setpoint", QVBoxLayout(), instruments)
 
         self.create_widgets()
         self.connect_widgets()

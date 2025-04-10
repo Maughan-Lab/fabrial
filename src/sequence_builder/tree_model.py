@@ -104,6 +104,10 @@ class TreeModel(QAbstractItemModel):
                 return item
         return self.root_item
 
+    def root(self) -> TreeItem:
+        """Get the root item."""
+        return self.root_item
+
     def insert_rows(self, row: int, parent_index: QModelIndex, items: list[TreeItem]) -> bool:
         """Insert items into the model. Returns True on success, False on failure."""
         parent_item = self.item(parent_index)

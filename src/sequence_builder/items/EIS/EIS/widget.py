@@ -26,7 +26,7 @@ class EISWidget(BaseWidget):
 
     def __init__(self):
         """Create a new instance."""
-        super().__init__(QVBoxLayout, "Electrochemical Impedance Spectroscopy")
+        super().__init__(QVBoxLayout(), "Electrochemical Impedance Spectroscopy")
         self.devices_list = []
         self.create_widgets()
 
@@ -34,7 +34,7 @@ class EISWidget(BaseWidget):
         """Create subwidgets."""
         # TODO: use a table instead of a bunch of spin boxes
 
-        layout = self.layout()
+        layout = self.parameter_widget().layout()
 
         button_layout = add_sublayout(layout, QHBoxLayout)
         add_to_layout(

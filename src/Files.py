@@ -59,6 +59,7 @@ class SequenceBuilder:
     """File/folder names for the sequence builder."""
 
     OPTIONS_INITIALIZER = "initialization"
+    DESCRIPTIONS = "item_descriptions"
 
 
 FOLDERS_TO_CREATE = [SAVED_SETTINGS_FOLDER, Sequence.DATA_FOLDER]

@@ -40,6 +40,10 @@ class TreeItem:
         """Whether this item contains subitems."""
         return not self.child_count() == 0
 
+    def subitems(self) -> list["TreeItem"]:
+        """Get this item's subitems."""
+        return self.children
+
     def child_index(self) -> int:
         """
         Get the index of this item in its parent's list of child items. If this object has no
@@ -135,6 +139,10 @@ class TreeItem:
     def process_type(self) -> type[BaseProcess] | None:
         """Returns the type of the linked process."""
         return self.linked_widget.PROCESS_TYPE
+
+    def data(self) -> dict[str, Any]:
+        """Get this item's widget data."""
+        return self.linked_widget.to_dict()
 
     # ----------------------------------------------------------------------------------------------
     @classmethod

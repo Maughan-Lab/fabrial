@@ -11,6 +11,10 @@ from .flow_control.loop.widget import LoopWidget
 from .EIS.category_widget import EISCategoryWidget
 from .EIS.EIS.widget import EISWidget
 
+# oven control
+from .oven_control.category_widget import OvenControlCategoryWidget
+from .oven_control.set_temperature.widget import SetTemperatureWidget
+
 # test
 from .test.widget import TestWidget
 
@@ -29,6 +33,9 @@ class ItemType(Enum):
     # flow control
     FLOW_CONTROL_CATEGORY = FlowControlCategoryWidget
     LOOP = LoopWidget
+    # oven control
+    OVEN_CONTROL_CATEGORY = OvenControlCategoryWidget
+    SET_TEMPERATURE = SetTemperatureWidget
 
     @classmethod
     def from_name(cls: type[Self], name: str) -> Self:

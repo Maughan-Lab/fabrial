@@ -38,8 +38,7 @@ def item_dict_from_directory(directory: str) -> dict[str, Any]:
     children: list[dict] = list()
     category_file_found = False
 
-    files = os.listdir(directory)
-    for filename in files:
+    for filename in os.listdir(directory):
         real_filename = os.path.join(directory, filename)
         if os.path.isdir(real_filename):  # it is a subcategory of the category
             children.append(item_dict_from_directory(real_filename))
@@ -58,10 +57,6 @@ def item_dict_from_directory(directory: str) -> dict[str, Any]:
     if not category_file_found:
         # you must have a category.json file
         raise FileNotFoundError(f"{ERROR_PREFIX} {CATEGORY_FILENAME} file not found in {directory}")
-    else:
-        if len(files) < 2:
-            # you cannot have an empty category (i.e. a directory with only a category.json file)
-            raise FileNotFoundError(f"{ERROR_PREFIX} Empty category in {directory}")
 
     # put the subitems in the current item
     item_as_dict[Files.TreeItem.CHILDREN] = children

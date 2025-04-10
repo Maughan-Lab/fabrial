@@ -1,0 +1,16 @@
+from PyQt6.QtWidgets import QTextBrowser, QFrame
+from PyQt6.QtCore import Qt
+
+
+class MarkdownLabel(QTextBrowser):
+    """Label with support for markdown."""
+
+    def __init__(self):
+        super().__init__()
+        self.setReadOnly(True)
+        self.setTextInteractionFlags(
+            self.textInteractionFlags() | Qt.TextInteractionFlag.LinksAccessibleByMouse
+        )
+        self.setOpenExternalLinks(True)
+        self.setFrameShape(QFrame.Shape.NoFrame)
+        self.setViewportMargins(10, 10, 10, 10)  # this just looks better

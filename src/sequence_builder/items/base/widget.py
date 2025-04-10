@@ -1,10 +1,10 @@
-from typing import Self, Callable, Any
+from typing import Self, Any
 from PyQt6.QtWidgets import QLayout
-from ....custom_widgets.container import FixedContainer
+from ....custom_widgets.parameter_description import ParameterDescriptionWidget
 from .process import BaseProcess
 
 
-class BaseWidget(FixedContainer):
+class BaseWidget(ParameterDescriptionWidget):
     """
     Base class for all linked widgets in the tree view.
     You must override:
@@ -19,17 +19,23 @@ class BaseWidget(FixedContainer):
     SUPPORTS_SUBITEMS: bool = False
     DRAGGABLE: bool = True
 
-    def __init__(self, layout_fn: Callable[[], QLayout], display_name: str = ""):
-        super().__init__(layout_fn)
+    def __init__(self, layout: QLayout, display_name: str = ""):
+        super().__init__(layout)
         self.set_display_name(display_name)
 
     def set_display_name(self, display_name: str):
-        """(private method) Set the text displayed on the window."""
+        """Set the text displayed on the window."""
         self.setWindowTitle(display_name)
 
     def display_name(self) -> str:
         """Get the text displayed on the window."""
         return self.windowTitle()
+
+    def show(self):
+        super().show()
+        WIDTH = 500
+        minimum_width = self.sizeHint().width()
+        self.resize(WIDTH if WIDTH > minimum_width else minimum_width, self.height())
 
     @classmethod
     def from_dict(cls: type[Self], data_as_dict: dict[str, Any]) -> Self:
@@ -38,7 +44,7 @@ class BaseWidget(FixedContainer):
 
         :param data_as_dict: A dictionary representing the widget's data in JSON format.
         """
-        return cls(QLayout)
+        return cls(QLayout())
 
     def to_dict(self) -> dict:
         """

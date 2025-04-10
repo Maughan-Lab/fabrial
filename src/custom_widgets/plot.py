@@ -3,7 +3,7 @@ from ..utility.layouts import add_to_layout, add_sublayout
 import pyqtgraph as pg  # type: ignore
 import pyqtgraph.exporters as exporters  # type: ignore
 from ..custom_widgets.button import Button
-from ..custom_widgets.widget import Widget
+from ..custom_widgets.widget import SignalWidget
 from typing import Literal
 
 
@@ -89,7 +89,7 @@ class PlotContainer(pg.PlotWidget):
         exporter.export(filename)
 
 
-class PlotWidget(Widget):
+class PlotWidget(SignalWidget):
     """Plot widget for displaying data. This is the widget."""
 
     def __init__(self, plot_container: PlotContainer | None = None):

@@ -11,8 +11,9 @@ class LoopWidget(BaseWidget):
 
     def __init__(self):
         # TODO: implement
-        super().__init__(QHBoxLayout, self.DISPLAY_NAME_PREFIX)
-        self.layout().addWidget(QLabel("TODO"))
+        layout = QHBoxLayout()
+        super().__init__(layout, self.DISPLAY_NAME_PREFIX)
+        self.parameter_widget().layout().addWidget(QLabel("TODO"))
 
     @classmethod
     def from_dict(cls, data_as_dict):

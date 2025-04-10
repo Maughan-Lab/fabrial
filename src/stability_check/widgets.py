@@ -28,7 +28,7 @@ class StabilityCheckWidget(GroupBox):
         :param instruments: Container for instruments.
         :param thread_type: The type of thread object to use when running stability checks.
         """
-        super().__init__("Temperature Stability Check", QVBoxLayout, instruments)
+        super().__init__("Temperature Stability Check", QVBoxLayout(), instruments)
 
         self.thread_type = thread_type
 
@@ -58,7 +58,9 @@ class StabilityCheckWidget(GroupBox):
 
         add_to_layout(layout, self.stability_check_button, self.progressbar)
 
-        stability_layout = add_sublayout(layout, QHBoxLayout, QSizePolicy.Policy.Fixed)
+        stability_layout = add_sublayout(
+            layout, QHBoxLayout, (QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        )
         add_to_layout(stability_layout, Label("Stability Status:"), self.stability_label)
 
     def connect_widgets(self):

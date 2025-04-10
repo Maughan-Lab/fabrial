@@ -17,7 +17,7 @@ class InstrumentConnectionWidget(GroupBox):
 
     def __init__(self, instruments: InstrumentSet):
         """:param instruments: Container for instruments."""
-        super().__init__("Instrument Connections", QHBoxLayout, instruments)
+        super().__init__("Instrument Connections", QHBoxLayout(), instruments)
 
         self.create_widgets()
 

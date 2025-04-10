@@ -1,12 +1,22 @@
-from PyQt6.QtCore import Qt, QModelIndex, QItemSelectionModel, QPersistentModelIndex
+from PyQt6.QtCore import Qt, QModelIndex, QItemSelectionModel, QPersistentModelIndex, QThreadPool
 from PyQt6.QtGui import QKeyEvent, QDropEvent
-from PyQt6.QtWidgets import QTreeView, QWidget, QAbstractItemView, QVBoxLayout
+from PyQt6.QtWidgets import (
+    QTreeView,
+    QWidget,
+    QAbstractItemView,
+    QVBoxLayout,
+    QStackedLayout,
+    QSizePolicy,
+)
 from .tree_model import TreeModel
 from ..custom_widgets.container import Container
-from ..custom_widgets.button import FixedButton
+from ..custom_widgets.button import FixedButton, Button
 from ..classes.actions import Shortcut
-from ..utility.layouts import add_to_layout
+from ..utility.layouts import add_to_layout, add_sublayout
 from .. import Files
+from typing import Self
+from .sequence_runner import SequenceRunner
+from ..instruments import InstrumentSet
 
 
 class TreeView(QTreeView):
@@ -125,13 +135,21 @@ class SequenceTreeView(TreeView):
 class SequenceTreeWidget(Container):
     """SequenceTreeView with a delete button."""
 
-    def __init__(self, parent: QWidget | None = None):
-        super().__init__(QVBoxLayout)
+    def __init__(self, parent: QWidget | None, instruments: InstrumentSet):
+        """
+        :param parent: This widget's parent.
+        :param instruments: The application's instruments.
+        """
+        super().__init__(QVBoxLayout())
+        self.setParent(parent)
 
         self.view: SequenceTreeView
         self.delete_button: FixedButton
         self.create_widgets()
         self.connect_signals()
+
+        self.threadpool = QThreadPool()
+        self.instruments = instruments
 
     def create_widgets(self):
         layout: QVBoxLayout = self.layout()  # type: ignore
@@ -140,11 +158,39 @@ class SequenceTreeWidget(Container):
         self.delete_button.setEnabled(False)
         add_to_layout(layout, self.delete_button, self.view)
 
+        self.button_layout = add_sublayout(
+            layout, QStackedLayout, (QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+        )
+        self.start_button = Button("Start", self.run_sequence)
+        self.pause_button = Button("Pause", lambda: self.set_paused(True))
+        self.unpause_button = Button("Unpause", lambda: self.set_paused(False))
+        add_to_layout(self.button_layout, self.start_button, self.pause_button, self.unpause_button)
+
     def connect_signals(self):
         self.view.selectionModel().currentChanged.connect(self.handle_selection_change)
 
     def handle_selection_change(self, current_index: QModelIndex, *args):
         self.delete_button.setEnabled(current_index.isValid())
+
+    def run_sequence(self) -> Self:
+        """Run the sequence."""
+        runner = SequenceRunner(self.instruments, "", self.view.model().root())
+        self.threadpool.start(runner)
+        # TODO: connect the error signal so it can show a dialog
+        return self
+
+    def set_paused(self, paused: bool):
+        """Pause/unpause the sequence runner."""
+        # TODO:
+        return self
+
+    def cancel_sequence(self) -> Self:
+        # TODO
+        return self
+
+    def skip_current_process(self) -> Self:
+        # TODO
+        return self
 
 
 class OptionsTreeView(TreeView):
@@ -167,7 +213,7 @@ class OptionsTreeWidget(Container):
     """OptionsTreeView with buttons for expanding and un-expanding all items."""
 
     def __init__(self, parent: QWidget | None = None):
-        super().__init__(QVBoxLayout)
+        super().__init__(QVBoxLayout())
         self.view: OptionsTreeView
         self.expand_button: FixedButton
         self.create_widgets()
