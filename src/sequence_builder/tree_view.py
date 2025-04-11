@@ -1,16 +1,18 @@
-from PyQt6.QtCore import Qt, QModelIndex, QItemSelectionModel, QPersistentModelIndex, QThreadPool
-from PyQt6.QtGui import QKeyEvent, QDropEvent
-from PyQt6.QtWidgets import (
-    QTreeView,
-    QWidget,
-    QAbstractItemView,
-    QVBoxLayout,
-    QStackedLayout,
-    QSizePolicy,
+from PyQt6.QtCore import (
+    Qt,
+    QModelIndex,
+    QItemSelectionModel,
+    QPersistentModelIndex,
+    QThreadPool,
+    QItemSelection,
 )
+from PyQt6.QtGui import QKeyEvent, QDropEvent
+from PyQt6.QtWidgets import QTreeView, QWidget, QAbstractItemView, QVBoxLayout
 from .tree_model import TreeModel
+from ..custom_widgets.button import FixedButton
 from ..custom_widgets.container import Container
-from ..custom_widgets.button import FixedButton, Button
+from ..custom_widgets.button import Button
+from ..custom_widgets.label import Label
 from ..classes.actions import Shortcut
 from ..utility.layouts import add_to_layout, add_sublayout
 from .. import Files
@@ -145,41 +147,56 @@ class SequenceTreeWidget(Container):
 
         self.view: SequenceTreeView
         self.delete_button: FixedButton
-        self.create_widgets()
-        self.connect_signals()
+        self.create_widgets().connect_signals()
 
         self.threadpool = QThreadPool()
         self.instruments = instruments
 
-    def create_widgets(self):
+    def create_widgets(self) -> Self:
         layout: QVBoxLayout = self.layout()  # type: ignore
         self.view = SequenceTreeView(self)
         self.delete_button = FixedButton("Delete Selected Items", self.view.delete_event)
         self.delete_button.setEnabled(False)
         add_to_layout(layout, self.delete_button, self.view)
 
-        self.button_layout = add_sublayout(
-            layout, QStackedLayout, (QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+        # the data directory selection widgets
+        directory_layout = add_sublayout(layout, QVBoxLayout)
+        directory_button = Button("Choose Data Directory", self.choose_directory)
+        self.directory_label = Label(
+            r"C:\Users\drewl\C:\Users\drewl\C:\Users\drewl\C:\Users\drewl\C:\Users\drewl\C:\Users\drewl\C:\Users\drewl\C:\Users\drewl\C:\Users\drewl"
         )
-        self.start_button = Button("Start", self.run_sequence)
-        self.pause_button = Button("Pause", lambda: self.set_paused(True))
-        self.unpause_button = Button("Unpause", lambda: self.set_paused(False))
-        add_to_layout(self.button_layout, self.start_button, self.pause_button, self.unpause_button)
+        self.directory_label.setContentsMargins(7, 0, 7, 0)
+        self.directory_label.setWordWrap(True)
+        add_to_layout(directory_layout, directory_button, self.directory_label)
 
-    def connect_signals(self):
-        self.view.selectionModel().currentChanged.connect(self.handle_selection_change)
+        return self
 
-    def handle_selection_change(self, current_index: QModelIndex, *args):
-        self.delete_button.setEnabled(current_index.isValid())
+    def connect_signals(self) -> Self:
+        self.view.selectionModel().selectionChanged.connect(self.handle_selection_change)  # type: ignore
+        return self
 
-    def run_sequence(self) -> Self:
+    def handle_selection_change(self, selected: QItemSelection, *args):
+        enabled = True
+        if selected.isEmpty():
+            enabled = False
+        else:
+            for index in selected.indexes():
+                if not index.isValid():
+                    enabled = False
+        self.delete_button.setEnabled(enabled)
+
+    def choose_directory(self):
+        """Open a dialog to choose the data-storage directory."""
+        # TODO: open a folder dialog and set the label to the result
+        self.directory_label.setText("")
+
+    def run_sequence(self):
         """Run the sequence."""
         runner = SequenceRunner(self.instruments, "", self.view.model().root())
         self.threadpool.start(runner)
         # TODO: connect the error signal so it can show a dialog
-        return self
 
-    def set_paused(self, paused: bool):
+    def set_paused(self, paused: bool) -> Self:
         """Pause/unpause the sequence runner."""
         # TODO:
         return self
@@ -217,6 +234,10 @@ class OptionsTreeWidget(Container):
         self.view: OptionsTreeView
         self.expand_button: FixedButton
         self.create_widgets()
+
+        # self.view.setEnabled(False)
+        self.s = None
+        self.p = None
 
     def create_widgets(self):
         layout: QVBoxLayout = self.layout()  # type: ignore

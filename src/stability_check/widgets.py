@@ -6,7 +6,7 @@ from ..custom_widgets.groupbox import GroupBox
 from ..custom_widgets.dialog import OkDialog
 from ..custom_widgets.progressbar import ProgressBar
 from ..instruments import InstrumentSet
-from ..utility.layouts import add_sublayout, add_to_layout, add_to_layout_grid
+from ..utility.layouts import add_sublayout, add_to_layout
 from ..enums.status import StabilityStatus
 from .stability_check import StabilityCheckThread
 from typing import Type
@@ -49,18 +49,13 @@ class StabilityCheckWidget(GroupBox):
         self.progressbar = ProgressBar(0, self.thread_type.MINIMUM_MEASUREMENTS)
         # layout for the label, detect_setpoint_button, and setpoint_spinbox
         inner_layout = add_sublayout(layout, QGridLayout)
-        add_to_layout_grid(
-            inner_layout,
-            (Label("Setpoint"), 0, 0),
-            (self.setpoint_spinbox, 1, 0),
-            (self.detect_setpoint_button, 1, 1),
-        )
+        inner_layout.addWidget(Label("Setpoint"), 0, 0)
+        inner_layout.addWidget(self.setpoint_spinbox, 1, 0)
+        inner_layout.addWidget(self.detect_setpoint_button, 1, 1)
 
         add_to_layout(layout, self.stability_check_button, self.progressbar)
 
-        stability_layout = add_sublayout(
-            layout, QHBoxLayout, (QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        )
+        stability_layout = add_sublayout(layout, QHBoxLayout)
         add_to_layout(stability_layout, Label("Stability Status:"), self.stability_label)
 
     def connect_widgets(self):
@@ -76,7 +71,7 @@ class StabilityCheckWidget(GroupBox):
 
     def handle_stability_change(self, status: StabilityStatus):
         """Handle a stability change."""
-        self.stability_label.setText(str(status))
+        self.stability_label.setText(status.status_text)
         self.stability_label.setStyleSheet("color: " + status.color)
 
     def handle_status_change(self, running: bool):

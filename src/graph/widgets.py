@@ -14,7 +14,7 @@ class GraphWidget(Frame):
     POINT_SIZE = 7
 
     def __init__(self) -> None:
-        super().__init__(QVBoxLayout, 0)
+        super().__init__(QVBoxLayout(), 0)
         self.plot: PlotWidget
         self.plot_item: PlotItem
         self.line_data: LineData

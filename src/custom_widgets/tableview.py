@@ -2,6 +2,8 @@ from PyQt6.QtWidgets import QTableView, QHeaderView, QSizePolicy
 from PyQt6.QtCore import Qt, QSize
 from .tablemodel import TableModel
 
+# TODO: remove this
+
 
 class TableView(QTableView):
     """Partial implementation of a QTableView."""

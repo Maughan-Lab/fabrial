@@ -1,10 +1,4 @@
-from PyQt6.QtWidgets import (
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QStackedLayout,
-    QSizePolicy,
-)
+from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QHBoxLayout, QStackedLayout
 from PyQt6.QtCore import Qt, pyqtSignal, QThreadPool
 from ..custom_widgets.label import Label
 from ..custom_widgets.combo_box import ComboBox
@@ -83,15 +77,11 @@ class SequenceWidget(GroupBox):
         add_to_layout(self.button_layout, self.start_button, self.pause_button, self.unpause_button)
 
         # cycle labels
-        cycle_label_layout = add_sublayout(
-            layout, QHBoxLayout, (QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        )
+        cycle_label_layout = add_sublayout(layout, QHBoxLayout)
         self.cycle_label = Label("---")
         add_to_layout(cycle_label_layout, Label("Cycle:"), self.cycle_label)
         # sequence status labels
-        stability_label_layout = add_sublayout(
-            layout, QHBoxLayout, (QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        )
+        stability_label_layout = add_sublayout(layout, QHBoxLayout)
         self.stability_label = Label(StabilityStatus.NULL.status_text)
         add_to_layout(stability_label_layout, Label("Stability Status:"), self.stability_label)
 

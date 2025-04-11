@@ -1,6 +1,5 @@
 from PyQt6.QtWidgets import QGridLayout
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
 from ..custom_widgets.label import Label
 from ..custom_widgets.groupbox import GroupBox
 from ..instruments import InstrumentSet
@@ -31,7 +30,8 @@ class PassiveMonitoringWidget(GroupBox):
     def add_widget_row(self, layout: QGridLayout, text: str, row: int, label_widget: Label):
         category_label = Label("Oven " + text + ":")
 
-        font = QFont("Arial", 16)
+        font = label_widget.font()
+        font.setPointSize(16)
         label_widget.setFont(font)
 
         layout.addWidget(category_label, row, 0, Qt.AlignmentFlag.AlignRight)

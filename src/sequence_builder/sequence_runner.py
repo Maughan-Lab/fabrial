@@ -1,4 +1,4 @@
-from PyQt6.QtCore import QRunnable, QThreadPool
+from PyQt6.QtCore import QRunnable
 from PyQt6.QtWidgets import QWidget
 from ..classes.process import ProcessInputs
 from ..instruments import InstrumentSet
@@ -18,7 +18,7 @@ class SequenceRunner(QRunnable):
         """
         super().__init__()
         self.root_item = root_item
-        self.process_inputs = ProcessInputs(instruments, QThreadPool(), data_directory, root_item)
+        self.process_inputs = ProcessInputs(instruments, data_directory)
         self.current_process: BaseProcess
         self.current_widget: QWidget
 

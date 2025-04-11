@@ -1,9 +1,8 @@
 from ...base.widget import BaseWidget
 from .....custom_widgets.spin_box import TemperatureSpinBox
-from .....custom_widgets.label import Label
 from .process import SetTemperatureProcess
 from .encoding import TEMPERATURE
-from PyQt6.QtWidgets import QHBoxLayout
+from PyQt6.QtWidgets import QFormLayout
 from typing import Any
 
 
@@ -15,7 +14,7 @@ class SetTemperatureWidget(BaseWidget):
     DISPLAY_NAME_PREFIX = "Set Oven Temperature"
 
     def __init__(self):
-        layout = QHBoxLayout()
+        layout = QFormLayout()
         super().__init__(layout, self.DISPLAY_NAME_PREFIX)
         self.set_description_from_file(
             "oven_control",
@@ -32,8 +31,7 @@ class SetTemperatureWidget(BaseWidget):
                 f"{self.DISPLAY_NAME_PREFIX} ({value_as_str} degrees)"
             )
         )
-        layout.addWidget(Label("Temperature"))
-        layout.addWidget(self.temperature_spinbox)
+        layout.addRow("Temperature", self.temperature_spinbox)
 
     def to_dict(self) -> dict[str, Any]:
         return {TEMPERATURE: self.temperature_spinbox.value()}

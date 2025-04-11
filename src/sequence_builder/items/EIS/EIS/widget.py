@@ -1,12 +1,5 @@
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout, QCheckBox
-from .....utility.layouts import (
-    add_sublayout,
-    add_sublayout_to_grid,
-    add_to_layout,
-    add_to_layout_grid,
-    row_pair,
-    clear_layout,
-)
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QFormLayout, QCheckBox
+from .....utility.layouts import add_sublayout, add_to_layout, add_to_form_layout, clear_layout
 from .....custom_widgets.spin_box import SpinBox, DoubleSpinBox
 from .....custom_widgets.button import Button
 from .....custom_widgets.label import Label
@@ -30,11 +23,9 @@ class EISWidget(BaseWidget):
         self.devices_list = []
         self.create_widgets()
 
-    def create_widgets(self):
+    def create_widgets(self) -> None:
         """Create subwidgets."""
-        # TODO: use a table instead of a bunch of spin boxes
-
-        layout = self.parameter_widget().layout()
+        layout: QVBoxLayout = self.parameter_widget().layout()  # type: ignore
 
         button_layout = add_sublayout(layout, QHBoxLayout)
         add_to_layout(
@@ -43,11 +34,12 @@ class EISWidget(BaseWidget):
             Button("Reload Device List", self.reload_device_list),
         )
 
-        parameter_layout = add_sublayout(layout, QGridLayout)
-
-        parameter_layout.addWidget(Label("Potentiostat(s)"), 0, 0)
-        self.devices_layout = add_sublayout_to_grid(parameter_layout, QVBoxLayout, 0, 1)
+        device_list_layout = add_sublayout(layout, QHBoxLayout)
+        device_list_layout.addWidget(Label("Potentiostat(s)"))
+        self.devices_layout = add_sublayout(device_list_layout, QVBoxLayout)
         self.reload_device_list()
+
+        parameter_layout = add_sublayout(layout, QFormLayout)
 
         self.initial_frequency_spinbox = DoubleSpinBox()
         self.final_frequency_spinbox = DoubleSpinBox()
@@ -57,15 +49,15 @@ class EISWidget(BaseWidget):
         self.area_spinbox = DoubleSpinBox()
         self.estimated_impedance_spinbox = DoubleSpinBox()
 
-        add_to_layout_grid(
+        add_to_form_layout(
             parameter_layout,
-            *row_pair(Label("Initial Freq. (Hz)"), self.initial_frequency_spinbox, 1),
-            *row_pair(Label("Final Freq. (Hz)"), self.final_frequency_spinbox, 2),
-            *row_pair(Label("Points/decade"), self.points_per_decade_spinbox, 3),
-            *row_pair(Label("AC Voltage (mV rms)"), self.AC_voltage_spinbox, 4),
-            *row_pair(Label("DC Voltage (V)"), self.DC_voltage_spinbox, 5),
-            *row_pair(Label("Area (cm^2)"), self.area_spinbox, 6),
-            *row_pair(Label("Estimated Z (ohms)"), self.estimated_impedance_spinbox, 7),
+            ("Initial Freq. (Hz)", self.initial_frequency_spinbox),
+            ("Final Freq. (Hz)", self.final_frequency_spinbox),
+            ("Points/decade", self.points_per_decade_spinbox),
+            ("AC Voltage (mV rms)", self.AC_voltage_spinbox),
+            ("DC Voltage (V)", self.DC_voltage_spinbox),
+            ("Area (cm^2)", self.area_spinbox),
+            ("Estimated Z (ohms)", self.estimated_impedance_spinbox),
         )
 
     def reload_device_list(self):

@@ -1,20 +1,28 @@
-from PyQt6.QtWidgets import QWidget, QSizePolicy, QLayout
+from PyQt6.QtWidgets import QSizePolicy, QLayout
+from .widget import Widget
 
 
-class Container(QWidget):
+class Container(Widget):
     """QWidget that automatically sets the layout and has no contents margins."""
 
-    def __init__(self, layout: QLayout):
-        """:param layout: The layout to initialize with."""
-        super().__init__()
-
+    def __init__(
+        self,
+        layout: QLayout,
+        horizontal_size_policy: QSizePolicy.Policy = QSizePolicy.Policy.Preferred,
+        vertical_size_policy: QSizePolicy.Policy = QSizePolicy.Policy.Preferred,
+    ):
+        """
+        :param layout: The layout to initialize with.
+        :param horizontal_size_policy: The horizontal size policy.
+        :param vertical_size_policy: The vertical size policy.
+        """
+        super().__init__(layout)
         layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
+        self.setSizePolicy(horizontal_size_policy, vertical_size_policy)
 
 
 class FixedContainer(Container):
     """Container with a fixed size."""
 
     def __init__(self, layout: QLayout):
-        super().__init__(layout)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        super().__init__(layout, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)

@@ -1,8 +1,8 @@
 from .widget import Widget
-from .widget import FixedWidget
-from .markdown_label import MarkdownLabel
+from .markdown_view import MarkdownView
 from typing import Self
 from PyQt6.QtWidgets import QVBoxLayout, QLayout, QTabWidget, QWidget
+from PyQt6.QtCore import Qt
 from .. import Files
 from ..utility.jinja import parse_template
 import os
@@ -19,12 +19,17 @@ class ParameterDescriptionWidget(Widget):
         self.tab_widget = QTabWidget(self)
         layout.addWidget(self.tab_widget)
 
-        self.parameter_tab: QWidget = FixedWidget()
+        self.parameter_tab = QWidget()
         self.parameter_tab.setLayout(parameter_layout)
-
         self.tab_widget.addTab(self.parameter_tab, "Parameters")
 
-        self.description_tab = MarkdownLabel()
+        description_layout = QVBoxLayout()
+        self.description_tab = Widget(description_layout)
+        self.description_widget = MarkdownView()
+        description_layout.addWidget(
+            self.description_widget, alignment=Qt.AlignmentFlag.AlignHCenter
+        )
+
         self.tab_widget.addTab(self.description_tab, "Description")
 
     def parameter_widget(self) -> QWidget:
@@ -40,7 +45,7 @@ class ParameterDescriptionWidget(Widget):
 
     def set_description(self, text: str) -> Self:
         """Set the text (interpreted as Markdown) displayed in the description tab."""
-        self.description_tab.setMarkdown(text)
+        self.description_widget.setMarkdown(text)
         return self
 
     def set_description_from_file(
@@ -56,5 +61,5 @@ class ParameterDescriptionWidget(Widget):
         """
         folder = os.path.join(Files.SequenceBuilder.DESCRIPTIONS, category_folder)
         markdown_text = parse_template(folder, filename, template_dict)
-        self.description_tab.setMarkdown(markdown_text)
+        self.description_widget.setMarkdown(markdown_text)
         return self

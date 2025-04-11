@@ -5,7 +5,6 @@ from ..instrument_connection.widgets import InstrumentConnectionWidget
 from ..stability_check.widgets import StabilityCheckWidget
 from ..sequence.widgets import SequenceWidget
 from ..graph.widgets import GraphWidget
-from ..utility.layouts import add_to_layout_grid
 from ..instruments import InstrumentSet
 from ..secondary_window import SecondaryWindow
 from ..classes.actions import Shortcut
@@ -15,7 +14,8 @@ from ..custom_widgets.plot import PlotWidget
 class OvenControlTab(QWidget):
     """First tab in the application, used for directly controlling the oven."""
 
-    def __init__(self, parent: QWidget, instruments: InstrumentSet) -> None:
+    def __init__(self, instruments: InstrumentSet):
+        """:param instruments: The application's instruments."""
         # data members
         self.setpoint_widget: SetpointWidget
         self.stability_check_widget: StabilityCheckWidget
@@ -25,7 +25,7 @@ class OvenControlTab(QWidget):
         self.instrument_connection_widget: InstrumentConnectionWidget
         self.popped_graph: SecondaryWindow
 
-        super().__init__(parent)
+        super().__init__()
 
         self.create_widgets(instruments)
         self.create_popped_graph(self.graph_widget.plot)
@@ -39,14 +39,13 @@ class OvenControlTab(QWidget):
 
         self.initialize_widgets(instruments)
         # add the widgets
-        add_to_layout_grid(
-            layout,
-            (self.setpoint_widget, 0, 0),
-            (self.stability_check_widget, 1, 0),
-            (self.passive_monitoring_widget, 0, 1),
-            (self.instrument_connection_widget, 0, 2),
-            (self.sequence_widget, 2, 0),
-        )
+        layout.addWidget(self.setpoint_widget, 0, 0)
+        layout.addWidget(self.stability_check_widget, 1, 0)
+        layout.addWidget(self.setpoint_widget, 0, 0)
+        layout.addWidget(self.stability_check_widget, 1, 0)
+        layout.addWidget(self.passive_monitoring_widget, 0, 1)
+        layout.addWidget(self.instrument_connection_widget, 0, 2)
+        layout.addWidget(self.sequence_widget, 2, 0)
         layout.addWidget(self.graph_widget, 1, 1, 2, 2)
 
     def initialize_widgets(self, instruments: InstrumentSet):  # this is necessary for testing

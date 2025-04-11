@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QTextBrowser, QFrame
 from PyQt6.QtCore import Qt
 
 
-class MarkdownLabel(QTextBrowser):
+class MarkdownView(QTextBrowser):
     """Label with support for markdown."""
 
     def __init__(self):
@@ -14,3 +14,6 @@ class MarkdownLabel(QTextBrowser):
         self.setOpenExternalLinks(True)
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.setViewportMargins(10, 10, 10, 10)  # this just looks better
+
+    def sizeHint(self):
+        return super().sizeHint() * 2

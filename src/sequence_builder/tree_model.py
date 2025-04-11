@@ -10,6 +10,7 @@ from PyQt6.QtCore import (
     QIODevice,
     pyqtSignal,
 )
+from PyQt6.QtWidgets import QApplication
 from .tree_item import TreeItem
 from .clipboard import CLIPBOARD
 from ..utility.sequence_builder import item_dict_from_directory
@@ -186,13 +187,21 @@ class TreeModel(QAbstractItemModel):
         parent_item = self.item(parent_index)
         return parent_item.child_count()
 
-    def data(self, index: QModelIndex, role: int | None = None) -> str | None:
+    def data(self, index: QModelIndex, role: int | None = None) -> Any:
         if not index.isValid():
             return None
         match role:
             case Qt.ItemDataRole.DisplayRole:
                 item = self.item(index)
-                return item.name()  # type: ignore
+                return item.name()
+            case Qt.ItemDataRole.FontRole:
+                # items that are running are shown in bold
+                item = self.item(index)
+                if item.is_running():
+                    font = QApplication.font()
+                    font = QApplication.font()
+                    font.setBold(True)
+                    return font
         return None
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlag:

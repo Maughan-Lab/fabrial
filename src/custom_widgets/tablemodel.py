@@ -1,6 +1,8 @@
 from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex
 import polars as pl
 
+# TODO: remove this
+
 
 class TableModel(QAbstractTableModel):
     """Partial implementation of a QAbstractTableModel."""

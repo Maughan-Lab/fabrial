@@ -17,6 +17,15 @@ class TreeItem:
         self.parent_item = parent
         self.linked_widget = linked_widget
         self.children: list["TreeItem"] = []
+        self.running = False
+
+    def set_running(self, running: bool):
+        """Set whether this item's associated process is currently running."""
+        self.running = running
+
+    def is_running(self) -> bool:
+        """Whether this item's associated process is currently running."""
+        return self.running
 
     def show_widget(self):
         self.linked_widget.show()
