@@ -1,4 +1,4 @@
-from ..base.widget import CategoryWidget
+from ..base_widget import CategoryWidget
 
 
 class OvenControlCategoryWidget(CategoryWidget):

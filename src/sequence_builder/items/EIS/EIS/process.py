@@ -1,7 +1,7 @@
-from ...base.process import BaseProcess
+from .....classes.process import Process
 
 
-class EISProcess(BaseProcess):
+class EISProcess(Process):
     def run(self, inputs):
         # TODO: implement
         pass

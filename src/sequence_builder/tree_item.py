@@ -1,6 +1,6 @@
 from typing import Union, Any
-from .items.base.widget import BaseWidget, CategoryWidget
-from .items.base.process import BaseProcess
+from .items.base_widget import BaseWidget, CategoryWidget
+from ..classes.process import Process
 from .items.item_types import ItemType
 from .. import Files
 from functools import cmp_to_key
@@ -11,13 +11,17 @@ class TreeItem:
 
     def __init__(
         self,
+        linked_widget: BaseWidget | CategoryWidget,
         parent: Union["TreeItem", None] = None,
-        linked_widget: BaseWidget | CategoryWidget = CategoryWidget(),
     ):
         self.parent_item = parent
         self.linked_widget = linked_widget
         self.children: list["TreeItem"] = []
         self.running = False
+
+    @classmethod
+    def create_root_item(cls: type["TreeItem"]):
+        return cls(CategoryWidget())
 
     def set_running(self, running: bool):
         """Set whether this item's associated process is currently running."""
@@ -29,6 +33,10 @@ class TreeItem:
 
     def show_widget(self):
         self.linked_widget.show()
+
+    def widget(self) -> BaseWidget | CategoryWidget:
+        """Get the this item's linked widget."""
+        return self.linked_widget
 
     def child(self, index: int) -> Union["TreeItem", None]:
         """Get the child item at **index**."""
@@ -145,7 +153,7 @@ class TreeItem:
         """Returns whether the item can be dragged."""
         return self.linked_widget.DRAGGABLE
 
-    def process_type(self) -> type[BaseProcess] | None:
+    def process_type(self) -> type[Process] | None:
         """Returns the type of the linked process."""
         return self.linked_widget.PROCESS_TYPE
 
@@ -168,7 +176,7 @@ class TreeItem:
         widget_type = ItemType.from_name(item_as_dict[Files.TreeItem.TYPE]).value
         widget = widget_type.from_dict(item_as_dict[Files.TreeItem.WIDGET_DATA])
         # cls is the type of the class (TreeItem in this case) and is passed implicitly
-        item = cls(parent, widget)
+        item = cls(widget, parent)
 
         # add children
         for child_item_as_dict in item_as_dict[Files.TreeItem.CHILDREN]:

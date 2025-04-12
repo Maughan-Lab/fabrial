@@ -1,4 +1,4 @@
-from ...base.widget import BaseWidget
+from ...base_widget import BaseWidget
 from .....custom_widgets.spin_box import TemperatureSpinBox
 from .process import SetTemperatureProcess
 from .encoding import TEMPERATURE
@@ -10,6 +10,7 @@ class SetTemperatureWidget(BaseWidget):
     """Set the oven's temperature and wait for it to stabilize."""
 
     PROCESS_TYPE: type[SetTemperatureProcess] = SetTemperatureProcess
+    ICON = "thermometer--arrow.png"
 
     DISPLAY_NAME_PREFIX = "Set Oven Temperature"
 

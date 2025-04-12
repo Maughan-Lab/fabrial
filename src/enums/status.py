@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, Flag, auto, unique, IntEnum
 
 
 class StabilityStatus(Enum):
@@ -27,21 +27,76 @@ class StabilityStatus(Enum):
         return self.truth_value
 
 
-class SequenceStatus(Enum):
+class OldSequenceStatus(Flag):
     """States representing the status of a sequence."""
 
-    INACTIVE = "gray", "Inactive"
-    ACTIVE = "green", "Active", True
-    COMPLETED = "gray", "Completed"
-    CANCELED = "gray", "Cancelled"
-    PAUSED = "cyan", "Paused", True
-    ERROR = "red", "Error"
+    INACTIVE = auto()
+    ACTIVE = auto()
+    COMPLETED = auto()
+    CANCELED = auto()
+    PAUSED = auto()
+    ERROR = auto()
 
-    def __init__(self, color: str, status_text: str, truth_value: bool = False):
-        self.color = color
-        self.status_text = status_text
-        self.truth_value = truth_value
+    def status_text(self) -> str:
+        """Get the status text."""
+        if self.name is None:
+            return ""
+        return self.name.title()
 
-    def __bool__(self):
-        """Return a boolean representing the running state."""
-        return self.truth_value
+    def color(self) -> str:
+        """Get the color (i.e. "green")."""
+        match self:
+            case OldSequenceStatus.ACTIVE:
+                return "green"
+            case OldSequenceStatus.PAUSED:
+                return "cyan"
+            case OldSequenceStatus.ERROR:
+                return "red"
+            case _:
+                return "gray"
+
+
+@unique
+class SequenceStatus(IntEnum):
+    """States representing the status of a sequence."""
+
+    INACTIVE = auto()
+    ACTIVE = auto()
+    COMPLETED = auto()
+    CANCELED = auto()
+    PAUSED = auto()
+    ERROR = auto()
+    ERROR_PAUSED = auto()  # there was and error and we paused
+
+    def status_text(self) -> str:
+        """Get the status text."""
+        match self:
+            case SequenceStatus.ERROR_PAUSED:  # ERROR and ERROR_PAUSED use the same text
+                return SequenceStatus.ERROR.status_text()
+        return self.name.title()
+
+    def is_pause(self) -> bool:
+        """Whether this status represents a paused sequence."""
+        match self:
+            case SequenceStatus.PAUSED | SequenceStatus.ERROR_PAUSED:
+                return True
+        return False
+
+    def is_running(self) -> bool:
+        """Whether this status represents a running sequence."""
+        match self:
+            case SequenceStatus.INACTIVE | SequenceStatus.COMPLETED | SequenceStatus.CANCELED:
+                return False
+        return True
+
+    def color(self) -> str:
+        """Get the color (i.e. "green")."""
+        match self:
+            case SequenceStatus.ACTIVE:
+                return "green"
+            case SequenceStatus.PAUSED:
+                return "cyan"
+            case SequenceStatus.ERROR | SequenceStatus.ERROR_PAUSED:
+                return "red"
+            case _:
+                return "gray"

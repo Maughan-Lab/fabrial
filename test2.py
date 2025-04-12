@@ -17,15 +17,16 @@ class Signals(QObject):
 
 
 class TestRunnable(QRunnable):
-    def __init__(self):
+    def __init__(self, linked_widget: QLabel):
         super().__init__()
         self.signals = Signals()
+        self.linked_widget = linked_widget
 
     def run(self):
         print("Start")
         time.sleep(1)
-        self.signals.changeSignal.emit(lambda label: QLabel.setText(label, "It worked!!!!!"))
-        time.sleep(5)
+        self.linked_widget.setText("It also worked!!!!")
+        time.sleep(3)
         print("End")
 
 
@@ -53,8 +54,7 @@ class MainWindow(QMainWindow):
         self.threadpool = QThreadPool(self)
 
     def test_func(self):
-        runner = TestRunnable()
-        runner.signals.changeSignal.connect(lambda func: func(self.label1))
+        runner = TestRunnable(self.label1)
         self.threadpool.start(runner)
 
 

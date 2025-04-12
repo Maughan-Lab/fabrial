@@ -4,7 +4,7 @@ import time
 from os import path
 import os
 from ..instruments import InstrumentSet  # ../instruments.py
-from ..enums.status import StabilityStatus, SequenceStatus  # ../enums
+from ..enums.status import StabilityStatus, OldSequenceStatus  # ../enums
 from ..classes.plotting import TemperaturePoint  # ../classes
 from ..classes.datamutex import DataMutex  # ../classes
 from ..utility.graph import graph_from_folder  # ../utility
@@ -107,7 +107,7 @@ class SequenceThread(QRunnable):
 
     def pre_run(self):
         """Pre-run tasks."""
-        self.update_status(SequenceStatus.ACTIVE)
+        self.update_status(OldSequenceStatus.ACTIVE)
         self.oven.acquire()
 
         # this should be last
@@ -117,12 +117,12 @@ class SequenceThread(QRunnable):
     def post_run(self):
         """Post-run tasks."""
         if self.cancel.get():
-            final_status = SequenceStatus.CANCELED
+            final_status = OldSequenceStatus.CANCELED
         else:
             if self.file_error_count >= self.MAX_FILE_ERRORS:
-                final_status = SequenceStatus.ERROR
+                final_status = OldSequenceStatus.ERROR
             else:
-                final_status = SequenceStatus.COMPLETED
+                final_status = OldSequenceStatus.COMPLETED
             # if the sequence is not cancelled by the user, set the oven to the END_TEMPERATURE
             self.change_setpoint(self.END_TEMPERATURE)
         self.graph_and_save()
@@ -305,7 +305,7 @@ class SequenceThread(QRunnable):
                 f.write(line)
         except IOError as e:
             # there can be a maximum of MAX_FILE_ERRORS before Quincy actually cancels the sequence
-            # the user will be notified via an OkDialog (SequenceStatus.ERROR is used)
+            # the user will be notified via an OkDialog (OldSequenceStatus.ERROR is used)
             self.file_error_count += 1
             if self.file_error_count >= self.MAX_FILE_ERRORS:
                 raise e
@@ -326,8 +326,8 @@ class SequenceThread(QRunnable):
         self.cycle_number += 1
         self.signals.cycleNumberChanged.emit(self.cycle_number)
 
-    def update_status(self, status: SequenceStatus):
-        """Emit the supplied SequenceStatus."""
+    def update_status(self, status: OldSequenceStatus):
+        """Emit the supplied OldSequenceStatus."""
         self.signals.statusChanged.emit(status)
 
     def update_stability(self, stability: StabilityStatus):
@@ -352,12 +352,12 @@ class SequenceThread(QRunnable):
     def pause_sequence(self):
         """Pause the sequence."""
         self.pause.set(True)
-        self.update_status(SequenceStatus.PAUSED)
+        self.update_status(OldSequenceStatus.PAUSED)
 
     def unpause_sequence(self):
         """Unpause the sequence."""
         self.pause.set(False)
-        self.update_status(SequenceStatus.ACTIVE)
+        self.update_status(OldSequenceStatus.ACTIVE)
 
     def skip_cycle(self):
         """Skip the current cycle."""
@@ -375,7 +375,7 @@ class Signals(QObject):
     cycleNumberChanged = pyqtSignal(int)
     stabilityChanged = pyqtSignal(StabilityStatus)
     stageChanged = pyqtSignal(StabilityStatus)
-    statusChanged = pyqtSignal(SequenceStatus)
+    statusChanged = pyqtSignal(OldSequenceStatus)
     graphFailed = pyqtSignal()
 
 

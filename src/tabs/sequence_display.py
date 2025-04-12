@@ -12,8 +12,13 @@ class SequenceDisplayTab(Widget):
     def __init__(self):
         super().__init__(QVBoxLayout())
 
-    def set_central_widget(self, widget: QWidget):
+    def set_central_widget(self, widget: QWidget | None):
         """Set the central widget."""
         layout: QVBoxLayout = self.layout()  # type: ignore
         clear_layout(layout)
-        layout.addWidget(widget)
+        if widget is not None:
+            layout.addWidget(widget)
+
+    def clear_layout(self):
+        """Remove all items from the layout."""
+        clear_layout(self.layout())

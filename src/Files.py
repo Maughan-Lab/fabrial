@@ -7,6 +7,12 @@ SAVED_SETTINGS_FOLDER = "saved_settings"
 ICON = "icons/oven_icon.png"
 
 
+class Icons:
+    """Icon paths."""
+
+    INTERNAL_ICONS = "icons/internal"
+
+
 class Sequence:
     """File/folder names for the sequence."""
 
@@ -48,7 +54,7 @@ class InstrumentConnection:
 
 
 class TreeItem:
-    """File/folder names for TreeItems."""
+    """Dictionary keys for TreeItems."""
 
     TYPE = "type"
     WIDGET_DATA = "linked-widget-data"
@@ -62,4 +68,10 @@ class SequenceBuilder:
     DESCRIPTIONS = "item_descriptions"
 
 
-FOLDERS_TO_CREATE = [SAVED_SETTINGS_FOLDER, Sequence.DATA_FOLDER]
+class SequenceRunner:
+    """File/folder names for the sequence runner."""
+
+    DEFAULT_DATA_FOLDER = "Data Files"
+
+
+FOLDERS_TO_CREATE = [SAVED_SETTINGS_FOLDER, SequenceRunner.DEFAULT_DATA_FOLDER]

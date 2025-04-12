@@ -40,6 +40,7 @@
     - For example, widgets that record data need to be able to describe to the user what directory data is stored in, but that information will be stored in the Process.
 
 # Save and load sequences in the sequence builder
+- Store the current sequence when closing and automatically reload it when opening
 - Store a sequence in a file chosen by the user.
 - Load the sequence from a file chosen by the user.
 

@@ -1,4 +1,4 @@
-from ...base.widget import BaseWidget
+from ...base_widget import BaseWidget
 from .process import LoopProcess
 from PyQt6.QtWidgets import QHBoxLayout, QLabel
 
@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel
 class LoopWidget(BaseWidget):
     PROCESS_TYPE = LoopProcess
     SUPPORTS_SUBITEMS = True
+    ICON = "arrow-repeat.png"
 
     DISPLAY_NAME_PREFIX = "Loop"
 

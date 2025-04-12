@@ -1,7 +1,7 @@
-from ...base.process import BaseProcess
+from .....classes.process import Process
 
 
-class LoopProcess(BaseProcess):
+class LoopProcess(Process):
     def run(self, inputs):
         # TODO: implement
         pass

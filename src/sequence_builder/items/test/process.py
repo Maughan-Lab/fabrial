@@ -1,8 +1,8 @@
-from ..base.process import BaseProcess
+from ....classes.process import Process
 from . import encoding as DATA
 
 
-class TestProcess(BaseProcess):
+class TestProcess(Process):
     def run(self, inputs):
         print("Test process running!")
         print(f"Average cries: {self.data[DATA.AVERAGE_CRIES]}")

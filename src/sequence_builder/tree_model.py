@@ -32,7 +32,7 @@ class TreeModel(QAbstractItemModel):
         """
         super().__init__(parent)
         self.name = name
-        self.root_item = TreeItem()
+        self.root_item = TreeItem.create_root_item()
 
         # don't access these directly
         self.supported_drop_actions = Qt.DropAction.CopyAction
@@ -190,18 +190,19 @@ class TreeModel(QAbstractItemModel):
     def data(self, index: QModelIndex, role: int | None = None) -> Any:
         if not index.isValid():
             return None
+        item = self.item(index)
         match role:
             case Qt.ItemDataRole.DisplayRole:
-                item = self.item(index)
                 return item.name()
             case Qt.ItemDataRole.FontRole:
                 # items that are running are shown in bold
-                item = self.item(index)
                 if item.is_running():
                     font = QApplication.font()
                     font = QApplication.font()
                     font.setBold(True)
                     return font
+            case Qt.ItemDataRole.DecorationRole:
+                return item.widget().icon()
         return None
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlag:

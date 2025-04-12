@@ -5,7 +5,7 @@ from .....custom_widgets.button import Button
 from .....custom_widgets.label import Label
 from typing import Self
 from . import encoding as DATA
-from ...base.widget import BaseWidget
+from ...base_widget import BaseWidget
 from .process import EISProcess
 
 from .....gamry_integration.GamryCOM import GamryCOM
@@ -16,6 +16,7 @@ class EISWidget(BaseWidget):
     """Contains entries for EIS experiments."""
 
     PROCESS_TYPE = EISProcess
+    ICON = "battery-charge.png"
 
     def __init__(self):
         """Create a new instance."""

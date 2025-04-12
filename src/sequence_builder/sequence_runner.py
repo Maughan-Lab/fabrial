@@ -1,16 +1,24 @@
-from PyQt6.QtCore import QRunnable
-from PyQt6.QtWidgets import QWidget
-from ..classes.process import ProcessInputs
+from PyQt6.QtCore import pyqtSignal, QThread
+from ..classes.process import ProcessRunner, Process
 from ..instruments import InstrumentSet
 from typing import Self
 from .tree_item import TreeItem
-from .items.base.process import BaseProcess
+from ..enums.status import SequenceStatus
 
 
-class SequenceRunner(QRunnable):
+class SequenceRunner(QThread):
     """Class for running sequences created by the SequenceBuilder."""
 
-    def __init__(self, instruments: InstrumentSet, data_directory: str, root_item: TreeItem):
+    statusChanged = pyqtSignal(SequenceStatus)
+    errorOccurred = pyqtSignal(str)
+    processChanged = pyqtSignal(Process)
+
+    def __init__(
+        self,
+        instruments: InstrumentSet,
+        data_directory: str,
+        root_item: TreeItem,
+    ):
         """
         :param instruments: The applications instruments.
         :param data_directory: The name of the base directory to write all data to.
@@ -18,36 +26,63 @@ class SequenceRunner(QRunnable):
         """
         super().__init__()
         self.root_item = root_item
-        self.process_inputs = ProcessInputs(instruments, data_directory)
-        self.current_process: BaseProcess
-        self.current_widget: QWidget
+        self.runner = ProcessRunner(instruments, data_directory)
+        self.canceled = False
+        # self.signals = SequenceRunnerSignals()
 
-    def set_paused(self, paused: bool) -> Self:
-        """Pause/unpause the sequence."""
-        # TODO
+        self.connect_signals()
+
+    def connect_signals(self):
+        """Connect signals."""
+        # self.runner.statusChanged.connect(self.signals.statusChanged.emit)
+        # self.runner.errorOccurred.connect(self.signals.errorOccurred.emit)
+        self.runner.statusChanged.connect(self.statusChanged.emit)
+        self.runner.errorOccurred.connect(self.errorOccurred.emit)
+
+    def process_runner(self) -> ProcessRunner:
+        """Get the process runner."""
+        return self.runner
+
+    def pause(self) -> Self:
+        """Pause the sequence."""
+        self.runner.pause()
+        return self
+
+    def unpause(self) -> Self:
+        """Pause the sequence."""
+        self.runner.unpause()
         return self
 
     def cancel(self) -> Self:
         """Cancel the entire sequence."""
-        # TODO
+        self.canceled = True
+        self.runner.cancel()
         return self
 
     def skip_current_process(self) -> Self:
         """Skip the current process by cancelling it and moving to the next one."""
-        # TODO
+        self.runner.cancel()
         return self
 
     def run(self):
         """Run the sequence."""
-        # TODO: finish
+        final_status = SequenceStatus.COMPLETED
         for item in self.root_item.subitems():
-            self.process_inputs.current_item = item
+            # setup
             process_type = item.process_type()
-            self.current_process = process_type(item.data())
-            self.current_widget = self.current_process.visual_widget()
-            # TODO: add the process' widget to the third tab on the main window
-            self.current_process.run(self.process_inputs)
-        if self.process_inputs.threadpool.activeThreadCount() > 0:
-            # TODO: cancel all background processes
-            # might need to have a list of background processes in ProcessInputs
-            pass
+            process = process_type(self.runner, item.widget().to_dict())
+            # set the current item and process
+            self.runner.set_current_item(item).set_current_proceses(process)
+            # update the visual widget
+            self.processChanged.emit(process)
+            # run
+            self.runner.run()
+            # check to see if we are cancelled
+            if self.canceled:
+                final_status = SequenceStatus.CANCELED
+                break
+
+        # check for and cancel any background processes
+        self.runner.cancel_background_processes()
+        # tell everyone else we finished
+        self.statusChanged.emit(final_status)

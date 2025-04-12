@@ -1,7 +1,7 @@
 from enum import Enum, unique
 from typing import Self
 
-from .base.widget import BaseWidget, CategoryWidget
+from .base_widget import BaseWidget, CategoryWidget
 
 # flow control
 from .flow_control.category_widget import FlowControlCategoryWidget

@@ -1,26 +1,27 @@
-from ...base.process import BaseProcess, ProcessSignals, pyqtSignal
+from .....classes.process import Process, ProcessRunner
 from .....custom_widgets.plot import PlotWidget
 from .....classes.plotting import TemperaturePoint
+from .....enums.status import SequenceStatus
+from PyQt6.QtCore import pyqtSignal
 from typing import Any
+import time
 
 
-class Signals(ProcessSignals):
+class SetTemperatureProcess(Process):
     newDataAcquired = pyqtSignal(TemperaturePoint)
 
-
-class SetTemperatureProcess(BaseProcess):
-    SIGNALS_TYPE = Signals
+    WIDGET_TYPE = PlotWidget
 
     MEASUREMENT_INTERVAL = 5
     DIRECTORY_NAME = "Set Temperature"
 
-    def __init__(self, data: dict[str, Any]):
-        super().__init__(data)
-        self.widget = PlotWidget()
+    def __init__(self, runner: ProcessRunner, data: dict[str, Any]):
+        super().__init__(runner, data)
 
-    def run(self, inputs):
-        # TODO: implement
-        print("We made it!")
-
-    def visual_widget(self) -> PlotWidget:
-        return self.widget
+    def run(self):
+        end_time = time.time() + 3
+        while time.time() < end_time:
+            if self.is_paused():
+                print("pause detected")
+                pass
+            time.sleep(0.1)

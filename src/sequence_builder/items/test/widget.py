@@ -1,4 +1,4 @@
-from ..base.widget import BaseWidget
+from ..base_widget import BaseWidget
 from .process import TestProcess
 from PyQt6.QtWidgets import QVBoxLayout
 from ....utility.layouts import add_to_layout

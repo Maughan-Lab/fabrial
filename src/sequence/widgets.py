@@ -8,7 +8,7 @@ from ..custom_widgets.dialog import OkDialog
 from ..custom_widgets.tableview import TableView
 from ..instruments import InstrumentSet
 from ..utility.layouts import add_sublayout, add_to_layout
-from ..enums.status import StabilityStatus, SequenceStatus
+from ..enums.status import StabilityStatus, OldSequenceStatus
 from ..classes.plotting import TemperaturePoint
 from .tablemodel import SequenceTableModel
 from .sequence import SequenceThread
@@ -50,7 +50,7 @@ class SequenceWidget(GroupBox):
         self.model.load_data()
 
         # set up the initial label state
-        self.handle_status_change(SequenceStatus.INACTIVE)
+        self.handle_status_change(OldSequenceStatus.INACTIVE)
 
         self.threadpool = QThreadPool()
 
@@ -145,27 +145,27 @@ class SequenceWidget(GroupBox):
 
     # ----------------------------------------------------------------------------------------------
     # statusChanged
-    def handle_status_change(self, status: SequenceStatus):
+    def handle_status_change(self, status: OldSequenceStatus):
         match status:
-            case SequenceStatus.ACTIVE:
+            case OldSequenceStatus.ACTIVE:
                 # tell the rest of the program the sequence started
                 self.statusChanged.emit(True)
                 self.update_button_visibility(self.pause_button)
-            case SequenceStatus.COMPLETED | SequenceStatus.CANCELED | SequenceStatus.INACTIVE:
+            case OldSequenceStatus.COMPLETED | OldSequenceStatus.CANCELED | OldSequenceStatus.INACTIVE:
                 self.handle_sequence_completion()
                 # tell the rest of the program the sequence ended
                 self.statusChanged.emit(False)
-            case SequenceStatus.ERROR:
+            case OldSequenceStatus.ERROR:
                 self.handle_sequence_completion()
                 self.statusChanged.emit(False)
                 OkDialog(
                     "Fatal Error", "Failed to write data too many times, sequence terminated."
                 ).exec()
-            case SequenceStatus.PAUSED:
+            case OldSequenceStatus.PAUSED:
                 self.update_button_visibility(self.unpause_button)
-            case _:  # in case other SequenceStatus options are added
+            case _:  # in case other OldSequenceStatus options are added
                 pass
-        self.update_label(self.status_label, status.status_text, status.color)
+        self.update_label(self.status_label, status.status_text(), status.color())
 
     def update_button_visibility(self, button_to_show: QPushButton):
         self.button_layout.setCurrentWidget(button_to_show)

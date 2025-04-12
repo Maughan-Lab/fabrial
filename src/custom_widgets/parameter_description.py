@@ -19,8 +19,7 @@ class ParameterDescriptionWidget(Widget):
         self.tab_widget = QTabWidget(self)
         layout.addWidget(self.tab_widget)
 
-        self.parameter_tab = QWidget()
-        self.parameter_tab.setLayout(parameter_layout)
+        self.parameter_tab = Widget(parameter_layout)
         self.tab_widget.addTab(self.parameter_tab, "Parameters")
 
         description_layout = QVBoxLayout()
