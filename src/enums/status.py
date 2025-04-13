@@ -82,6 +82,13 @@ class SequenceStatus(IntEnum):
                 return True
         return False
 
+    def is_error(self) -> bool:
+        """Whether this status represents an error state."""
+        match self:
+            case SequenceStatus.ERROR | SequenceStatus.ERROR_PAUSED:
+                return True
+        return False
+
     def is_running(self) -> bool:
         """Whether this status represents a running sequence."""
         match self:

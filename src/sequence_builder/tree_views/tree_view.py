@@ -14,6 +14,7 @@ class TreeView(QTreeView):
         self.setDragEnabled(True)
         self.setDropIndicatorShown(True)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setExpandsOnDoubleClick(False)
         self.setModel(model)
 
     def model(self) -> TreeModel:
@@ -60,8 +61,4 @@ class TreeView(QTreeView):
         self.selectionModel().select(  # type: ignore
             new_selection_index, QItemSelectionModel.SelectionFlag.ClearAndSelect
         )
-        return self
-
-    def set_readonly(self, readonly: bool) -> Self:
-        self.model().set_items_enabled(not readonly)
         return self

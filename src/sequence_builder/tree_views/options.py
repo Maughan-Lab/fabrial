@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QModelIndex
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QSizePolicy
 from .tree_view import TreeView
 from ..tree_model import TreeModel
@@ -19,6 +19,7 @@ class OptionsTreeView(TreeView):
         super().__init__(model)
         self.create_shortcuts()
         self.connect_signals()
+        self.doubleClicked.connect(self.handle_double_click)
 
     def create_shortcuts(self):
         Shortcut(
@@ -28,6 +29,9 @@ class OptionsTreeView(TreeView):
     def connect_signals(self):
         self.expanded.connect(lambda index: self.model().item(index).widget().expand_event())
         self.collapsed.connect(lambda index: self.model().item(index).widget().collapse_event())
+
+    def handle_double_click(self, index: QModelIndex):
+        self.model().item(index).widget().show_disabled()
 
 
 class OptionsTreeWidget(Container):

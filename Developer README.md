@@ -52,16 +52,13 @@ Some general notes
         - Add a file for the item's process (other items call this **process.py**).
             - You should use the same names from **encoding.py** when accessing the process' data.
             - Subclass `Process` (**src/classes/process.py**), overriding:
-                - `SIGNALS_TYPE`
-                    - Only necessary if you need extra signals.
-                    - You can subclass `ProcessSignals` to add additional signals to the widget. Currently, the process runner will only interface with the `errorOccured` signal.
                 - `WIDGET_TYPE`
                     - The type of the data visualization widget used by the process.
                     - Only necessary if your process has an associated widget.
                 - `__init__()`
                     - Call the base method, then initialize any other data.
                 - `run()`
-                    - The sequence runner will call this method after creating a process instance. It is allowed to do anything, you just need to make sure to frequently call `time.sleep()` so you don't freeze the application.
+                    - The sequence runner will call this method after creating a process instance. It is allowed to do anything, you just need to make sure to frequently call `wait()` so you don't freeze the application.
 - In **src/sequence_builder/items/item_types.py**, edit the `ItemType` enum to have an entry for your action's widget.
 - Navigate to **initialization/[category you are adding to]/**
     - Create **.json** file for your action containing the following info:

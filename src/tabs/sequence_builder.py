@@ -53,10 +53,10 @@ class SequenceBuilderTab(QWidget):
             "Start", self.sequence_tree.run_sequence, size_scalars=SIZE_SCALARS
         )
         self.pause_button = BiggerButton(
-            "Pause", lambda: self.sequence_tree.pauseCommand.emit(), size_scalars=SIZE_SCALARS
+            "Pause", self.sequence_tree.pauseCommand, size_scalars=SIZE_SCALARS
         )
         self.unpause_button = BiggerButton(
-            "Unpause", lambda: self.sequence_tree.unpauseCommand.emit(), size_scalars=SIZE_SCALARS
+            "Unpause", self.sequence_tree.unpauseCommand, size_scalars=SIZE_SCALARS
         )
         self.button_container.addWidget(self.start_button)
         self.button_container.addWidget(self.pause_button)
@@ -93,7 +93,6 @@ class SequenceBuilderTab(QWidget):
             current_button = self.pause_button
         else:  # we're not running
             current_button = self.start_button
-            self.visual_widget_container.clear_layout()
 
         self.button_container.setCurrentWidget(current_button)
         self.status_label.setText(status.status_text())

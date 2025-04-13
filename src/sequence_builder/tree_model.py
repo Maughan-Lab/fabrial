@@ -37,15 +37,6 @@ class TreeModel(QAbstractItemModel):
         # don't access these directly
         self.supported_drop_actions = Qt.DropAction.CopyAction
         self.supported_drag_actions = self.supported_drop_actions
-        self.items_are_enabled = True
-
-    def set_items_enabled(self, enabled: bool):
-        """Set whether the model's items are enabled."""
-        self.items_are_enabled = enabled
-
-    def items_enabled(self) -> bool:
-        """Whether the model's items are enabled."""
-        return self.items_are_enabled
 
     def init_from_dict(self, root_item_as_dict: dict[str, Any]) -> Self:
         """Initialize the model's data from a dictionary."""
@@ -206,9 +197,6 @@ class TreeModel(QAbstractItemModel):
         return None
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlag:
-        if not self.items_enabled():
-            return Qt.ItemFlag.NoItemFlags
-
         flags = Qt.ItemFlag.ItemIsEnabled
         item = self.item(index)
         if item.supports_subitems():

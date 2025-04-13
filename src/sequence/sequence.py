@@ -6,7 +6,7 @@ import os
 from ..instruments import InstrumentSet  # ../instruments.py
 from ..enums.status import StabilityStatus, OldSequenceStatus  # ../enums
 from ..classes.plotting import TemperaturePoint  # ../classes
-from ..classes.datamutex import DataMutex  # ../classes
+from ..classes.mutex import DataMutex  # ../classes
 from ..utility.graph import graph_from_folder  # ../utility
 from .. import Files
 
@@ -181,9 +181,7 @@ class SequenceThread(QRunnable):
                         temperature_variances = []
                     else:
                         # otherwise remove the "unstable" point and everything before
-                        # fmt: off
-                        temperature_variances = temperature_variances[index+1:]
-                        # fmt: on
+                        temperature_variances = temperature_variances[index + 1 :]
                     break
 
         self.record_stabilization_time()

@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 from ...custom_widgets.parameter_description import ParameterDescriptionWidget
 from ...utility.images import make_icon
-from ...classes.process import Process
+from ...classes.process import Process, BackgroundProcess
 
 
 class BaseWidget(ParameterDescriptionWidget):
@@ -21,7 +21,7 @@ class BaseWidget(ParameterDescriptionWidget):
     file.
     """
 
-    PROCESS_TYPE: type[Process] | None = None
+    PROCESS_TYPE: type[Process] | type[BackgroundProcess] | None = None
     SUPPORTS_SUBITEMS: bool = False
     DRAGGABLE: bool = True
     ICON = "script.png"
@@ -31,6 +31,11 @@ class BaseWidget(ParameterDescriptionWidget):
         self.set_display_name(display_name)
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.setWindowIcon(make_icon(self.ICON))
+
+    def show_disabled(self):
+        """Show the widget with the parameter tab disabled."""
+        self.parameter_widget().setDisabled(True)
+        self.show()
 
     def display_name(self) -> str:
         """Get the text displayed on the window."""
@@ -79,9 +84,9 @@ class CategoryWidget:
     - `EXPANDED_ICON` to change the icon used when the item is expanded.
     """
 
-    PROCESS_TYPE: None = None
-    SUPPORTS_SUBITEMS: bool = True
-    DRAGGABLE: bool = False
+    PROCESS_TYPE = None
+    SUPPORTS_SUBITEMS = True
+    DRAGGABLE = False
     COLLAPSED_ICON = "folder-horizontal.png"
     EXPANDED_ICON = "folder-horizontal-open.png"
 
@@ -100,6 +105,9 @@ class CategoryWidget:
         return dict()
 
     def show(self):  # there is nothing to show
+        pass
+
+    def show_disabled(self):
         pass
 
     def display_name(self) -> str:

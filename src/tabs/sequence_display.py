@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
 from ..custom_widgets.widget import Widget
 from ..utility.layouts import clear_layout
+from ..classes.null import Null
 
 
 class SequenceDisplayTab(Widget):
@@ -12,11 +13,11 @@ class SequenceDisplayTab(Widget):
     def __init__(self):
         super().__init__(QVBoxLayout())
 
-    def set_central_widget(self, widget: QWidget | None):
-        """Set the central widget."""
+    def set_central_widget(self, widget: QWidget | Null):
+        """Set the central widget. If **widget** is **None**, this just clears the layout."""
         layout: QVBoxLayout = self.layout()  # type: ignore
         clear_layout(layout)
-        if widget is not None:
+        if not isinstance(widget, Null):
             layout.addWidget(widget)
 
     def clear_layout(self):

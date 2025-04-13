@@ -17,6 +17,7 @@ class MainWindow(QMainWindow):
         self.tabs = TabWidget(self, instruments)
         self.setCentralWidget(self.tabs)
         self.oven_control_tab = self.tabs.oven_control_tab  # shortcut
+        self.sequence_tab = self.tabs.sequence_builder_tab
         # create menu bar
         self.menu_bar = MenuBar(self, instruments)
         self.setMenuBar(self.menu_bar)

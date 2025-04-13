@@ -1,7 +1,8 @@
-from PyQt6.QtCore import Qt, QModelIndex, QItemSelection, pyqtSignal
+from PyQt6.QtCore import Qt, QModelIndex, QItemSelection, pyqtSignal, QThread
 from PyQt6.QtGui import QKeyEvent, QDropEvent
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QFileDialog, QSizePolicy, QWidget
 from .tree_view import TreeView
+from ..tree_item import TreeItem
 from ..tree_model import TreeModel
 from ...custom_widgets.button import FixedButton
 from ...custom_widgets.container import Container
@@ -9,11 +10,11 @@ from ...custom_widgets.button import BiggerButton
 from ...custom_widgets.label import IconLabel
 from ...custom_widgets.dialog import OkDialog
 from ...classes.actions import Shortcut
-from ...classes.process import Process, ProcessRunner
+from ...classes.null import Null
 from ...enums.status import SequenceStatus
 from ...utility.layouts import add_to_layout, add_sublayout
 from ...utility.images import make_pixmap
-from typing import Self
+from typing import Self, Callable
 from ..sequence_runner import SequenceRunner
 from ...instruments import InstrumentSet
 from ... import Files
@@ -30,7 +31,6 @@ class SequenceTreeView(TreeView):
         # initialize the super class
         super().__init__(model)
         # configure
-        self.setExpandsOnDoubleClick(False)
         self.setAcceptDrops(True)
         self.setDefaultDropAction(Qt.DropAction.MoveAction)
         self.doubleClicked.connect(self.handle_double_click)
@@ -82,7 +82,7 @@ class SequenceTreeWidget(Container):
     """SequenceTreeView with a delete button."""
 
     # signals that get emitted to other objects
-    processWidgetChanged = pyqtSignal(QWidget)
+    processWidgetChanged = pyqtSignal(object)  # tis is really QWidget or Null
     sequenceStatusChanged = pyqtSignal(SequenceStatus)
     # internal signals
     pauseCommand = pyqtSignal()
@@ -104,6 +104,7 @@ class SequenceTreeWidget(Container):
         self.create_widgets().connect_signals()
 
         self.instruments = instruments
+        self.threads: list[SequenceRunner] = []
 
     def create_widgets(self) -> Self:
         layout: QVBoxLayout = self.layout()  # type: ignore
@@ -142,7 +143,7 @@ class SequenceTreeWidget(Container):
                     enabled = False
         self.delete_button.setEnabled(enabled)
 
-    def choose_directory(self):
+    def choose_directory(self) -> Self:
         """Open a dialog to choose the data-storage directory."""
         directory = QFileDialog.getExistingDirectory(
             self,
@@ -151,42 +152,79 @@ class SequenceTreeWidget(Container):
             QFileDialog.Option.ShowDirsOnly,
         )
         self.directory_label.label().setText(directory)
+        return self
 
     def data_directory(self) -> str:
         """Get the current data directory."""
         return self.directory_label.label().text()
 
-    def run_sequence(self):
+    def is_running(self) -> bool:
+        """Whether the sequence is currently running."""
+        return len(self.threads) > 0
+
+    def run_sequence(self) -> Self:
         """Run the sequence."""
+        thread = QThread(self)
         runner = SequenceRunner(
             self.instruments, self.directory_label.label().text(), self.view.model().root()
         )
-        # connect the runner's signals
-        runner.processChanged.connect(
-            lambda new_process: self.handle_process_change(new_process, runner.process_runner())
-        )
-        runner.statusChanged.connect(self.handle_status_change)
-        runner.errorOccurred.connect(lambda message: OkDialog("Error", message).exec())
-        # connect internal signals to the runner
-        self.pauseCommand.connect(runner.pause)
-        self.unpauseCommand.connect(runner.unpause)
-        self.cancelCommand.connect(runner.cancel)
-        self.skipCommand.connect(runner.skip_current_process)
+        runner.moveToThread(thread)
+        self.connect_sequence_signals(runner, thread)
         # run
-        runner.start()
+        thread.started.connect(runner.run)
+        thread.start()
+        return self
 
-    def handle_process_change(self, new_process: Process, runner: ProcessRunner):
-        self.view.update()
-        if new_process.WIDGET_TYPE is not None:
-            widget = new_process.WIDGET_TYPE()
-            runner.set_process_widget(widget)
+    def connect_sequence_signals(self, runner: SequenceRunner, thread: QThread) -> Self:
+        # up towards the parent
+        runner.widgetTypeChanged.connect(
+            lambda widget_type: self.handle_widget_type_change(widget_type, runner)
+        )
+        runner.errorOccurred.connect(lambda message: OkDialog("Error", message).exec())
+        runner.currentItemChanged.connect(self.handle_item_change)
+        runner.statusChanged.connect(self.sequenceStatusChanged)
+        # down towards the child
+        self.pauseCommand.connect(runner.pauseCommand)
+        self.unpauseCommand.connect(runner.unpauseCommand)
+        self.cancelCommand.connect(runner.cancelCommand)
+        self.skipCommand.connect(runner.skipCommand)
+        # internal-only signals
+        runner.finished.connect(thread.quit)
+        thread.started.connect(lambda: self.sequence_start_event(runner))
+        thread.finished.connect(lambda: self.sequence_end_event(runner))
+
+        return self
+
+    def handle_widget_type_change(
+        self, widget_type: Callable[[], QWidget] | Null, runner: SequenceRunner
+    ):
+        if not isinstance(widget_type, Null):
+            widget = widget_type()
             self.processWidgetChanged.emit(widget)
         else:
-            self.processWidgetChanged.emit(None)
+            self.processWidgetChanged.emit(Null())
 
-    def handle_status_change(self, status: SequenceStatus):
-        running = status.is_running()
-        self.view.set_readonly(running)
+    def handle_item_change(self, current: TreeItem | Null, previous: TreeItem | Null):
+        if not isinstance(previous, Null):
+            previous.set_running(False)
+        if not isinstance(current, Null):
+            current.set_running(True)
+        self.view.update()
+
+    def sequence_start_event(self, runner: SequenceRunner):
+        """This runs when the sequence starts."""
+        self.adjust_view_state(True)
         self.view.clearSelection()
+
+        self.threads.append(runner)
+
+    def sequence_end_event(self, runner: SequenceRunner):
+        """This runs when the sequence ends."""
+        self.adjust_view_state(False)
+
+        self.threads.remove(runner)
+
+    def adjust_view_state(self, running: bool):
+        """Adjust the view's visual state for the sequence."""
+        self.view.setDisabled(running)
         self.directory_button.setDisabled(running)
-        self.sequenceStatusChanged.emit(status)
