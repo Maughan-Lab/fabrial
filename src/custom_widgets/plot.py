@@ -14,11 +14,10 @@ class PlotItem(pg.PlotItem):
     TITLE_SIZE = "20pt"
 
     def __init__(self) -> None:
-        """Create a new PlotWidget."""
+        """Create a new PlotItem."""
         super().__init__()
         self.text_color = self.palette().windowText().color().name()
         self.background_color = self.palette().window().color().name()
-        # self.background_color = self.palette().window().color().name()
 
         self.create_plot()
 
@@ -77,36 +76,41 @@ class PlotItem(pg.PlotItem):
         return line
 
 
-class PlotContainer(pg.PlotWidget):
+class PlotWidget(pg.PlotWidget):
     """Container for a PlotItem. Capable of exporting itself as an image."""
 
-    def __init__(self, plot_item: PlotItem):
-        """Create a new PlotContainer."""
+    def __init__(self):
+        """Create a new PlotWidget."""
+        plot_item = PlotItem()
         super().__init__(background=plot_item.background_color, plotItem=plot_item)
 
     def export_to_image(self, filename: str):
-        exporter = exporters.ImageExporter(self.plotItem)
+        exporter = exporters.ImageExporter(self.getPlotItem())
         exporter.export(filename)
 
+    def autoscale(self):
+        """Autoscale the graph."""
+        self.getPlotItem().getViewBox().enableAutoRange(pg.ViewBox.XYAxes)
 
-class PlotWidget(SignalWidget):
+
+class OldPlotWidget(SignalWidget):
     """Plot widget for displaying data. This is the widget."""
 
-    def __init__(self, plot_container: PlotContainer | None = None):
+    def __init__(self, plot_container: PlotWidget | None = None):
         """
         Create a new PlotWidget. Optionally provide a **PlotContainer** to initialize this widget
         with.
         """
         super().__init__()
         self.plot_item: PlotItem
-        self.plot_container: PlotContainer
+        self.plot_container: PlotWidget
 
         if plot_container is not None:
             self.plot_container = plot_container
             self.plot_item = plot_container.plotItem
         else:
-            self.plot_item = PlotItem()
-            self.plot_container = PlotContainer(self.plot_item)
+            self.plot_container = PlotWidget()
+            self.plot_item = self.plot_container.getPlotItem()
 
         layout = QVBoxLayout()
         self.setLayout(layout)

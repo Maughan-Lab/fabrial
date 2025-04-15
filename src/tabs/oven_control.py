@@ -8,7 +8,7 @@ from ..graph.widgets import GraphWidget
 from ..instruments import InstrumentSet
 from ..secondary_window import SecondaryWindow
 from ..classes.actions import Shortcut
-from ..custom_widgets.plot import PlotWidget
+from ..custom_widgets.plot import OldPlotWidget
 
 
 class OvenControlTab(QWidget):
@@ -58,7 +58,7 @@ class OvenControlTab(QWidget):
         self.passive_monitoring_widget = PassiveMonitoringWidget(instruments)
         self.instrument_connection_widget = InstrumentConnectionWidget(instruments)
 
-    def create_popped_graph(self, plot: PlotWidget):
+    def create_popped_graph(self, plot: OldPlotWidget):
         self.popped_graph = SecondaryWindow("Quincy - Popped Graph", None)
         # close the window on "Ctrl+g"
         Shortcut(self.popped_graph, "Ctrl+g", self.popped_graph.close)

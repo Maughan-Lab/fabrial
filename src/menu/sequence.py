@@ -28,8 +28,8 @@ class SequenceMenu(QMenu):
         # self.load_settings = Action(
         #     parent, "Load Settings", self.widget.model.load_data, shortcut="Ctrl+Shift+L"
         # )
-        self.skip = Action(parent, "Skip Current Process", self.widget.skipCommand.emit)
-        self.cancel = Action(parent, "Cancel Sequence", self.widget.cancelCommand.emit)
+        self.skip = Action(parent, "Skip Current Process", self.widget.command_signals.skipCommand)
+        self.cancel = Action(parent, "Cancel Sequence", self.widget.command_signals.cancelCommand)
         # disable these initially
         for action in (self.skip, self.cancel):
             action.setDisabled(True)

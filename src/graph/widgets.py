@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
-from ..custom_widgets.plot import PlotWidget
+from ..custom_widgets.plot import OldPlotWidget
 from ..custom_widgets.frame import Frame
 from ..enums.status import StabilityStatus
 from ..classes.plotting import TemperaturePoint, LineData
@@ -15,14 +15,14 @@ class GraphWidget(Frame):
 
     def __init__(self) -> None:
         super().__init__(QVBoxLayout(), 0)
-        self.plot: PlotWidget
+        self.plot: OldPlotWidget
         self.plot_item: PlotItem
         self.line_data: LineData
 
         self.create_widgets()
 
     def create_widgets(self):
-        self.plot = PlotWidget()
+        self.plot = OldPlotWidget()
         self.plot_item = self.plot.plot_item
         self.add_labels()
         self.layout().addWidget(self.plot)

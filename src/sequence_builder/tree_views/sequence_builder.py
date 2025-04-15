@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt, QModelIndex, QItemSelection, pyqtSignal, QThread
 from PyQt6.QtGui import QKeyEvent, QDropEvent
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QFileDialog, QSizePolicy, QWidget
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QFileDialog, QSizePolicy
 from .tree_view import TreeView
 from ..tree_item import TreeItem
 from ..tree_model import TreeModel
@@ -10,11 +10,11 @@ from ...custom_widgets.button import BiggerButton
 from ...custom_widgets.label import IconLabel
 from ...custom_widgets.dialog import OkDialog
 from ...classes.actions import Shortcut
-from ...classes.null import Null
+from ...classes.signals import CommandSignals, GraphSignals
 from ...enums.status import SequenceStatus
 from ...utility.layouts import add_to_layout, add_sublayout
 from ...utility.images import make_pixmap
-from typing import Self, Callable
+from typing import Self
 from ..sequence_runner import SequenceRunner
 from ...instruments import InstrumentSet
 from ... import Files
@@ -82,13 +82,8 @@ class SequenceTreeWidget(Container):
     """SequenceTreeView with a delete button."""
 
     # signals that get emitted to other objects
-    processWidgetChanged = pyqtSignal(object)  # tis is really QWidget or Null
     sequenceStatusChanged = pyqtSignal(SequenceStatus)
-    # internal signals
-    pauseCommand = pyqtSignal()
-    unpauseCommand = pyqtSignal()
-    cancelCommand = pyqtSignal()
-    skipCommand = pyqtSignal()
+    graphSignalsChanged = pyqtSignal(GraphSignals)
 
     def __init__(self, instruments: InstrumentSet):
         """
@@ -105,6 +100,9 @@ class SequenceTreeWidget(Container):
 
         self.instruments = instruments
         self.threads: list[SequenceRunner] = []
+
+        self.command_signals = CommandSignals()
+        self.graph_signals = GraphSignals()
 
     def create_widgets(self) -> Self:
         layout: QVBoxLayout = self.layout()  # type: ignore
@@ -177,17 +175,12 @@ class SequenceTreeWidget(Container):
 
     def connect_sequence_signals(self, runner: SequenceRunner, thread: QThread) -> Self:
         # up towards the parent
-        runner.widgetTypeChanged.connect(
-            lambda widget_type: self.handle_widget_type_change(widget_type, runner)
-        )
-        runner.errorOccurred.connect(lambda message: OkDialog("Error", message).exec())
-        runner.currentItemChanged.connect(self.handle_item_change)
-        runner.statusChanged.connect(self.sequenceStatusChanged)
+        runner.info_signals.errorOccurred.connect(lambda message: OkDialog("Error", message).exec())
+        runner.info_signals.currentItemChanged.connect(self.handle_item_change)
+        runner.info_signals.statusChanged.connect(self.sequenceStatusChanged)
+        self.graph_signals.connect_to_other(runner.graph_signals)
         # down towards the child
-        self.pauseCommand.connect(runner.pauseCommand)
-        self.unpauseCommand.connect(runner.unpauseCommand)
-        self.cancelCommand.connect(runner.cancelCommand)
-        self.skipCommand.connect(runner.skipCommand)
+        self.command_signals.connect_to_other(runner.command_signals)
         # internal-only signals
         runner.finished.connect(thread.quit)
         thread.started.connect(lambda: self.sequence_start_event(runner))
@@ -195,19 +188,10 @@ class SequenceTreeWidget(Container):
 
         return self
 
-    def handle_widget_type_change(
-        self, widget_type: Callable[[], QWidget] | Null, runner: SequenceRunner
-    ):
-        if not isinstance(widget_type, Null):
-            widget = widget_type()
-            self.processWidgetChanged.emit(widget)
-        else:
-            self.processWidgetChanged.emit(Null())
-
-    def handle_item_change(self, current: TreeItem | Null, previous: TreeItem | Null):
-        if not isinstance(previous, Null):
+    def handle_item_change(self, current: TreeItem | None, previous: TreeItem | None):
+        if previous is not None:
             previous.set_running(False)
-        if not isinstance(current, Null):
+        if current is not None:
             current.set_running(True)
         self.view.update()
 

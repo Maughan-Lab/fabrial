@@ -3,10 +3,10 @@ from os import path
 from ..graph.widgets import GraphWidget
 from ..enums.status import StabilityStatus
 from .. import Files
-from ..custom_widgets.plot import PlotItem, PlotContainer
+from ..custom_widgets.plot import PlotItem, PlotWidget
 
 
-def graph_from_folder(data_folder: str) -> PlotContainer:
+def graph_from_folder(data_folder: str) -> PlotWidget:
     """
     Graph the temperature data in **data_folder**.
 
@@ -27,8 +27,10 @@ def graph_from_folder(data_folder: str) -> PlotContainer:
     plot_from_file(plot_item, data_folder, Files.Sequence.PRE_STABLE, StabilityStatus.CHECKING)
     plot_from_file(plot_item, data_folder, Files.Sequence.BUFFER, StabilityStatus.BUFFERING)
     plot_from_file(plot_item, data_folder, Files.Sequence.STABLE, StabilityStatus.STABLE)
+    widget = PlotWidget()
+    widget.plotItem = plot_item
 
-    return PlotContainer(plot_item)
+    return widget
 
 
 def plot_from_file(
@@ -51,7 +53,7 @@ def plot_from_file(
         plot_item.scatter(
             df[TIME],
             df[TEMPERATURE],
-            stability_status.to_legend_text(),
+            stability_status.legend_text(),
             GraphWidget.POINT_SIZE,
             stability_status.to_color(),
         )

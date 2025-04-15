@@ -17,9 +17,8 @@
 - You should probably put all the stuff for running the sequence in a class called SequenceRunner.
 - If the user tries to close the application while a sequence is running, ask them for confirmation. If they still want to close, cancel the sequence first, then close.
 
-# Sequence File Selection
-- This should be just below the Sequence Builder.
-- One button and one label: the button triggers a folder select window and the label displays the currently selected directory.
+# Anything with oven stability
+Instead of storing temperature variations in a list, just check if the temperature variation is above the threshold. If it isn't increment a counter. If it is, reset the counter. When the counter reaches 150, you are stable.
 
 # Implement Widgets
 - Enable constant temperature recording

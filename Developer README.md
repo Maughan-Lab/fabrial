@@ -52,9 +52,9 @@ Some general notes
         - Add a file for the item's process (other items call this **process.py**).
             - You should use the same names from **encoding.py** when accessing the process' data.
             - Subclass `Process` (**src/classes/process.py**), overriding:
-                - `WIDGET_TYPE`
-                    - The type of the data visualization widget used by the process.
+                - `HAS_GRAPH`
                     - Only necessary if your process has an associated widget.
+                    - Set it to **True** to enable interacting with the graph.
                 - `__init__()`
                     - Call the base method, then initialize any other data.
                 - `run()`

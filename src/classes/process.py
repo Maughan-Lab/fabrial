@@ -1,11 +1,10 @@
 from ..instruments import InstrumentSet
 from ..enums.status import SequenceStatus
 from ..classes.mutex import StatusStateMachine
-from ..classes.null import Null
 from ..utility.events import PROCESS_SIGNALS
-from PyQt6.QtCore import QThread, QObject, pyqtSignal
-from PyQt6.QtWidgets import QWidget
-from typing import Any, Self, Callable, TYPE_CHECKING, Union
+from PyQt6.QtCore import QThread, QObject, pyqtSignal, QCoreApplication, QEventLoop
+from typing import Any, Self, TYPE_CHECKING, Union
+from .signals import CommandSignals, GraphSignals, InformationSignals
 import time
 
 if TYPE_CHECKING:
@@ -15,26 +14,13 @@ if TYPE_CHECKING:
 class Process(QObject):
     """
     Base class for all foreground processes. You must override:
-    - `SIGNALS_TYPE`
-    - `WIDGET_TYPE` - the type of widget used to display this process' data. Do not override if
-    there is no data.
-
     - `run()`
+        - You must frequently call `wait()` to process events and handle pausing and canceling.
+            - `wait()` returns a boolean indicating if the process has been canceled. If it has,
+            you MUST end the process by cleaning up resources and returning.
 
     If you override `__init__()` make sure to call the base method.
-
-    You must also ensure the process regularly checks its status to see if it should pause or
-    cancel.
     """
-
-    errorOccurred = pyqtSignal(str)
-    statusChanged = pyqtSignal(SequenceStatus)
-    # you can emit this for nested processes that have widgets
-    widgetTypeChanged = pyqtSignal(object)  # this is a Callable[[], QWidget] | Null
-    # you can emit this for nested processes that change the item
-    currentItemChanged = pyqtSignal(object, object)  # new, previous (TreeItem | Null)
-
-    WIDGET_TYPE: Callable[[], QWidget] | Null = Null()
 
     def __init__(self, runner: "ProcessRunner", data: dict[str, Any] | None = None):
         """:param data: The data used to run this process."""
@@ -42,6 +28,8 @@ class Process(QObject):
         self.data = data
         self.runner = runner
         self.status = StatusStateMachine(SequenceStatus.INACTIVE)
+        self.graph_signals = GraphSignals()
+        self.info_signals = InformationSignals()
 
     def run(self):
         """
@@ -50,20 +38,22 @@ class Process(QObject):
         """
         pass
 
-    def wait(self, delay: float) -> bool:
+    def wait(self, delay_ms: int) -> bool:
         """
-        Hold for **delay** seconds or as long as the process is paused, whichever is longer. This is
-        where signals are processed, so be sure to call this frequently.
+        Hold for **delay** milliseconds or as long as the process is paused, whichever is longer.
+        This is where signals are processed, so be sure to call this frequently.
 
         :returns: Whether the process should continue (i.e. it was not cancelled).
         """
+        delay = delay_ms / 1000
         end_time = time.time() + delay
-        wait_interval = delay / 100  # this is arbitrary and seemed like a good value
+        # wait_interval = delay_ms / 100  # this is arbitrary and seemed like a good value
         while time.time() < end_time or self.is_paused():
             PROCESS_SIGNALS()
             if self.status.get() == SequenceStatus.CANCELED:
                 return False
-            time.sleep(wait_interval)
+            # process events for 10 ms
+            QCoreApplication.processEvents(QEventLoop.ProcessEventsFlag.ExcludeUserInputEvents, 10)
         return True
 
     def get_status(self) -> SequenceStatus:
@@ -109,12 +99,12 @@ class Process(QObject):
         """
         changed = self.status.set(status)
         if changed:
-            self.statusChanged.emit(status)
+            self.info_signals.statusChanged.emit(status)
         return changed
 
     def communicate_error(self, message: str) -> Self:
         """Communicate to the process runner that an error occurred."""
-        self.errorOccurred.emit(message)
+        self.info_signals.errorOccurred.emit(message)
         return self
 
 
@@ -164,16 +154,6 @@ class BackgroundProcess(QThread):
 class ProcessRunner(QObject):
     """Runs **Process**es. Contains parameters used by the `run()` method of a **Process**."""
 
-    errorOccurred = pyqtSignal(str)
-    statusChanged = pyqtSignal(SequenceStatus)
-    widgetTypeChanged = pyqtSignal(object)  # this is a Callable[[], QWidget] | Null
-    currentItemChanged = pyqtSignal(object, object)  # new, previous (TreeItem | Null)
-
-    pauseCommand = pyqtSignal()
-    unpauseCommand = pyqtSignal()
-    cancelCommand = pyqtSignal()
-    skipCommand = pyqtSignal()
-
     def __init__(self, parent: QObject, instruments: InstrumentSet, data_directory: str):
         """
         :param parent: The QObject that owns this runner. The parent should be in the same thread.
@@ -184,8 +164,11 @@ class ProcessRunner(QObject):
         self.application_instruments = instruments
         self.data_directory = data_directory
         self.process: Process | BackgroundProcess
-        self.item: "TreeItem" | Null = Null()
+        self.item: "TreeItem" | None = None
 
+        self.command_signals = CommandSignals()
+        self.graph_signals = GraphSignals()
+        self.info_signals = InformationSignals()
         self.background_processes: list[BackgroundProcess] = []
 
     def pre_run(self) -> Self:
@@ -212,27 +195,24 @@ class ProcessRunner(QObject):
 
     def connect_process_signals(self) -> Self:
         """Connect signals before the current process runs."""
-        self.process.errorOccurred.connect(self.errorOccurred.emit)
-
         if not isinstance(self.process, BackgroundProcess):
             # up toward parent
-            self.process.statusChanged.connect(self.statusChanged)
-            self.process.errorOccurred.connect(self.errorOccurred)
-            self.process.widgetTypeChanged.connect(self.widgetTypeChanged)
-            self.process.currentItemChanged.connect(self.currentItemChanged)
+            self.info_signals.connect_to_other(self.process.info_signals)
             # down toward children
-            self.pauseCommand.connect(self.process.pause)
-            self.unpauseCommand.connect(self.process.unpause)
-            self.cancelCommand.connect(self.process.cancel)
-            self.skipCommand.connect(self.process.skip)
-
+            self.command_signals.pauseCommand.connect(self.process.pause)
+            self.command_signals.unpauseCommand.connect(self.process.unpause)
+            self.command_signals.cancelCommand.connect(self.process.cancel)
+            self.command_signals.skipCommand.connect(self.process.skip)
+        else:
+            self.process.errorOccurred.connect(self.info_signals.errorOccurred)
         return self
 
     def set_current_proceses(self, process: Process | BackgroundProcess) -> Self:
         """Set the current process. This also updates the widget type."""
         self.process = process
         if not isinstance(process, BackgroundProcess):
-            self.widgetTypeChanged.emit(process.WIDGET_TYPE)
+            self.graph_signals.connect_to_other(process.graph_signals)
+            self.info_signals.graphSignalsChanged.emit(process.graph_signals)
         return self
 
     def current_process(self) -> Process | BackgroundProcess:
@@ -241,11 +221,11 @@ class ProcessRunner(QObject):
 
     def set_current_item(self, item: "TreeItem") -> Self:
         """Set the current item and emit signals."""
-        self.currentItemChanged.emit(item, self.item)
+        self.info_signals.currentItemChanged.emit(item, self.item)
         self.item = item
         return self
 
-    def current_item(self) -> Union["TreeItem", Null]:
+    def current_item(self) -> Union["TreeItem", None]:
         """Get the current item."""
         return self.item
 

@@ -1,7 +1,7 @@
-from PyQt6.QtWidgets import QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QVBoxLayout
 from ..custom_widgets.widget import Widget
-from ..utility.layouts import clear_layout
-from ..classes.null import Null
+from ..custom_widgets.plot import PlotWidget
+from ..classes.signals import GraphSignals
 
 
 class SequenceDisplayTab(Widget):
@@ -11,15 +11,11 @@ class SequenceDisplayTab(Widget):
     """
 
     def __init__(self):
-        super().__init__(QVBoxLayout())
+        layout = QVBoxLayout()
+        super().__init__(layout)
+        self.plot = PlotWidget()
+        layout.addWidget(self.plot)
 
-    def set_central_widget(self, widget: QWidget | Null):
-        """Set the central widget. If **widget** is **None**, this just clears the layout."""
-        layout: QVBoxLayout = self.layout()  # type: ignore
-        clear_layout(layout)
-        if not isinstance(widget, Null):
-            layout.addWidget(widget)
-
-    def clear_layout(self):
-        """Remove all items from the layout."""
-        clear_layout(self.layout())
+    def connect_graph_signals(self, signals: GraphSignals):
+        # TODO: connect all possible graph signals to functions on the PlotWidget
+        pass

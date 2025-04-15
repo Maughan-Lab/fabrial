@@ -53,10 +53,10 @@ class SequenceBuilderTab(QWidget):
             "Start", self.sequence_tree.run_sequence, size_scalars=SIZE_SCALARS
         )
         self.pause_button = BiggerButton(
-            "Pause", self.sequence_tree.pauseCommand, size_scalars=SIZE_SCALARS
+            "Pause", self.sequence_tree.command_signals.pauseCommand, size_scalars=SIZE_SCALARS
         )
         self.unpause_button = BiggerButton(
-            "Unpause", self.sequence_tree.unpauseCommand, size_scalars=SIZE_SCALARS
+            "Unpause", self.sequence_tree.command_signals.unpauseCommand, size_scalars=SIZE_SCALARS
         )
         self.button_container.addWidget(self.start_button)
         self.button_container.addWidget(self.pause_button)
@@ -80,8 +80,8 @@ class SequenceBuilderTab(QWidget):
         )
 
     def connect_signals(self):
-        self.sequence_tree.processWidgetChanged.connect(
-            self.visual_widget_container.set_central_widget
+        self.sequence_tree.graphSignalsChanged.connect(
+            self.visual_widget_container.connect_graph_signals
         )
         self.sequence_tree.sequenceStatusChanged.connect(self.handle_status_change)
 

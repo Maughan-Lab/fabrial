@@ -4,7 +4,7 @@ from ..classes.actions import Action
 from ..instruments import InstrumentSet
 from ..sequence.widgets import SequenceWidget
 from ..custom_widgets.dialog import OkDialog
-from ..custom_widgets.plot import PlotWidget
+from ..custom_widgets.plot import OldPlotWidget
 from ..enums.status import StabilityStatus
 from ..utility.graph import graph_from_folder
 from typing import TYPE_CHECKING
@@ -97,7 +97,7 @@ class OldSequenceMenu(QMenu):
         if folder != "":
             try:
                 plot_container = graph_from_folder(folder)
-                plot_widget = PlotWidget(plot_container)
+                plot_widget = OldPlotWidget(plot_container)
                 main_window.new_window("Sequence Graph", plot_widget)
                 return
             except FileNotFoundError:

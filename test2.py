@@ -1,7 +1,6 @@
 import sys
-from time import sleep
-
-from PyQt6.QtCore import Qt, pyqtSignal, QObject, QThread
+import time
+from PyQt6.QtCore import Qt, pyqtSignal, QObject, QThread, QReadLocker, QWriteLocker, QReadWriteLock
 from PyQt6.QtWidgets import (
     QApplication,
     QLabel,
@@ -12,16 +11,68 @@ from PyQt6.QtWidgets import (
 )
 
 
+class NestedWorker(QObject):
+    progress = pyqtSignal(int)
+    finished = pyqtSignal()
+
+    def __init__(self, parent: QObject):
+        super().__init__(parent)
+        self.canceled = False
+        self.paused = False
+        self.mutex = QReadWriteLock()
+
+    def run(self):
+        for i in range(10):
+            # this gets properly processed. Why?
+            self.progress.emit(i)
+            time.sleep(1)
+            with QReadLocker(self.mutex):
+                if self.canceled:
+                    break
+            while True:
+                with QReadLocker(self.mutex):
+                    if not self.paused:
+                        break
+                time.sleep(0.1)
+
+        self.finished.emit()
+
+    def cancel(self):
+        # this never runs
+        with QWriteLocker(self.mutex):
+            self.canceled = True
+
+    def pause(self):
+        # this never runs
+        with QWriteLocker(self.mutex):
+            self.paused = True
+
+    def unpause(self):
+        # this never runs
+        with QWriteLocker(self.mutex):
+            self.paused = False
+
+
 class Worker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(int)
 
+    cancelCommand = pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+
+        self.nested_worker = NestedWorker(self)
+
+        self.canceled = False
+        self.paused = False
+
     def run(self):
         """Long-running task."""
-        for i in range(5):
-            sleep(1)
-            self.progress.emit(i + 1)
-        self.finished.emit()
+        self.cancelCommand.connect(self.nested_worker.cancel, Qt.ConnectionType.DirectConnection)
+        self.nested_worker.progress.connect(self.progress)
+        self.nested_worker.finished.connect(self.finished)
+        self.nested_worker.run()
 
 
 class Window(QMainWindow):
@@ -44,6 +95,10 @@ class Window(QMainWindow):
         self.countBtn.clicked.connect(self.countClicks)
         self.longRunningBtn = QPushButton("Long-Running Task!", self)
         self.longRunningBtn.clicked.connect(self.runLongTask)
+
+        self.cancel_button = QPushButton("Cancel", self)
+        self.pause_button = QPushButton("Pause", self)
+        self.unpause_button = QPushButton("Unpause", self)
         # Set the layout
         layout = QVBoxLayout()
         layout.addWidget(self.clicksLabel)
@@ -51,6 +106,9 @@ class Window(QMainWindow):
         layout.addStretch()
         layout.addWidget(self.stepLabel)
         layout.addWidget(self.longRunningBtn)
+        layout.addWidget(self.cancel_button)
+        layout.addWidget(self.pause_button)
+        layout.addWidget(self.unpause_button)
         self.centralWidget.setLayout(layout)
 
     def countClicks(self):
@@ -73,12 +131,13 @@ class Window(QMainWindow):
         self.worker.finished.connect(self.worker.deleteLater)
         self.threader.finished.connect(self.threader.deleteLater)
         self.worker.progress.connect(self.reportProgress)
+        # these three signals never get received
+        self.cancel_button.pressed.connect(self.worker.cancelCommand, Qt.ConnectionType.DirectConnection)
+
         # Step 6: Start the thread
         self.threader.start()
-
         # Final resets
         self.longRunningBtn.setEnabled(False)
-        self.threader.finished.connect(lambda: self.longRunningBtn.setEnabled(True))
         self.threader.finished.connect(lambda: self.stepLabel.setText("Long-Running Step: 0"))
 
 

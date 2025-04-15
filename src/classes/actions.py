@@ -1,4 +1,4 @@
-from PyQt6.QtCore import QObject, Qt
+from PyQt6.QtCore import QObject, Qt, pyqtBoundSignal
 from PyQt6.QtGui import QAction, QKeySequence, QShortcut
 from typing import Callable, Any
 
@@ -10,7 +10,7 @@ class Action(QAction):
         self,
         parent: QObject,
         name: str,
-        action: Callable[..., Any] | None = None,
+        action: Callable[..., Any] | pyqtBoundSignal | None = None,
         status_tip: str | None = None,
         shortcut: str | None = None,
     ):

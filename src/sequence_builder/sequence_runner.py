@@ -4,23 +4,13 @@ from ..instruments import InstrumentSet
 from typing import Self
 from .tree_item import TreeItem
 from ..enums.status import SequenceStatus
-from ..classes.mutex import DataMutex
-from ..classes.null import Null
+from ..classes.signals import CommandSignals, GraphSignals, InformationSignals
 
 
 class SequenceRunner(QObject):
     """Class for running sequences created by the SequenceBuilder."""
 
     finished = pyqtSignal()
-    statusChanged = pyqtSignal(SequenceStatus)
-    errorOccurred = pyqtSignal(str)
-    widgetTypeChanged = pyqtSignal(object)  # this is a Callable[[], QWidget] | Null
-    currentItemChanged = pyqtSignal(object, object)  # new, previous (TreeItem | Null)
-
-    pauseCommand = pyqtSignal()
-    unpauseCommand = pyqtSignal()
-    cancelCommand = pyqtSignal()
-    skipCommand = pyqtSignal()
 
     def __init__(self, instruments: InstrumentSet, data_directory: str, root_item: TreeItem):
         """
@@ -31,22 +21,23 @@ class SequenceRunner(QObject):
         super().__init__()
         self.root_item = root_item
         self.runner = ProcessRunner(self, instruments, data_directory)
-        self.canceled = DataMutex(False)
+        self.canceled = False
+        self.command_signals = CommandSignals()
+        self.graph_signals = GraphSignals()
+        self.info_signals = InformationSignals()
 
         self.connect_signals()
 
     def connect_signals(self):
         """Connect signals."""
         # up toward parent
-        self.runner.statusChanged.connect(self.statusChanged)
-        self.runner.errorOccurred.connect(self.errorOccurred)
-        self.runner.currentItemChanged.connect(self.currentItemChanged)
-        self.runner.widgetTypeChanged.connect(self.widgetTypeChanged)
+        self.info_signals.connect_to_other(self.runner.info_signals)
         # down toward children
-        self.pauseCommand.connect(self.runner.pauseCommand)
-        self.unpauseCommand.connect(self.runner.unpauseCommand)
-        self.skipCommand.connect(self.runner.skipCommand)
-        self.cancelCommand.connect(self.cancel_event)
+        self.command_signals.connect_to_other(self.runner.command_signals)
+        # necessary to make sure we update self.canceled before actually canceling the process
+        self.command_signals.cancelCommand.disconnect()
+        self.command_signals.cancelCommand.connect(self.cancel_event)
+        self.graph_signals.connect_to_other(self.runner.graph_signals)
 
     def run(self):
         """Run the sequence."""
@@ -59,7 +50,7 @@ class SequenceRunner(QObject):
 
         self.cleanup()
         # tell everyone else we finished
-        self.statusChanged.emit(final_status)
+        self.info_signals.statusChanged.emit(final_status)
         self.finished.emit()
 
     def run_task(self, item: TreeItem) -> bool:
@@ -78,12 +69,11 @@ class SequenceRunner(QObject):
             # run
             self.runner.run()
         # return whether we should keep going
-        return not self.canceled.get()
+        return not self.canceled
 
     def cleanup(self) -> Self:
         """This runs at the end of the sequence."""
-        self.currentItemChanged.emit(Null(), self.runner.current_item())
-        self.widgetTypeChanged.emit(Null())
+        self.info_signals.currentItemChanged.emit(None, self.runner.current_item())
         # check for and cancel any background processes
         self.runner.cancel_background_processes()
         return self
@@ -94,6 +84,6 @@ class SequenceRunner(QObject):
 
     def cancel_event(self) -> Self:
         """Cancel the entire sequence."""
-        self.canceled.set(True)
-        self.runner.cancelCommand.emit()
+        self.canceled = True
+        self.runner.command_signals.cancelCommand.emit()
         return self
