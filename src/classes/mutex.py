@@ -8,7 +8,6 @@ from PyQt6.QtCore import (
 )
 import time
 from typing import TypeVar
-from ..enums.status import SequenceStatus
 
 Data = TypeVar("Data")
 
@@ -84,55 +83,3 @@ class DataMutex[Data](QReadWriteLock):  # generic class
             if i != 1:
                 time.sleep(0.01)
         return None
-
-
-class StatusStateMachine(DataMutex[SequenceStatus]):
-    """
-    Container for a SequenceStatus. This defines valid state transitions. If you try to set the
-    state to an invalid state, it will be ignored.
-    """
-
-    def __init__(self, initial_status: SequenceStatus):
-        """:param initial_status: The initial status to put in the mutex."""
-        super().__init__(initial_status)
-
-    def set(self, status: SequenceStatus) -> bool:
-        """
-        Set the internal status without emitting signals. Blocks until the mutex is available.
-
-        :returns: True if the status changed (a valid state transition occurred), False otherwise.
-        """
-        match self.get():
-            case SequenceStatus.INACTIVE | SequenceStatus.COMPLETED | SequenceStatus.CANCELED:
-                # these can only go to ACTIVE
-                match status:
-                    case SequenceStatus.ACTIVE:
-                        pass
-                    case _:
-                        return False
-            case SequenceStatus.ACTIVE | SequenceStatus.PAUSED:
-                # ACTIVE and PAUSED can go to any state
-                pass
-            case SequenceStatus.ERROR_PAUSED:
-                # ERROR_PAUSED cannot go to PAUSED or ERROR
-                match status:
-                    case SequenceStatus.PAUSED | SequenceStatus.ERROR:
-                        return False
-            case SequenceStatus.ERROR:
-                # ERROR cannot go to PAUSED
-                match status:
-                    case SequenceStatus.PAUSED:
-                        return False
-                    case _:
-                        pass
-        # if we made it here we are performing a valid state transition
-        super().set(status)
-        return True
-
-    def try_set(self, data):
-        """Do not call this method. It is a remnant from the base class."""
-        raise Exception("ERROR: called try_set() on a StatusStateMachine.")
-
-    def try_get(self):
-        """Do not call this method. It is a remnant from the base class."""
-        raise Exception("ERROR: called try_get() on a StatusStateMachine.")

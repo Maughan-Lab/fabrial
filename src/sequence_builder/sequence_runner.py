@@ -5,6 +5,7 @@ from typing import Self
 from .tree_item import TreeItem
 from ..enums.status import SequenceStatus
 from ..classes.signals import CommandSignals, GraphSignals, InformationSignals
+import os
 
 
 class SequenceRunner(QObject):
@@ -19,8 +20,9 @@ class SequenceRunner(QObject):
         :root_item: The root item of the sequence builder.
         """
         super().__init__()
+        self.data_directory = data_directory
         self.root_item = root_item
-        self.runner = ProcessRunner(self, instruments, data_directory)
+        self.process_runner = ProcessRunner(self, instruments, data_directory)
         self.canceled = False
         self.command_signals = CommandSignals()
         self.graph_signals = GraphSignals()
@@ -31,16 +33,29 @@ class SequenceRunner(QObject):
     def connect_signals(self):
         """Connect signals."""
         # up toward parent
-        self.info_signals.connect_to_other(self.runner.info_signals)
+        self.info_signals.connect_to_other(self.process_runner.info_signals)
         # down toward children
-        self.command_signals.connect_to_other(self.runner.command_signals)
+        self.command_signals.connect_to_other(self.process_runner.command_signals)
         # necessary to make sure we update self.canceled before actually canceling the process
         self.command_signals.cancelCommand.disconnect()
         self.command_signals.cancelCommand.connect(self.cancel_event)
-        self.graph_signals.connect_to_other(self.runner.graph_signals)
+        self.graph_signals.connect_to_other(self.process_runner.graph_signals)
+
+    def pre_run(self) -> bool:
+        """Run this before `run()`. Returns whether the sequence should continue."""
+        try:
+            os.makedirs(self.data_directory, exist_ok=True)
+        except Exception:
+            self.info_signals.errorOccurred.emit("Failed to create data directory, aborting.")
+            return False
+        return True
 
     def run(self):
         """Run the sequence."""
+        proceed = self.pre_run()
+        if not proceed:
+            return  # don't run
+
         final_status = SequenceStatus.COMPLETED
         for item in self.root_item.subitems():
             proceed = self.run_task(item)
@@ -63,27 +78,23 @@ class SequenceRunner(QObject):
         # setup
         process_type = item.process_type()
         if process_type is not None:
-            process = process_type(self.runner, item.widget().to_dict())
+            process = process_type(self.process_runner, item.widget().to_dict())
             # set the current item and process
-            self.runner.set_current_item(item).set_current_proceses(process)
+            self.process_runner.set_current_item(item).set_current_proceses(process)
             # run
-            self.runner.run()
+            self.process_runner.run()
         # return whether we should keep going
         return not self.canceled
 
     def cleanup(self) -> Self:
         """This runs at the end of the sequence."""
-        self.info_signals.currentItemChanged.emit(None, self.runner.current_item())
+        self.info_signals.currentItemChanged.emit(None, self.process_runner.current_item())
         # check for and cancel any background processes
-        self.runner.cancel_background_processes()
+        self.process_runner.cancel_background_processes()
         return self
-
-    def process_runner(self) -> ProcessRunner:
-        """Get the process runner."""
-        return self.runner
 
     def cancel_event(self) -> Self:
         """Cancel the entire sequence."""
         self.canceled = True
-        self.runner.command_signals.cancelCommand.emit()
+        self.process_runner.command_signals.cancelCommand.emit()
         return self

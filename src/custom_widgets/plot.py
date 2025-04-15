@@ -3,7 +3,7 @@ from ..utility.layouts import add_to_layout, add_sublayout
 import pyqtgraph as pg  # type: ignore
 import pyqtgraph.exporters as exporters  # type: ignore
 from ..custom_widgets.button import Button
-from ..custom_widgets.widget import SignalWidget
+from ..custom_widgets.widget import SignalWidget, Widget
 from typing import Literal
 
 
@@ -76,11 +76,11 @@ class PlotItem(pg.PlotItem):
         return line
 
 
-class PlotWidget(pg.PlotWidget):
+class PlotView(pg.PlotWidget):
     """Container for a PlotItem. Capable of exporting itself as an image."""
 
     def __init__(self):
-        """Create a new PlotWidget."""
+        """Create a new PlotView."""
         plot_item = PlotItem()
         super().__init__(background=plot_item.background_color, plotItem=plot_item)
 
@@ -88,28 +88,53 @@ class PlotWidget(pg.PlotWidget):
         exporter = exporters.ImageExporter(self.getPlotItem())
         exporter.export(filename)
 
+
+class PlotWidget(Widget):
+    """Contains a **PlotView** and buttons for interacting with it."""
+
+    def __init__(self):
+        layout = QVBoxLayout()
+        super().__init__(layout)
+        self.view = PlotView()
+        layout.addWidget(self.view)
+
+        autoscale_button = Button("Autoscale", self.autoscale)
+        save_button = Button("Save", self.save_as_image)
+        add_to_layout(add_sublayout(layout, QHBoxLayout), autoscale_button, save_button)
+
+    def plot_item(self) -> PlotItem:
+        """Get the underlying **PlotItem**."""
+        return self.view.getPlotItem()
+
+    def save_as_image(self):
+        filename, _ = QFileDialog.getSaveFileName(
+            None, "Save Graph", "", "Portable Network Graphics (*.png)"
+        )
+        if filename != "":
+            self.export_to_image(filename)
+
     def autoscale(self):
         """Autoscale the graph."""
-        self.getPlotItem().getViewBox().enableAutoRange(pg.ViewBox.XYAxes)
+        self.plot_item().getViewBox().enableAutoRange(pg.ViewBox.XYAxes)
 
 
 class OldPlotWidget(SignalWidget):
     """Plot widget for displaying data. This is the widget."""
 
-    def __init__(self, plot_container: PlotWidget | None = None):
+    def __init__(self, plot_container: PlotView | None = None):
         """
         Create a new PlotWidget. Optionally provide a **PlotContainer** to initialize this widget
         with.
         """
         super().__init__()
         self.plot_item: PlotItem
-        self.plot_container: PlotWidget
+        self.plot_container: PlotView
 
         if plot_container is not None:
             self.plot_container = plot_container
-            self.plot_item = plot_container.plotItem
+            self.plot_item = plot_container.getPlotItem()
         else:
-            self.plot_container = PlotWidget()
+            self.plot_container = PlotView()
             self.plot_item = self.plot_container.getPlotItem()
 
         layout = QVBoxLayout()

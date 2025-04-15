@@ -66,7 +66,7 @@ class BaseWidget(ParameterDescriptionWidget):
         """
         return cls(QLayout())
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert all of this item's data into a JSON-like dictionary. The base method returns an
         empty dictionary.
@@ -101,7 +101,7 @@ class CategoryWidget:
     def from_dict(cls: type[Self], data_as_dict: dict[str, Any]) -> Self:
         return cls()
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return dict()
 
     def show(self):  # there is nothing to show

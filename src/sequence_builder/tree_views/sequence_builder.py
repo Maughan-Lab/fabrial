@@ -14,6 +14,7 @@ from ...classes.signals import CommandSignals, GraphSignals
 from ...enums.status import SequenceStatus
 from ...utility.layouts import add_to_layout, add_sublayout
 from ...utility.images import make_pixmap
+from ...utility.datetime import get_file_friendly_datatime
 from typing import Self
 from ..sequence_runner import SequenceRunner
 from ...instruments import InstrumentSet
@@ -120,7 +121,10 @@ class SequenceTreeWidget(Container):
         self.directory_button.setSizePolicy(
             QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum
         )
-        self.directory_label = IconLabel(make_pixmap("folder-open-document.png"))
+        self.directory_label = IconLabel(
+            make_pixmap("folder-open-document.png"),
+            f"{Files.SequenceBuilder.DEFAULT_DATA_FOLDER}/{get_file_friendly_datatime()}",
+        )
         self.directory_label.label().setWordWrap(True)
         directory_layout.addWidget(self.directory_button)
         directory_layout.addWidget(self.directory_label, alignment=Qt.AlignmentFlag.AlignVCenter)
@@ -146,7 +150,7 @@ class SequenceTreeWidget(Container):
         directory = QFileDialog.getExistingDirectory(
             self,
             "Select sequence data location",
-            Files.SequenceRunner.DEFAULT_DATA_FOLDER,
+            Files.SequenceBuilder.DEFAULT_DATA_FOLDER,
             QFileDialog.Option.ShowDirsOnly,
         )
         self.directory_label.label().setText(directory)

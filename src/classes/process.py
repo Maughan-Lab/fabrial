@@ -1,8 +1,10 @@
 from ..instruments import InstrumentSet
 from ..enums.status import SequenceStatus
-from ..classes.mutex import StatusStateMachine
-from ..utility.events import PROCESS_SIGNALS
-from PyQt6.QtCore import QThread, QObject, pyqtSignal, QCoreApplication, QEventLoop
+from ..enums.status import StatusStateMachine
+from ..utility.events import PROCESS_EVENTS
+from ..utility.datetime import get_datetime
+from .. import Files
+from PyQt6.QtCore import QThread, QObject, pyqtSignal
 from typing import Any, Self, TYPE_CHECKING, Union
 from .signals import CommandSignals, GraphSignals, InformationSignals
 import time
@@ -22,11 +24,12 @@ class Process(QObject):
     If you override `__init__()` make sure to call the base method.
     """
 
-    def __init__(self, runner: "ProcessRunner", data: dict[str, Any] | None = None):
+    def __init__(self, runner: "ProcessRunner", data: dict[str, Any]):
         """:param data: The data used to run this process."""
         super().__init__()
-        self.data = data
-        self.runner = runner
+        self.data_as_dict = data
+        self.process_runner = runner
+        self.process_start_time = 0.0
         self.status = StatusStateMachine(SequenceStatus.INACTIVE)
         self.graph_signals = GraphSignals()
         self.info_signals = InformationSignals()
@@ -49,12 +52,27 @@ class Process(QObject):
         end_time = time.time() + delay
         # wait_interval = delay_ms / 100  # this is arbitrary and seemed like a good value
         while time.time() < end_time or self.is_paused():
-            PROCESS_SIGNALS()
             if self.status.get() == SequenceStatus.CANCELED:
                 return False
             # process events for 10 ms
-            QCoreApplication.processEvents(QEventLoop.ProcessEventsFlag.ExcludeUserInputEvents, 10)
+            PROCESS_EVENTS()
         return True
+
+    def data(self) -> dict[str, Any]:
+        """Get this process' data."""
+        return self.data_as_dict
+
+    def init_start_time(self):
+        """Call this right before `run()` to set the start time from `time.time()`."""
+        self.process_start_time = time.time()
+
+    def start_time(self) -> float:
+        """Get the start time of this process."""
+        return self.process_start_time
+
+    def runner(self) -> "ProcessRunner":
+        """Get the **ProcessRunner** running this process."""
+        return self.process_runner
 
     def get_status(self) -> SequenceStatus:
         """Get the process status. This blocks until the mutex is available."""
@@ -107,9 +125,27 @@ class Process(QObject):
         self.info_signals.errorOccurred.emit(message)
         return self
 
+    def write_metadata(self, filename: str, start_time: float, end_time: float):
+        """
+        Create a metadata file and write the start and end time to it. You can override this method,
+        but make sure to keep the same general format.
 
-# TODO: make this a QObject instead and update the process runner methods
-class BackgroundProcess(QThread):
+        :param filename: The full file name of the metadata file (including directories).
+        :param start_time: The start time of the process, as returned by `time.time()`.
+        :param end_time: The end time of the process, as returned by `time.time()`.
+        """
+        with open(filename, "w") as f:
+            HEADERS = Files.Process.Headers.Metadata
+            f.write(
+                f"{HEADERS.START_TIME},{HEADERS.START_TIME_DATETIME},\
+                    {HEADERS.END_TIME},{HEADERS.END_TIME_DATETIME}\n"
+            )
+            f.write(
+                f"{start_time},{get_datetime(start_time)},{end_time},{get_datetime(end_time)}\n"
+            )
+
+
+class BackgroundProcess(QObject):
     """
     Base class for all background processes. You must override:
     - `run()`: Make sure to frequently call `time.sleep()`
@@ -118,6 +154,7 @@ class BackgroundProcess(QThread):
     """
 
     errorOccurred = pyqtSignal(str)
+    finished = pyqtSignal()
 
     def __init__(self, runner: "ProcessRunner", data: dict[str, Any] | None = None):
         """
@@ -125,11 +162,23 @@ class BackgroundProcess(QThread):
         """
         super().__init__()
         self.status = StatusStateMachine(SequenceStatus.INACTIVE)
-        self.runner = runner
+        self.process_runner = runner
 
     def run(self):
         """(Virtual) Run the process."""
         pass
+
+    def init_start_time(self):
+        """Call this right before `run()` to set the start time from `time.time()`."""
+        self.process_start_time = time.time()
+
+    def start_time(self) -> float:
+        """Get the start time of this process."""
+        return self.process_start_time
+
+    def runner(self) -> "ProcessRunner":
+        """Get the **ProcessRunner** running this process."""
+        return self.process_runner
 
     def update_status(self, status: SequenceStatus) -> bool:
         """
@@ -174,7 +223,7 @@ class ProcessRunner(QObject):
     def pre_run(self) -> Self:
         """Runs before the current process."""
         self.process.update_status(SequenceStatus.ACTIVE)
-        # PROCESS_SIGNALS()
+        self.process.init_start_time()
         return self
 
     def run(self) -> Self:
@@ -239,11 +288,17 @@ class ProcessRunner(QObject):
 
     # ----------------------------------------------------------------------------------------------
     # background process utilities
-    def start_background_process(self, process: "BackgroundProcess") -> Self:
+    def start_background_process(self, process: BackgroundProcess) -> Self:
         """Start a BackgroundProcess."""
         self.background_processes.append(process)
-        process.finished.connect(process.deleteLater)
-        process.start()
+
+        thread = QThread()
+        process.moveToThread(thread)
+        thread.started.connect(process.run)
+        process.finished.connect(thread.quit)
+        thread.finished.connect(lambda: self.background_processes.remove(process))
+
+        thread.start()
         return self
 
     def background_process_running(self) -> bool:
@@ -255,6 +310,8 @@ class ProcessRunner(QObject):
         if self.background_process_running():
             for process in self.background_processes:
                 process.cancel()
-                process.wait()  # wait for them to actually finish
+            while self.background_process_running():  # wait for them to actually finish
+                PROCESS_EVENTS()
+
             self.background_processes.clear()
         return self

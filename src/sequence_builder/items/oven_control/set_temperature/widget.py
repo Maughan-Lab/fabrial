@@ -1,9 +1,10 @@
 from ...base_widget import BaseWidget
 from .....custom_widgets.spin_box import TemperatureSpinBox
 from .process import SetTemperatureProcess
-from .encoding import TEMPERATURE
+from . import encoding
 from PyQt6.QtWidgets import QFormLayout
 from typing import Any
+from ..... import Files
 
 
 class SetTemperatureWidget(BaseWidget):
@@ -22,7 +23,9 @@ class SetTemperatureWidget(BaseWidget):
             "set_temperature.md",
             {
                 "MEASUREMENT_INTERVAL": str(self.PROCESS_TYPE.MEASUREMENT_INTERVAL),
-                "DIRECTORY_NAME": self.PROCESS_TYPE.DIRECTORY_NAME,
+                "DIRECTORY_NAME": encoding.Filenames.DIRECTORY,
+                "TEMPERATURE_FILE": encoding.Filenames.TEMPERATURES,
+                "METADATA_FILE": Files.Process.Filenames.METADATA,
             },
         )
 
@@ -35,10 +38,10 @@ class SetTemperatureWidget(BaseWidget):
         layout.addRow("Temperature", self.temperature_spinbox)
 
     def to_dict(self) -> dict[str, Any]:
-        return {TEMPERATURE: self.temperature_spinbox.value()}
+        return {encoding.TEMPERATURE: self.temperature_spinbox.value()}
 
     @classmethod
     def from_dict(cls, data_as_dict: dict[str, Any]):
         widget = cls()
-        widget.temperature_spinbox.setValue(data_as_dict[TEMPERATURE])
+        widget.temperature_spinbox.setValue(data_as_dict[encoding.TEMPERATURE])
         return widget
