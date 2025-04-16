@@ -1,7 +1,6 @@
-from .....classes.process import Process, ProcessRunner
-from .....classes.plotting import TemperaturePoint
+from .....classes.process import Process
+from .....classes.process_runner import ProcessRunner
 from ..... import Files
-from .....utility.datetime import get_datetime, get_file_friendly_datatime
 from . import encoding
 from PyQt6.QtCore import pyqtSignal
 from typing import Any
@@ -11,6 +10,8 @@ from io import TextIOWrapper
 
 
 class SetTemperatureProcess(Process):
+    DIRECTORY = "Set Temperature"
+
     newDataAcquired = pyqtSignal(float, float)  # time, temperature
 
     MEASUREMENT_INTERVAL = 5000  # milliseconds
@@ -20,6 +21,7 @@ class SetTemperatureProcess(Process):
     def __init__(self, runner: ProcessRunner, data: dict[str, Any]):
         super().__init__(runner, data)
         self.file_write_counter = 0
+        self.oven = self.runner().instruments().oven
         self.temperature_file: TextIOWrapper
 
     def pre_run(self):
@@ -28,6 +30,9 @@ class SetTemperatureProcess(Process):
     def run(self):
         self.pre_run()
         try:
+            self.oven.acquire()
+
+            # TODO: actually implement
             count = 0
             end_time = time.time() + 5
             while time.time() < end_time:
@@ -35,36 +40,21 @@ class SetTemperatureProcess(Process):
                 proceed = self.wait(10)
                 if not proceed:
                     break
-            # print("Started")
-            # proceed = self.wait(self.MEASUREMENT_INTERVAL)
-            # if not proceed:
-            #     return
-            # print("Just waited")
-            # proceed = self.wait(self.MEASUREMENT_INTERVAL)
-            # if not proceed:
-            #     return
-            # print("Ending")
         finally:
             self.post_run()
 
     def post_run(self):
-        self.temperature_file.close()
+        try:
+            self.temperature_file.close()
+            self.write_metadata(self.directory(), self.start_time(), time.time())
+        finally:
+            self.oven.release()
 
     def create_files(self):
         """Create data files and write headers."""
-        data_directory = os.path.join(
-            self.runner().directory(),
-            encoding.Filenames.DIRECTORY,
-            get_file_friendly_datatime(self.start_time()),
-        )
-        os.makedirs(data_directory, exist_ok=True)
         self.temperature_file = open(
-            os.path.join(data_directory, encoding.Filenames.TEMPERATURES), "w"
+            os.path.join(self.directory(), encoding.Filenames.TEMPERATURES), "w"
         )
-        self.write_headers()
-
-    def write_headers(self):
-        """Write headers."""
         HEADERS = Files.Process.Headers.Time
         self.temperature_file.write(
             f"{HEADERS.TIME},{HEADERS.TIME_DATETIME},{encoding.Headers.OVEN_TEMPERATURE}\n"

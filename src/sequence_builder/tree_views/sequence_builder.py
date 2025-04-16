@@ -103,6 +103,7 @@ class SequenceTreeWidget(Container):
         self.threads: list[SequenceRunner] = []
 
         self.command_signals = CommandSignals()
+        self.cancelCommand = self.command_signals.cancelCommand  # shortcut
         self.graph_signals = GraphSignals()
 
     def create_widgets(self) -> Self:

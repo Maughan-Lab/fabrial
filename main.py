@@ -29,7 +29,7 @@ def main(oven_type: type[Oven] = Oven, main_window_type: type[MainWindow] = Main
     make_application_folders()
 
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(Files.ICON))
+    app.setWindowIcon(QIcon(Files.Icons.MAIN_ICON))
     # create the instrument using `oven_type`
     instruments = InstrumentSet(oven_type(), None)  # necessary for testing
     # create the main window using `main_window_type`

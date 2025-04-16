@@ -5,7 +5,6 @@ import minimalmodbus as modbus  # type: ignore
 from .classes.mutex import SignalMutex
 from typing import Union, TYPE_CHECKING
 from .utility.timers import Timer
-import time
 
 if TYPE_CHECKING:
     from developer import DeveloperOven
@@ -57,6 +56,10 @@ class Instrument(QObject):
 
         # this lock ensures accessing the physical device is thread safe
         self.device_lock = QMutex()
+
+    def get_lock(self) -> SignalMutex:
+        """Access the lock."""
+        return self.lock
 
     def acquire(self):
         """
@@ -181,12 +184,9 @@ class Oven(Instrument):
         return setpoint
 
     def try_device_lock(self) -> bool:
-        """Try to acquire the device lock twice, pausing in between."""
-        for i in range(2):
-            if self.device_lock.tryLock():
-                return True
-            if i != 1:
-                time.sleep(0.01)
+        """Try to acquire the device lock with a timeout of 10 ms."""
+        if self.device_lock.tryLock(10):
+            return True
         return False
 
     def connect(self):

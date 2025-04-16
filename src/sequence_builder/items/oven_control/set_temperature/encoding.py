@@ -6,5 +6,4 @@ class Headers:
 
 
 class Filenames:
-    DIRECTORY = "Set Temperature"
     TEMPERATURES = "temperatures.csv"

@@ -1,5 +1,5 @@
 from PyQt6.QtCore import pyqtSignal, QObject
-from ..classes.process import ProcessRunner
+from ..classes.process_runner import ProcessRunner
 from ..instruments import InstrumentSet
 from typing import Self
 from .tree_item import TreeItem
@@ -47,6 +47,8 @@ class SequenceRunner(QObject):
             os.makedirs(self.data_directory, exist_ok=True)
         except Exception:
             self.info_signals.errorOccurred.emit("Failed to create data directory, aborting.")
+            return False
+        if not self.root_item.child_count() > 0:
             return False
         return True
 

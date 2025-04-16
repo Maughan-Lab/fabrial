@@ -23,7 +23,7 @@ class SetTemperatureWidget(BaseWidget):
             "set_temperature.md",
             {
                 "MEASUREMENT_INTERVAL": str(self.PROCESS_TYPE.MEASUREMENT_INTERVAL),
-                "DIRECTORY_NAME": encoding.Filenames.DIRECTORY,
+                "DIRECTORY_NAME": self.PROCESS_TYPE.DIRECTORY,
                 "TEMPERATURE_FILE": encoding.Filenames.TEMPERATURES,
                 "METADATA_FILE": Files.Process.Filenames.METADATA,
             },

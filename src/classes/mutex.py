@@ -22,7 +22,7 @@ class SignalMutex(QMutex):
     def __init__(self):
         super().__init__()
         self.signals = MutexSignals()
-        self.lockChanged = self.signals.lockedChanged
+        self.lockChanged = self.signals.lockedChanged  # shortcut
 
     def lock(self):
         """Lock the mutex (emits a signal)."""

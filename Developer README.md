@@ -52,9 +52,9 @@ Some general notes
         - Add a file for the item's process (other items call this **process.py**).
             - You should use the same names from **encoding.py** when accessing the process' data.
             - Subclass `Process` (**src/classes/process.py**), overriding:
-                - `HAS_GRAPH`
-                    - Only necessary if your process has an associated widget.
-                    - Set it to **True** to enable interacting with the graph.
+                - `DIRECTORY`
+                    - Only necessary if your process write data to files.
+                    - The name of the folder you want to store data in. The process runner will take care of the full file path and process number, so use something like **Set Temperature** instead of **C:/Users/.../Set Temperature**.
                 - `__init__()`
                     - Call the base method, then initialize any other data.
                 - `run()`

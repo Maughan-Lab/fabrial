@@ -5,7 +5,6 @@ from .custom_widgets.dialog import YesCancelDialog
 from .instruments import InstrumentSet
 from .secondary_window import SecondaryWindow
 from .menu.menu_bar import MenuBar
-import time
 
 
 class MainWindow(QMainWindow):
@@ -17,7 +16,7 @@ class MainWindow(QMainWindow):
         self.tabs = TabWidget(self, instruments)
         self.setCentralWidget(self.tabs)
         self.oven_control_tab = self.tabs.oven_control_tab  # shortcut
-        self.sequence_tab = self.tabs.sequence_builder_tab
+        self.sequence_tab = self.tabs.sequence_builder_tab  # shortcut
         # create menu bar
         self.menu_bar = MenuBar(self, instruments)
         self.setMenuBar(self.menu_bar)
@@ -76,26 +75,15 @@ class MainWindow(QMainWindow):
 
     def allowed_to_close(self) -> bool:
         """Determine if the window should close."""
-        if self.oven_control_tab.stability_check_widget.is_running():
-            message = "A stability check is currently running."
-            signal = self.oven_control_tab.stability_check_widget.cancelStabilityCheck
-        elif self.oven_control_tab.sequence_widget.is_running():
-            message = "A sequence is currently running."
-            signal = self.oven_control_tab.sequence_widget.cancelSequence
-        else:
-            return True  # we can close
-        # this will run if either of the first two conditions triggered
-        if YesCancelDialog("Are you sure you want to exit?", message).run():
-            signal.emit()
-            # NOTE: the below line forces PyQt to run all queued tasks (like handling signals), so
-            # it will cancel whatever sequence is going. DO NOT use this in normal code. It is only
-            # allowed here because we are about to close the application
-            QApplication.processEvents()
-            # wait until the sequence actually stops
-            while (
-                self.oven_control_tab.stability_check_widget.is_running()
-                or self.oven_control_tab.sequence_widget.is_running()
-            ):
-                time.sleep(0.01)
-            return True  # close
-        return False  # do not close
+        # only close if a sequence is not running
+        process_widget = self.sequence_tab.sequence_tree
+        if process_widget.is_running():
+            if YesCancelDialog(
+                "Are you sure you want to exit?", "A sequence is currently running."
+            ).run():
+                process_widget.cancelCommand.emit()
+                while process_widget.is_running():
+                    QApplication.processEvents()
+            else:
+                return False
+        return True

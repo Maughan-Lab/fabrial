@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QGridLayout, QPushButton, QSizePolicy
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QGridLayout, QPushButton
 from PyQt6.QtCore import pyqtSignal, QThreadPool
 from ..custom_widgets.spin_box import TemperatureSpinBox
 from ..custom_widgets.label import Label
@@ -101,10 +101,10 @@ class StabilityCheckWidget(GroupBox):
 
     def update_button_states(self, connected: bool, unlocked: bool, running: bool):
         """Update the states of buttons."""
-        # enable the button if the oven is connected and a check isn't running
-        self.detect_setpoint_button.setEnabled(connected and not running)
-        # enable the button if the oven is connected and unlocked, and a check isn't running
-        self.stability_check_button.setEnabled(connected and unlocked and not running)
+        # enable the buttons if the oven is connected and unlocked, and a check isn't running
+        enabled = connected and unlocked and not running
+        self.detect_setpoint_button.setEnabled(enabled)
+        self.stability_check_button.setEnabled(enabled)
 
     def detect_setpoint(self):
         """Attempt to autofill the setpoint box with the oven's current setpoint."""

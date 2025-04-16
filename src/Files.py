@@ -3,12 +3,12 @@
 import os
 
 SAVED_SETTINGS_FOLDER = "saved_settings"
-ICON = "icons/oven_icon.png"
 
 
 class Icons:
-    """Icon os.paths."""
+    """Icon file/folder names."""
 
+    MAIN_ICON = "icons/oven_icon.png"
     INTERNAL_ICONS = "icons/internal"
 
 
@@ -61,11 +61,14 @@ class TreeItem:
 
 
 class SequenceBuilder:
-    """File/folder names for the sequence builder."""
+    """File/folder names and dictionary keys for the sequence builder."""
 
+    # file/folder names
     OPTIONS_INITIALIZER = "initialization"
     DESCRIPTIONS = "item_descriptions"
     DEFAULT_DATA_FOLDER = "./Data Files"
+
+    DIRECTORY_KEY = "data-directory"
 
 
 class Datetime:
@@ -78,15 +81,13 @@ class Process:
 
     class Headers:
         class Time:
-            # time
             TIME = "Time (seconds)"
             TIME_DATETIME = f"Time ({Datetime.HEADER})"
 
         class Metadata:
-            START_TIME = "Start Time"
-            START_TIME_DATETIME = f"{START_TIME} ({Datetime.HEADER})"
-            END_TIME = "End Time"
-            END_TIME_DATETIME = f"{END_TIME} ({Datetime.HEADER})"
+            START_DATETIME = f"Start Time ({Datetime.HEADER})"
+            END_DATETIME = f"End Time ({Datetime.HEADER})"
+            DURATION = "Duration (seconds)"
 
     class Filenames:
         METADATA = "metadata.csv"
