@@ -99,6 +99,7 @@ class Process:
             START_DATETIME = f"Start Time ({Datetime.HEADER})"
             END_DATETIME = f"End Time ({Datetime.HEADER})"
             DURATION = "Duration (seconds)"
+            SETPOINT = "Oven Setpoint (degrees C)"
 
     class Filenames:
         METADATA = "metadata.csv"

@@ -167,7 +167,7 @@ class Oven(Instrument):
         return success
 
     def get_setpoint(self) -> float | None:
-        """Updates the oven's setpoint if on a successful read."""
+        """Get the oven's setpoint. Returns **None** if the read fails."""
         if not self.try_device_lock():
             return None
 
@@ -176,7 +176,6 @@ class Oven(Instrument):
             setpoint = float(
                 self.device.read_register(self.SETPOINT_REGISTER, self.NUMBER_OF_DECIMALS)
             )
-            self.setpointChanged.emit(setpoint)
         except Exception:
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
         finally:

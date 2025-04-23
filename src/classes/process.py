@@ -97,8 +97,8 @@ class BaseProcess(QObject):
 
     def write_metadata(self, directory: str, start_time: float, end_time: float):
         """
-        Create a metadata file and write the start and end time to it. You can override this method,
-        but make sure to keep the same general format.
+        Create a metadata file. Write the start time, duration, and oven temperature. You can
+        override this method, but make sure to keep the same general format.
 
         :param directory: The full path to the process' data directory.
         :param start_time: The start time of the process, as returned by `time.time()`.
@@ -107,9 +107,13 @@ class BaseProcess(QObject):
         """
         with open(os.path.join(directory, Files.Process.Filenames.METADATA), "w") as f:
             HEADERS = Files.Process.Headers.Metadata
-            f.write(f"{HEADERS.START_DATETIME},{HEADERS.END_DATETIME},{HEADERS.DURATION}\n")
+            f.write(
+                f"{HEADERS.START_DATETIME},{HEADERS.END_DATETIME},"
+                f"{HEADERS.DURATION},{HEADERS.SETPOINT}\n"
+            )
+            setpoint = self.runner().instruments().oven.get_setpoint()
             duration = end_time - start_time
-            f.write(f"{get_datetime(start_time)},{get_datetime(end_time)},{duration}\n")
+            f.write(f"{get_datetime(start_time)},{get_datetime(end_time)},{duration},{setpoint}\n")
 
 
 class Process(BaseProcess):
