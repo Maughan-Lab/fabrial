@@ -12,6 +12,16 @@ class Icons:
     INTERNAL_ICONS = "icons/internal"
 
 
+class SavedSettings:
+    """File/folder names for saved settings."""
+
+    SAVED_SETTINGS_FOLDER = "saved_settings"
+    OVEN_PORT = os.path.join(SAVED_SETTINGS_FOLDER, "oven_port.csv")
+    SEQUENCE = os.path.join(SAVED_SETTINGS_FOLDER, "sequence_autosave.json")
+    SEQUENCE_DIRECTORY = os.path.join(SAVED_SETTINGS_FOLDER, "sequence_directory.csv")
+
+
+# TODO: murder this
 class Sequence:
     """File/folder names for the sequence."""
 
@@ -46,6 +56,7 @@ class Sequence:
     )  # keep the DATE_FORMAT and its specifier for the `time` module in sync
 
 
+# TODO: murder this
 class InstrumentConnection:
     """File/folder names for instrument connection."""
 

@@ -1,18 +1,15 @@
-from .....classes.process import Process
+from .....classes.process import GraphingProcess
 from .....classes.process_runner import ProcessRunner
 from ..... import Files
 from . import encoding
-from PyQt6.QtCore import pyqtSignal
 from typing import Any
 import time
 import os
 from io import TextIOWrapper
 
 
-class SetTemperatureProcess(Process):
+class SetTemperatureProcess(GraphingProcess):
     DIRECTORY = "Set Temperature"
-
-    newDataAcquired = pyqtSignal(float, float)  # time, temperature
 
     MEASUREMENT_INTERVAL = 5000  # milliseconds
     MINIMUM_MEASUREMENTS = 150
@@ -25,10 +22,14 @@ class SetTemperatureProcess(Process):
         self.temperature_file: TextIOWrapper
 
     def pre_run(self):
+        self.init_scatter_plot(
+            "Oven Temperature", "Time (seconds)", "Temperature (°C)", "Oven Temperature"
+        )
         self.create_files()
 
     def run(self):
         self.pre_run()
+
         try:
             self.oven.acquire()
 

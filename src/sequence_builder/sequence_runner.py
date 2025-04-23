@@ -4,7 +4,6 @@ from ..instruments import InstrumentSet
 from typing import Self
 from .tree_item import TreeItem
 from ..enums.status import SequenceStatus
-from ..classes.signals import CommandSignals, GraphSignals, InformationSignals
 import os
 
 
@@ -24,22 +23,10 @@ class SequenceRunner(QObject):
         self.root_item = root_item
         self.process_runner = ProcessRunner(self, instruments, data_directory)
         self.canceled = False
-        self.command_signals = CommandSignals()
-        self.graph_signals = GraphSignals()
-        self.info_signals = InformationSignals()
 
-        self.connect_signals()
-
-    def connect_signals(self):
-        """Connect signals."""
-        # up toward parent
-        self.info_signals.connect_to_other(self.process_runner.info_signals)
-        # down toward children
-        self.command_signals.connect_to_other(self.process_runner.command_signals)
-        # necessary to make sure we update self.canceled before actually canceling the process
-        self.command_signals.cancelCommand.disconnect()
-        self.command_signals.cancelCommand.connect(self.cancel_event)
-        self.graph_signals.connect_to_other(self.process_runner.graph_signals)
+        self.command_signals = self.process_runner.command_signals
+        self.info_signals = self.process_runner.info_signals
+        self.graph_signals = self.process_runner.graph_signals
 
     def pre_run(self) -> bool:
         """Run this before `run()`. Returns whether the sequence should continue."""
@@ -95,8 +82,23 @@ class SequenceRunner(QObject):
         self.process_runner.cancel_background_processes()
         return self
 
-    def cancel_event(self) -> Self:
-        """Cancel the entire sequence."""
+    def cancel(self) -> Self:
+        """Cancel the sequence."""
         self.canceled = True
-        self.process_runner.command_signals.cancelCommand.emit()
+        self.command_signals.cancelCommand.emit()
+        return self
+
+    def pause(self) -> Self:
+        """Pause the sequence."""
+        self.command_signals.pauseCommand.emit()
+        return self
+
+    def unpause(self) -> Self:
+        """Unpause the sequence."""
+        self.command_signals.unpauseCommand.emit()
+        return self
+
+    def skip(self) -> Self:
+        """Skip the current outermost process."""
+        self.command_signals.skipCommand.emit()
         return self

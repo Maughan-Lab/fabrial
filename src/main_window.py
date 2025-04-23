@@ -15,8 +15,10 @@ class MainWindow(QMainWindow):
         # create tabs
         self.tabs = TabWidget(self, instruments)
         self.setCentralWidget(self.tabs)
-        self.oven_control_tab = self.tabs.oven_control_tab  # shortcut
-        self.sequence_tab = self.tabs.sequence_builder_tab  # shortcut
+        # shortcuts
+        self.oven_control_tab = self.tabs.oven_control_tab
+        self.sequence_tab = self.tabs.sequence_builder_tab
+        self.sequence_builder = self.sequence_tab.sequence_tree
         # create menu bar
         self.menu_bar = MenuBar(self, instruments)
         self.setMenuBar(self.menu_bar)
@@ -71,7 +73,11 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent | None):  # overridden method
         """Prevent the window from closing if a sequence or stability check are running."""
         if event is not None:
-            event.accept() if self.allowed_to_close() else event.ignore()
+            if self.allowed_to_close():
+                self.sequence_builder.save_on_close()
+                event.accept()
+            else:
+                event.ignore()
 
     def allowed_to_close(self) -> bool:
         """Determine if the window should close."""

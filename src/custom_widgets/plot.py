@@ -5,6 +5,7 @@ import pyqtgraph.exporters as exporters  # type: ignore
 from ..custom_widgets.button import Button
 from ..custom_widgets.widget import SignalWidget, Widget
 from typing import Literal
+from ..classes.plotting import LineData
 
 
 class PlotItem(pg.PlotItem):
@@ -12,16 +13,17 @@ class PlotItem(pg.PlotItem):
 
     LABEL_SIZE = "14pt"
     TITLE_SIZE = "20pt"
+    DEFAULT_POINT_SIZE = 7
 
     def __init__(self) -> None:
         """Create a new PlotItem."""
         super().__init__()
         self.text_color = self.palette().windowText().color().name()
         self.background_color = self.palette().window().color().name()
+        self.line_data: LineData
+        self.init_plot()
 
-        self.create_plot()
-
-    def create_plot(self):
+    def init_plot(self):
         self.getViewBox().setBackgroundColor(self.background_color)
         self.addLegend()
         self.legend.setLabelTextColor(self.text_color)
@@ -33,47 +35,73 @@ class PlotItem(pg.PlotItem):
         axis.setPen(self.text_color)
         axis.setTextPen(self.text_color)
 
-    def label(self, axis_name: Literal["left", "right", "bottom", "top"], label: str, **args):
+    def label(
+        self, axis_name: Literal["left", "right", "bottom", "top"], label: str | None, **args
+    ):
         axis: pg.AxisItem = self.getAxis(axis_name)
         axis.setLabel(label, **{"font-size": self.LABEL_SIZE}, **args)
 
-    def set_title(self, title: str, **args):
+    def set_title(self, title: str | None, **args):
         self.setTitle(title, size=self.TITLE_SIZE, color=self.text_color, **args)
 
-    def scatter(
-        self,
-        x_data: list[float | int],
-        y_data: list[float | int],
-        name: str,
-        point_size: int,
-        point_color: str,
-        **args,
-    ) -> pg.PlotDataItem:
-        """
-        Plot a scatterplot on a **PlotItem**.
+    def current_line(self) -> pg.PlotDataItem:
+        """Get the current line."""
+        return self.line_data.line
 
-        :param plot_item: The PlotItem to plot on.
+    def reset(self):
+        """Reset the plot to it's original state."""
+        self.clear()
+        for axis_name in ["left", "right", "top", "bottom"]:
+            self.label(axis_name, None)
+        self.set_title(None)
+
+    def plot(
+        self,
+        x_data: list[float],
+        y_data: list[float],
+        legend_label: str,
+        line_color: str | None,
+        line_width: float | None,
+        symbol: str,
+        symbol_color: str,
+        symbol_size: int,
+    ):
+        """
+        Plot a new line.
+
         :param x_data: The x-data.
         :param y_data: The y-data.
-        :param name: The label for this line in the legend.
-        :param point_size: The point size.
-        :param point_color: The color of the points. Can be a hex string (i.e. "#112233") or a standard
-        color name (i.e. "green").
-        :param args: Additional arguments to pass to **PlotItem.plot()**.
+        :param legend_label: The label for this line in the legend.
+        :param line_color: The color of the line. If set to **None**, there will be no line.
+        :param line_width: The width of the line. If set to **None**, there will be no line.
+        :param symbol: The symbol to use, i.e. "o" for a dot.
+        :param symbol_size: The point size.
+        :param symbol_color: The color of the points. Can be a hex string (i.e. "#112233") or a
+        standard color name (i.e. "green").
 
-        :returns: A reference to the plotted line.
+        :returns: A reference to the data item.
         """
-        line = self.plot(
+        if line_color is None or line_width is None:
+            line_pen = None
+        else:
+            line_pen = pg.mkPen(line_color, width=line_width)
+        data_item = super().plot(
             x_data,
             y_data,
-            name=name,
-            pen=None,
-            symbol="o",
-            symbolSize=point_size,
-            symbolBrush=point_color,
-            symbolPen=pg.mkPen(color=point_color),
+            name=legend_label,
+            pen=line_pen,
+            symbol=symbol,
+            symbolSize=symbol_size,
+            symbolBrush=symbol_color,
+            symbolPen=pg.mkPen(color=symbol_color),
         )
-        return line
+        self.line_data = LineData(data_item, x_data, y_data)
+
+    def add_point(self, x_value: float, y_value: float):
+        """
+        Add a point to the current line. You must call `plot()` before this function.
+        """
+        self.line_data.add_point(x_value, y_value)
 
 
 class PlotView(pg.PlotWidget):

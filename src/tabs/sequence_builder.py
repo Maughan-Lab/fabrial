@@ -52,6 +52,7 @@ class SequenceBuilderTab(QWidget):
         self.start_button = BiggerButton(
             "Start", self.sequence_tree.run_sequence, size_scalars=SIZE_SCALARS
         )
+        self.start_button.setEnabled(self.sequence_tree.directory_is_valid())
         self.pause_button = BiggerButton(
             "Pause", self.sequence_tree.command_signals.pauseCommand, size_scalars=SIZE_SCALARS
         )
@@ -80,8 +81,9 @@ class SequenceBuilderTab(QWidget):
         )
 
     def connect_signals(self):
+        self.sequence_tree.directoryChanged.connect(self.start_button.setEnabled)
         self.sequence_tree.graphSignalsChanged.connect(
-            self.visual_widget_container.connect_graph_signals
+            self.visual_widget_container.connect_graph_signals, Qt.ConnectionType.DirectConnection
         )
         self.sequence_tree.sequenceStatusChanged.connect(self.handle_status_change)
 

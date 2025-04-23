@@ -9,7 +9,32 @@ class TemperaturePoint:
 
 
 @dataclass
+class LineSettings:
+    title: str
+    x_label: str
+    y_label: str
+    legend_label: str
+    line_color: str | None
+    line_width: float | None
+    symbol: str
+    symbol_color: str
+    symbol_size: int
+
+
+@dataclass
 class LineData:
     line: pg.PlotDataItem
     x_data: list[float | int]
     y_data: list[float | int]
+
+    def add_point(self, x_value: float, y_value: float):
+        """Add a point to the line."""
+        self.x_data.append(x_value)
+        self.y_data.append(y_value)
+        self.line.setData(self.x_data, self.y_data)
+
+    # TODO: probably delete this
+    def clear(self):
+        """Clear the line data."""
+        self.x_data.clear()
+        self.y_data.clear()

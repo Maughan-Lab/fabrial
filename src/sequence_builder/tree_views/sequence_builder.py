@@ -4,21 +4,20 @@ from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QFileDialog, QSizePolicy
 from .tree_view import TreeView
 from ..tree_item import TreeItem
 from ..tree_model import TreeModel
-from ...custom_widgets.button import FixedButton
+from ...custom_widgets.button import FixedButton, BiggerButton
 from ...custom_widgets.container import Container
-from ...custom_widgets.button import BiggerButton
 from ...custom_widgets.label import IconLabel
-from ...custom_widgets.dialog import OkDialog
+from ...custom_widgets.dialog import OkDialog, YesNoDialog
 from ...classes.actions import Shortcut
 from ...classes.signals import CommandSignals, GraphSignals
 from ...enums.status import SequenceStatus
 from ...utility.layouts import add_to_layout, add_sublayout
 from ...utility.images import make_pixmap
-from ...utility.datetime import get_file_friendly_datatime
 from typing import Self
 from ..sequence_runner import SequenceRunner
 from ...instruments import InstrumentSet
 from ... import Files
+import os
 
 
 class SequenceTreeView(TreeView):
@@ -27,10 +26,12 @@ class SequenceTreeView(TreeView):
     def __init__(self):
         # initialize the model
         model = TreeModel("Sequence Builder")
+        model.init_from_file(Files.SavedSettings.SEQUENCE)
         model.set_supported_drag_actions(Qt.DropAction.MoveAction | Qt.DropAction.CopyAction)
         model.set_supported_drop_actions(Qt.DropAction.MoveAction | Qt.DropAction.CopyAction)
         # initialize the super class
         super().__init__(model)
+        self.expandAll()
         # configure
         self.setAcceptDrops(True)
         self.setDefaultDropAction(Qt.DropAction.MoveAction)
@@ -83,6 +84,8 @@ class SequenceTreeWidget(Container):
     """SequenceTreeView with a delete button."""
 
     # signals that get emitted to other objects
+    directoryChanged = pyqtSignal(bool)  # whether the selected directory is valid
+
     sequenceStatusChanged = pyqtSignal(SequenceStatus)
     graphSignalsChanged = pyqtSignal(GraphSignals)
 
@@ -104,14 +107,29 @@ class SequenceTreeWidget(Container):
 
         self.command_signals = CommandSignals()
         self.cancelCommand = self.command_signals.cancelCommand  # shortcut
-        self.graph_signals = GraphSignals()
 
     def create_widgets(self) -> Self:
         layout: QVBoxLayout = self.layout()  # type: ignore
+
         self.view = SequenceTreeView()
+
+        button_layout = QHBoxLayout()
+        button_container = Container(button_layout)
+
         self.delete_button = FixedButton("Delete Selected Items", self.view.delete_event)
         self.delete_button.setEnabled(False)
-        add_to_layout(layout, self.delete_button, self.view)
+        button_layout.addWidget(self.delete_button)
+
+        button_sublayout = QHBoxLayout()
+        self.save_button = FixedButton("Save", self.save_settings)
+        button_sublayout.addWidget(self.save_button)
+        self.load_button = FixedButton("Load", self.load_settings)
+        button_sublayout.addWidget(self.load_button)
+
+        button_layout.addWidget(self.delete_button, alignment=Qt.AlignmentFlag.AlignLeft)
+        button_layout.addLayout(button_sublayout)
+
+        add_to_layout(layout, button_container, self.view)
 
         # the data directory selection widgets
         directory_layout = add_sublayout(layout, QHBoxLayout)
@@ -123,8 +141,7 @@ class SequenceTreeWidget(Container):
             QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum
         )
         self.directory_label = IconLabel(
-            make_pixmap("folder-open-document.png"),
-            f"{Files.SequenceBuilder.DEFAULT_DATA_FOLDER}/{get_file_friendly_datatime()}",
+            make_pixmap("folder-open-document.png"), self.read_previous_directory()
         )
         self.directory_label.label().setWordWrap(True)
         directory_layout.addWidget(self.directory_button)
@@ -155,7 +172,48 @@ class SequenceTreeWidget(Container):
             QFileDialog.Option.ShowDirsOnly,
         )
         self.directory_label.label().setText(directory)
+        self.directoryChanged.emit(self.directory_is_valid())
         return self
+
+    def read_previous_directory(self) -> str:
+        """Try to load the previously used directory."""
+        try:
+            with open(Files.SavedSettings.SEQUENCE_DIRECTORY, "r") as f:
+                directory = f.read()
+                return directory
+        except Exception:
+            return ""
+
+    def directory_is_valid(self) -> bool:
+        """Whether the directory text represents a valid directory."""
+        return False if self.directory_label.label().text() == "" else True
+
+    def save_on_close(self):
+        """Call this when closing the application to save settings."""
+        self.view.model().save_to_file(Files.SavedSettings.SEQUENCE)
+        directory = self.directory_label.label().text()
+        with open(Files.SavedSettings.SEQUENCE_DIRECTORY, "w") as f:
+            f.write(directory)
+
+    def save_settings(self):
+        """Save the sequence to a file."""
+        filename, _ = QFileDialog.getSaveFileName(
+            self,
+            "Select save file",
+            os.path.join(os.path.expanduser("~"), "untitled.json"),
+            "JSON files (*.json)",
+        )
+        if filename != "":
+            self.view.model().save_to_file(filename)
+
+    def load_settings(self):
+        """Load a sequence from a file."""
+        filename, _ = QFileDialog.getOpenFileName(
+            self, "Select sequence file", filter="JSON files (*.json)"
+        )
+        if filename != "":
+            self.view.model().init_from_file(filename)
+            self.view.expandAll()
 
     def data_directory(self) -> str:
         """Get the current data directory."""
@@ -167,12 +225,17 @@ class SequenceTreeWidget(Container):
 
     def run_sequence(self) -> Self:
         """Run the sequence."""
+        directory = self.directory_label.label().text()
+        # TODO: uncomment these
+        # if len(os.listdir(directory)) > 0:  # the directory isn't empty
+        #     if not YesNoDialog("Note", "Data directory is not empty, proceed?").run():
+        #         return self
+
         thread = QThread(self)
-        runner = SequenceRunner(
-            self.instruments, self.directory_label.label().text(), self.view.model().root()
-        )
+        runner = SequenceRunner(self.instruments, directory, self.view.model().root())
         runner.moveToThread(thread)
         self.connect_sequence_signals(runner, thread)
+        self.graphSignalsChanged.emit(runner.graph_signals)
         # run
         thread.started.connect(runner.run)
         thread.start()
@@ -183,9 +246,11 @@ class SequenceTreeWidget(Container):
         runner.info_signals.errorOccurred.connect(lambda message: OkDialog("Error", message).exec())
         runner.info_signals.currentItemChanged.connect(self.handle_item_change)
         runner.info_signals.statusChanged.connect(self.sequenceStatusChanged)
-        self.graph_signals.connect_to_other(runner.graph_signals)
         # down towards the child
-        self.command_signals.connect_to_other(runner.command_signals)
+        self.command_signals.cancelCommand.connect(runner.cancel)
+        self.command_signals.pauseCommand.connect(runner.pause)
+        self.command_signals.unpauseCommand.connect(runner.unpause)
+        self.command_signals.skipCommand.connect(runner.skip)
         # internal-only signals
         runner.finished.connect(thread.quit)
         thread.started.connect(lambda: self.sequence_start_event(runner))

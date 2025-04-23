@@ -2,6 +2,7 @@ from ..enums.status import SequenceStatus
 from ..enums.status import StatusStateMachine
 from ..utility.events import PROCESS_EVENTS
 from ..utility.datetime import get_datetime
+from ..classes.plotting import LineSettings
 from .. import Files
 from PyQt6.QtCore import QObject, pyqtSignal
 from typing import Any, Self, TYPE_CHECKING
@@ -128,8 +129,7 @@ class Process(BaseProcess):
     def __init__(self, runner: "ProcessRunner", data: dict[str, Any]):
         """:param data: The data used to run this process."""
         super().__init__(runner, data)
-        self.graph_signals = GraphSignals()
-        self.info_signals = InformationSignals()
+        self.info_signals = InformationSignals(self)
 
     def skip(self) -> Self:
         """
@@ -164,6 +164,66 @@ class Process(BaseProcess):
         """Communicate to the process runner that an error occurred."""
         self.info_signals.errorOccurred.emit(message)
         return self
+
+
+class GraphingProcess(Process):
+    """
+    **Process** with graphing capabilities. This has the same override requirements as **Process**.
+    """
+
+    def __init__(self, runner: "ProcessRunner", data: dict[str, Any]):
+        super().__init__(runner, data)
+        self.graph_signals = GraphSignals(self)
+
+    def init_line_plot(
+        self,
+        title: str,
+        x_label: str,
+        y_label: str,
+        legend_label: str,
+        line_color: str,
+        line_width: float,
+        symbol: str,
+        symbol_color: str,
+        symbol_size: int,
+    ):
+        """Initialize the sequence graph as a line plot."""
+        settings = LineSettings(
+            title,
+            x_label,
+            y_label,
+            legend_label,
+            line_color,
+            line_width,
+            symbol,
+            symbol_color,
+            symbol_size,
+        )
+        self.graph_signals.initPlot.emit(settings)
+
+    def init_scatter_plot(
+        self,
+        title: str,
+        x_label: str,
+        y_label: str,
+        legend_label: str,
+        symbol: str = "o",
+        symbol_color: str = "orange",
+        symbol_size: int = 7,
+    ):
+        """Initialize the sequence graph as a scatter plot."""
+        settings = LineSettings(
+            title,
+            x_label,
+            y_label,
+            legend_label,
+            None,
+            None,
+            symbol,
+            symbol_color,
+            symbol_size,
+        )
+        self.graph_signals.initPlot.emit(settings)
 
 
 class BackgroundProcess(BaseProcess):

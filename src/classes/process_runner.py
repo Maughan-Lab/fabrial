@@ -4,7 +4,7 @@ from ..utility.events import PROCESS_EVENTS
 from PyQt6.QtCore import QThread, QObject
 from typing import Self, Union
 from .signals import CommandSignals, GraphSignals, InformationSignals
-from .process import Process, BackgroundProcess
+from .process import Process, GraphingProcess, BackgroundProcess
 from typing import TYPE_CHECKING
 import os
 
@@ -27,9 +27,9 @@ class ProcessRunner(QObject):
         self.current_process: Process | BackgroundProcess
         self.item: "TreeItem" | None = None
 
-        self.command_signals = CommandSignals()
-        self.graph_signals = GraphSignals()
-        self.info_signals = InformationSignals()
+        self.command_signals = CommandSignals(self)
+        self.info_signals = InformationSignals(self)
+        self.graph_signals = GraphSignals(self)
 
         self.background_processes: list[BackgroundProcess] = []
 
@@ -50,7 +50,6 @@ class ProcessRunner(QObject):
 
     def run(self) -> Self:
         """Run the current process."""
-        self.connect_process_signals()
         if isinstance(self.current_process, BackgroundProcess):
             self.pre_run()
             self.start_background_process(self.current_process)
@@ -62,6 +61,7 @@ class ProcessRunner(QObject):
 
     def post_run(self):
         """This runs when the current process completes."""
+        self.graph_signals.clear.emit()
         self.current_process.deleteLater()
 
     def connect_process_signals(self) -> Self:
@@ -74,6 +74,10 @@ class ProcessRunner(QObject):
             self.command_signals.unpauseCommand.connect(self.current_process.unpause)
             self.command_signals.cancelCommand.connect(self.current_process.cancel)
             self.command_signals.skipCommand.connect(self.current_process.skip)
+            # if the process supports graphing connect the signals
+            if isinstance(self.current_process, GraphingProcess):
+                self.graph_signals.connect_to_other(self.current_process.graph_signals)
+
         else:
             self.current_process.errorOccurred.connect(self.info_signals.errorOccurred)
         return self
@@ -82,9 +86,7 @@ class ProcessRunner(QObject):
         """Set the current process. This also updates the process number."""
         self.current_process = process
         self.process_number += 1
-        if not isinstance(process, BackgroundProcess):
-            self.graph_signals.connect_to_other(process.graph_signals)
-            self.info_signals.graphSignalsChanged.emit(process.graph_signals)
+        self.connect_process_signals()
         return self
 
     def process(self) -> Process | BackgroundProcess:

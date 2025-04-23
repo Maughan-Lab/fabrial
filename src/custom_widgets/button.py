@@ -23,7 +23,7 @@ class FixedButton(Button):
 
     def __init__(self, text: str, *push_fn: Callable[[], None | Any]):
         super().__init__(text, *push_fn)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
 
 
 class BiggerButton(Button):  # this name feels so dumb xD

@@ -41,6 +41,7 @@ class TreeModel(QAbstractItemModel):
     def init_from_dict(self, root_item_as_dict: dict[str, Any]) -> Self:
         """Initialize the model's data from a dictionary."""
         self.root_item = TreeItem.from_dict(None, root_item_as_dict)
+        self.layoutChanged.emit()
         return self
 
     def init_from_file(self, filename: str) -> Self:
@@ -52,6 +53,13 @@ class TreeModel(QAbstractItemModel):
     def init_from_directory(self, directory: str) -> Self:
         """Initialize the model's data from a directory."""
         return self.init_from_dict(item_dict_from_directory(directory))
+
+    def save_to_file(self, filename: str) -> Self:
+        """Save the model's data to a file."""
+        data = self.root().to_dict()
+        with open(filename, "w") as f:
+            json.dump(data, f)
+        return self
 
     @classmethod
     def from_file(cls: type[Self], name: str, filename: str) -> Self:

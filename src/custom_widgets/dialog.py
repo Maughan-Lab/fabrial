@@ -52,3 +52,12 @@ class OkCancelDialog(Dialog):
             message,
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel,
         )
+
+
+class YesNoDialog(Dialog):
+    """Dialog pop-up with Yes and No buttons."""
+
+    def __init__(self, title: str, message: str):
+        super().__init__(
+            title, message, QDialogButtonBox.StandardButton.Yes | QDialogButtonBox.StandardButton.No
+        )

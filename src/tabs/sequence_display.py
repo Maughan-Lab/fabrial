@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QVBoxLayout
 from ..custom_widgets.widget import Widget
 from ..custom_widgets.plot import PlotWidget
 from ..classes.signals import GraphSignals
+from ..classes.plotting import LineSettings
 
 
 class SequenceDisplayTab(Widget):
@@ -17,5 +18,23 @@ class SequenceDisplayTab(Widget):
         layout.addWidget(self.plot)
 
     def connect_graph_signals(self, signals: GraphSignals):
-        # TODO: connect all possible graph signals to functions on the PlotWidget
-        pass
+        plot_item = self.plot.plot_item()
+        signals.initPlot.connect(self.init_plot)
+        signals.clear.connect(plot_item.reset)
+        signals.addPoint.connect(plot_item.add_point)
+
+    def init_plot(self, settings: LineSettings):
+        plot_item = self.plot.plot_item()
+        plot_item.set_title(settings.title)
+        plot_item.label("bottom", settings.x_label)
+        plot_item.label("left", settings.y_label)
+        plot_item.plot(
+            [],
+            [],
+            settings.legend_label,
+            settings.line_color,
+            settings.line_width,
+            settings.symbol,
+            settings.symbol_color,
+            settings.symbol_size,
+        )
