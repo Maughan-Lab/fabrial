@@ -4,6 +4,7 @@
 - Hold (no temperature data collection)
 - Hold (with temperature data collection) (subclass of above)
 - Electrochemical Impedance Spectroscopy
+    - Similarly to how you have an `Oven` class for the physical oven, you should make a `Potentiostat` class that gets created each time an **EIS** action is run, for each potentiostat. This means you can abstract things like running EIS.
 - Loop
 - TODO more items
 
