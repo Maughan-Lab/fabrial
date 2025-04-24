@@ -139,7 +139,7 @@ class PlotWidget(Widget):
             None, "Save Graph", "", "Portable Network Graphics (*.png)"
         )
         if filename != "":
-            self.export_to_image(filename)
+            self.view.export_to_image(filename)
 
     def autoscale(self):
         """Autoscale the graph."""

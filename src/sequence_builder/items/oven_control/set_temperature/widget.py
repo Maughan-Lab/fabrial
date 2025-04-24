@@ -35,13 +35,13 @@ class SetTemperatureWidget(BaseWidget):
                 f"{self.DISPLAY_NAME_PREFIX} ({value_as_str} degrees)"
             )
         )
-        layout.addRow("Temperature", self.temperature_spinbox)
+        layout.addRow("Setpoint", self.temperature_spinbox)
 
     def to_dict(self) -> dict[str, Any]:
-        return {encoding.TEMPERATURE: self.temperature_spinbox.value()}
+        return {encoding.SETPOINT: self.temperature_spinbox.value()}
 
     @classmethod
     def from_dict(cls, data_as_dict: dict[str, Any]):
         widget = cls()
-        widget.temperature_spinbox.setValue(data_as_dict[encoding.TEMPERATURE])
+        widget.temperature_spinbox.setValue(data_as_dict[encoding.SETPOINT])
         return widget

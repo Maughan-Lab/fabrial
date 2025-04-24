@@ -1,4 +1,4 @@
-TEMPERATURE = "temperature"
+SETPOINT = "setpoint"
 
 
 class Headers:

@@ -9,6 +9,8 @@ from typing import Any, Self, TYPE_CHECKING
 from .signals import GraphSignals, InformationSignals
 import time
 import os
+from typing import Callable
+import polars as pl
 
 if TYPE_CHECKING:
     from .process_runner import ProcessRunner
@@ -31,26 +33,9 @@ class BaseProcess(QObject):
     def run(self):
         """
         (Virtual) Run the process. When subclassing this method, you must ensure that long-running
-        processes frequently call `time.sleep()`, otherwise they will freeze the application.
+        processes frequently call `wait()`, otherwise they will freeze the application.
         """
         pass
-
-    def wait(self, delay_ms: int) -> bool:
-        """
-        Hold for **delay** milliseconds or as long as the process is paused, whichever is longer.
-        This is where signals are processed, so be sure to call this frequently.
-
-        :returns: Whether the process should continue (i.e. it was not cancelled).
-        """
-        delay = delay_ms / 1000
-        end_time = time.time() + delay
-        # wait_interval = delay_ms / 100  # this is arbitrary and seemed like a good value
-        while time.time() < end_time or self.is_paused():
-            if self.status() == SequenceStatus.CANCELED:
-                return False
-            # process events for 10 ms
-            PROCESS_EVENTS()
-        return True
 
     def data(self) -> dict[str, Any]:
         """Get this process' data."""
@@ -72,7 +57,7 @@ class BaseProcess(QObject):
         self.process_start_time = time.time()
 
     def start_time(self) -> float:
-        """Get the start time of this process."""
+        """Get the start time of this process in seconds."""
         return self.process_start_time
 
     def runner(self) -> "ProcessRunner":
@@ -80,40 +65,42 @@ class BaseProcess(QObject):
         return self.process_runner
 
     def status(self) -> SequenceStatus:
-        """Get the process status. This blocks until the mutex is available."""
+        """Get the process status."""
         return self.process_status.get()
 
-    def is_paused(self) -> bool:
-        """Whether the process is paused. This blocks until the mutex is available."""
-        return self.status().is_pause()
-
-    def is_errored(self) -> bool:
-        """Whether the process is in an error state. This blocks until the mutex is available."""
-        return self.status().is_error()
+    def is_canceled(self) -> bool:
+        """Whether the process has been canceled."""
+        return self.status() == SequenceStatus.CANCELED
 
     def cancel(self):
         """Cancel the current process gracefully (do not emit signals)."""
         self.process_status.set(SequenceStatus.CANCELED)
 
-    def write_metadata(self, directory: str, start_time: float, end_time: float):
+    def metadata(self, start_time: float, end_time: float) -> pl.DataFrame:
         """
-        Create a metadata file. Write the start time, duration, and oven temperature. You can
-        override this method, but make sure to keep the same general format.
+        Create a DataFrame containing metadata for the process. By default, this DataFrame contains
+        the start time, duration, and oven setpoint. You can override this method to add additional
+        metadata.
 
-        :param directory: The full path to the process' data directory.
         :param start_time: The start time of the process, as returned by `time.time()`.
-        :param end_time: The end time of the process, as returned by `time.time()`. If not
-        specified, the current time is used.
+        :param end_time: The end time of the process, as returned by `time.time()`.
         """
-        with open(os.path.join(directory, Files.Process.Filenames.METADATA), "w") as f:
-            HEADERS = Files.Process.Headers.Metadata
-            f.write(
-                f"{HEADERS.START_DATETIME},{HEADERS.END_DATETIME},"
-                f"{HEADERS.DURATION},{HEADERS.SETPOINT}\n"
-            )
-            setpoint = self.runner().instruments().oven.get_setpoint()
-            duration = end_time - start_time
-            f.write(f"{get_datetime(start_time)},{get_datetime(end_time)},{duration},{setpoint}\n")
+        HEADERS = Files.Process.Headers.Metadata
+        duration = end_time - start_time
+        setpoint = self.runner().instruments().oven.get_setpoint()
+        metadata = pl.DataFrame(
+            {
+                HEADERS.START_DATETIME: get_datetime(start_time),
+                HEADERS.END_DATETIME: get_datetime(end_time),
+                HEADERS.DURATION: duration,
+                HEADERS.SETPOINT: setpoint,
+            }
+        )
+        return metadata
+
+    def write_metadata(self, metadata: pl.DataFrame):
+        """Create a metadata file and write **metadata** to it."""
+        metadata.write_csv(os.path.join(self.directory(), Files.Process.Filenames.METADATA))
 
 
 class Process(BaseProcess):
@@ -135,6 +122,40 @@ class Process(BaseProcess):
         super().__init__(runner, data)
         self.info_signals = InformationSignals(self)
 
+    def wait(self, delay_ms: int, unpause_fn: Callable[[], bool] = lambda: False) -> bool:
+        """
+        Hold for **delay** milliseconds or as long as the process is paused, whichever is longer.
+        This is where signals are processed, so be sure to call this frequently.
+
+        :param delay_ms: How long to hold for.
+        :param unpause_fn: A function that can cause the sequence to unpause if it is paused. This
+        function takes no arguments and should return **True** to unpause, **False** otherwise.
+
+        :returns: Whether the process should continue (i.e. it was not cancelled).
+        """
+        delay = delay_ms / 1000
+        end_time = time.time() + delay
+        while time.time() < end_time:
+            if self.is_canceled():
+                return False
+            PROCESS_EVENTS()  # process events for 10 ms
+        while self.is_paused():
+            if self.is_canceled():
+                return False
+            PROCESS_EVENTS()  # process events for 10 ms
+            if unpause_fn():
+                self.unpause()
+
+        return True
+
+    def is_paused(self) -> bool:
+        """Whether the process is paused."""
+        return self.status().is_pause()
+
+    def is_errored(self) -> bool:
+        """Whether the process is in an error state."""
+        return self.status().is_error()
+
     def skip(self) -> Self:
         """
         Skip the current process. By default, this just calls **cancel()**. You can override this
@@ -148,6 +169,11 @@ class Process(BaseProcess):
         self.update_status(SequenceStatus.PAUSED)
         return self
 
+    def error_pause(self) -> Self:
+        """Pause the process with an error"""
+        self.update_status(SequenceStatus.ERROR_PAUSED)
+        return self
+
     def unpause(self) -> Self:
         """Unpause the process."""
         self.update_status(SequenceStatus.ACTIVE)
@@ -155,7 +181,7 @@ class Process(BaseProcess):
 
     def update_status(self, status: SequenceStatus) -> bool:
         """
-        Set the status and emit signals. This blocks until the mutex is available.
+        Set the status and emit signals.
 
         :returns: Whether the status was updated (a valid state change occurred).
         """
@@ -249,9 +275,26 @@ class BackgroundProcess(BaseProcess):
         """
         super().__init__(runner, data)
 
+    def wait(self, delay_ms: int, unpause_fn: Callable[[], bool] = lambda: False) -> bool:
+        """
+        Hold for **delay** milliseconds. This is where signals are processed, so be sure to call
+        this frequently.
+
+        :returns: Whether the process should continue (i.e. it was not cancelled).
+        """
+        delay = delay_ms / 1000
+        end_time = time.time() + delay
+        # wait_interval = delay_ms / 100  # this is arbitrary and seemed like a good value
+        while time.time() < end_time:
+            if self.is_canceled():
+                return False
+            # process events for 10 ms
+            PROCESS_EVENTS()
+        return True
+
     def update_status(self, status: SequenceStatus) -> bool:
         """
-        Set the status. This blocks until the mutex is available.
+        Set the status.
 
         :returns: Whether the status changed.
         """

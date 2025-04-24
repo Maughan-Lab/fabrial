@@ -1,0 +1,6 @@
+{
+    "type": "INCREMENT_TEMPERATURE",
+    "linked-widget-data": {
+        "increment": 0
+    }
+}

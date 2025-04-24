@@ -1,15 +1,8 @@
-# Anything with oven stability
-Instead of storing temperature variations in a list, just check if the temperature variation is above the threshold. If it isn't increment a counter. If it is, reset the counter. When the counter reaches 150, you are stable.
-
-# Graph Interface
-- You need a bunch of functions you can call to modify the graph from the a process.
-
 # Implement Widgets
 - Enable constant temperature recording
-- Temperature set
-- Temperature modify
+- Temperature increment
 - Hold (no temperature data collection)
-- Hold (with temperature data collection)
+- Hold (with temperature data collection) (subclass of above)
 - Electrochemical Impedance Spectroscopy
 - Loop
 - TODO more items

@@ -82,7 +82,7 @@ class Instrument(QObject):
             self.connectionChanged.emit(self.is_connected())
 
     def is_connected(self) -> bool:
-        """Get the connection status of this instrument as a bool."""
+        """Get the connection status of this instrument as a **bool**."""
         return bool(self.connection_status)
 
     def is_unlocked(self) -> bool:

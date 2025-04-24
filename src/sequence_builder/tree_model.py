@@ -46,9 +46,12 @@ class TreeModel(QAbstractItemModel):
 
     def init_from_file(self, filename: str) -> Self:
         """Initialize the model's data from a file."""
-        with open(filename, "r") as f:
-            data: dict[str, Any] = json.load(f)
-        return self.init_from_dict(data)
+        try:
+            with open(filename, "r") as f:
+                data: dict[str, Any] = json.load(f)
+            self.init_from_dict(data)
+        finally:
+            return self
 
     def init_from_directory(self, directory: str) -> Self:
         """Initialize the model's data from a directory."""

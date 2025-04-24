@@ -39,7 +39,7 @@ class ProcessRunner(QObject):
         """Runs before the current process."""
         directory_base = self.current_process.DIRECTORY
         if directory_base != "":
-            # example: "C:/Users/.../1 Temperature Data"
+            # example: "C:/Users/.../1 Set Temperature"
             directory = os.path.join(self.directory(), f"{self.number()} {directory_base}")
             os.makedirs(directory, exist_ok=True)
             self.current_process.set_directory(directory)
