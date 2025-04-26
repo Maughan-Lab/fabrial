@@ -6,7 +6,7 @@ from ..custom_widgets.groupbox import GroupBox
 from ..custom_widgets.separator import HSeparator
 from ..custom_widgets.dialog import OkDialog
 from ..custom_widgets.tableview import TableView
-from ..instruments import InstrumentSet
+from ..instruments import INSTRUMENTS
 from ..utility.layouts import add_sublayout, add_to_layout
 from ..enums.status import StabilityStatus, OldSequenceStatus
 from ..classes.plotting import TemperaturePoint
@@ -31,14 +31,11 @@ class SequenceWidget(GroupBox):
     skipCycle = pyqtSignal()
     cancelSequence = pyqtSignal()
 
-    def __init__(
-        self, instruments: InstrumentSet, thread_type: Type[SequenceThread] = SequenceThread
-    ):
+    def __init__(self, thread_type: Type[SequenceThread] = SequenceThread):
         """
-        :param instruments: Container for instruments.
         :param thread_type: The type of thread object to use when running sequences.
         """
-        super().__init__("Temperature Sequence", QVBoxLayout(), instruments)
+        super().__init__("Temperature Sequence", QVBoxLayout())
         self.thread_type = thread_type
 
         # variables
@@ -113,17 +110,17 @@ class SequenceWidget(GroupBox):
     def connect_signals(self):
         """Connect external signals."""
         # oven connection
-        self.instruments.oven.connectionChanged.connect(self.handle_connection_change)
+        INSTRUMENTS.oven.connectionChanged.connect(self.handle_connection_change)
         # oven lock
-        self.instruments.oven.lockChanged.connect(self.handle_lock_change)
+        INSTRUMENTS.oven.lockChanged.connect(self.handle_lock_change)
 
     def handle_connection_change(self, connected: bool):
         """Handle the oven's connectedChanged signal."""
-        self.update_button_states(connected, self.instruments.oven.is_unlocked())
+        self.update_button_states(connected, INSTRUMENTS.oven.is_unlocked())
 
     def handle_lock_change(self, unlocked: bool):
         """Handle the oven's lockChanged signal."""
-        self.update_button_states(self.instruments.oven.is_connected(), unlocked)
+        self.update_button_states(INSTRUMENTS.oven.is_connected(), unlocked)
 
     # ----------------------------------------------------------------------------------------------
     # cycleNumberChanged
@@ -151,7 +148,11 @@ class SequenceWidget(GroupBox):
                 # tell the rest of the program the sequence started
                 self.statusChanged.emit(True)
                 self.update_button_visibility(self.pause_button)
-            case OldSequenceStatus.COMPLETED | OldSequenceStatus.CANCELED | OldSequenceStatus.INACTIVE:
+            case (
+                OldSequenceStatus.COMPLETED
+                | OldSequenceStatus.CANCELED
+                | OldSequenceStatus.INACTIVE
+            ):
                 self.handle_sequence_completion()
                 # tell the rest of the program the sequence ended
                 self.statusChanged.emit(False)
@@ -205,7 +206,7 @@ class SequenceWidget(GroupBox):
     def start_sequence(self):
         """Start a temperature sequence."""
         if not self.is_running():
-            thread = self.thread_type(self.instruments, self.model)
+            thread = self.thread_type(self.model)
 
             thread.signals.statusChanged.connect(self.handle_status_change)
             thread.signals.stabilityChanged.connect(self.handle_stability_change)

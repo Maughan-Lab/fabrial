@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout
 from ..custom_widgets.label import Label
 from ..custom_widgets.combo_box import ComboBox
 from ..custom_widgets.groupbox import GroupBox
-from ..instruments import InstrumentSet, to_str, to_color
+from ..instruments import INSTRUMENTS, to_str, to_color
 from ..utility.layouts import add_sublayout, add_to_layout
 from .ports import get_ports_list
 from os import path
@@ -15,15 +15,15 @@ class InstrumentConnectionWidget(GroupBox):
 
     """Widget for changing the instrument connection ports."""
 
-    def __init__(self, instruments: InstrumentSet):
-        """:param instruments: Container for instruments."""
-        super().__init__("Instrument Connections", QHBoxLayout(), instruments)
+    def __init__(self):
+        super().__init__("Instrument Connections", QHBoxLayout())
+        self.oven = INSTRUMENTS.oven
 
         self.create_widgets()
 
         # check the oven's connection on an interval
         self.connect_signals()
-        self.instruments.oven.start()
+        self.oven.start()
         self.load_ports()
 
     def create_widgets(self):
@@ -49,7 +49,7 @@ class InstrumentConnectionWidget(GroupBox):
         self.oven_combobox.activated.connect(self.update_port)
         self.oven_combobox.activated.connect(self.save_ports)
         self.oven_combobox.pressed.connect(self.update_comboboxes)
-        self.instruments.oven.connectionChanged.connect(self.handle_connection_change)
+        self.oven.connectionChanged.connect(self.handle_connection_change)
 
     def update_comboboxes(self):
         """Update the port comboboxes to show the ports that currently exist."""
@@ -73,7 +73,7 @@ class InstrumentConnectionWidget(GroupBox):
 
     def update_port(self, index: int | None = None):
         """Update the oven's port (this is a slot)."""
-        self.instruments.oven.update_port(self.oven_combobox.currentText())
+        self.oven.update_port(self.oven_combobox.currentText())
 
     def save_ports(self, index: int):
         """Writes the current port selections to a file."""
@@ -89,4 +89,4 @@ class InstrumentConnectionWidget(GroupBox):
             # if the combobox contains the previously stored port
             if self.oven_combobox.findText(port) != -1:
                 self.oven_combobox.setCurrentText(port)
-                self.instruments.oven.update_port(port)
+                self.oven.update_port(port)

@@ -2,25 +2,24 @@ from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication
 from PyQt6.QtGui import QCloseEvent
 from .tabs.tab_widget import TabWidget
 from .custom_widgets.dialog import YesCancelDialog
-from .instruments import InstrumentSet
 from .secondary_window import SecondaryWindow
 from .menu.menu_bar import MenuBar
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, instruments: InstrumentSet) -> None:
+    def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Quincy")
 
         # create tabs
-        self.tabs = TabWidget(self, instruments)
+        self.tabs = TabWidget(self)
         self.setCentralWidget(self.tabs)
         # shortcuts
         self.oven_control_tab = self.tabs.oven_control_tab
         self.sequence_tab = self.tabs.sequence_builder_tab
         self.sequence_builder = self.sequence_tab.sequence_tree
         # create menu bar
-        self.menu_bar = MenuBar(self, instruments)
+        self.menu_bar = MenuBar(self)
         self.setMenuBar(self.menu_bar)
         # secondary windows are stored here
         self.secondary_windows: list[QMainWindow] = []

@@ -1,0 +1,49 @@
+from ...base_widget import BaseWidget
+from ..set_temperature.encoding import Filenames
+from .....custom_widgets.spin_box import DoubleSpinBox
+from .process import IncrementTemperatureProcess
+from . import encoding
+from PyQt6.QtWidgets import QFormLayout
+from typing import Any, Self
+from ..... import Files
+
+
+class IncrementTemperatureWidget(BaseWidget):
+    """Increment the oven's temperature and wait for it to stabilize."""
+
+    PROCESS_TYPE: type[IncrementTemperatureProcess] = IncrementTemperatureProcess
+    ICON = "thermometer--plus.png"
+
+    DISPLAY_NAME_PREFIX = "Increment Oven Temperature"
+
+    def __init__(self):
+        layout = QFormLayout()
+        super().__init__(layout, self.DISPLAY_NAME_PREFIX)
+        self.set_description_from_file(
+            "oven_control",
+            "increment_temperature.md",
+            {
+                "MEASUREMENT_INTERVAL": str(self.PROCESS_TYPE.MEASUREMENT_INTERVAL),
+                "DIRECTORY_NAME": self.PROCESS_TYPE.DIRECTORY,
+                "TEMPERATURE_FILE": Filenames.TEMPERATURES,
+                "METADATA_FILE": Files.Process.Filenames.METADATA,
+            },
+        )
+
+        self.increment_spinbox = DoubleSpinBox()
+        self.increment_spinbox.setDecimals(1)
+        self.increment_spinbox.textChanged.connect(
+            lambda value_as_str: self.setWindowTitle(
+                f"{self.DISPLAY_NAME_PREFIX} ({value_as_str} degrees)"
+            )
+        )
+        layout.addRow("Setpoint Increment", self.increment_spinbox)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {encoding.INCREMENT: self.increment_spinbox.value()}
+
+    @classmethod
+    def from_dict(cls, data_as_dict: dict[str, Any]) -> Self:
+        widget = cls()
+        widget.increment_spinbox.setValue(data_as_dict[encoding.INCREMENT])
+        return widget

@@ -3,7 +3,7 @@ from .....custom_widgets.spin_box import TemperatureSpinBox
 from .process import SetTemperatureProcess
 from . import encoding
 from PyQt6.QtWidgets import QFormLayout
-from typing import Any
+from typing import Any, Self
 from ..... import Files
 
 
@@ -41,7 +41,7 @@ class SetTemperatureWidget(BaseWidget):
         return {encoding.SETPOINT: self.temperature_spinbox.value()}
 
     @classmethod
-    def from_dict(cls, data_as_dict: dict[str, Any]):
+    def from_dict(cls, data_as_dict: dict[str, Any]) -> Self:
         widget = cls()
         widget.temperature_spinbox.setValue(data_as_dict[encoding.SETPOINT])
         return widget

@@ -5,7 +5,7 @@ from ..custom_widgets.label import Label
 from ..custom_widgets.groupbox import GroupBox
 from ..custom_widgets.dialog import OkDialog
 from ..custom_widgets.progressbar import ProgressBar
-from ..instruments import InstrumentSet
+from ..instruments import INSTRUMENTS
 from ..utility.layouts import add_sublayout, add_to_layout
 from ..enums.status import StabilityStatus
 from .stability_check import StabilityCheckThread
@@ -19,16 +19,11 @@ class StabilityCheckWidget(GroupBox):
     statusChanged = pyqtSignal(bool)
     cancelStabilityCheck = pyqtSignal()
 
-    def __init__(
-        self,
-        instruments: InstrumentSet,
-        thread_type: Type[StabilityCheckThread] = StabilityCheckThread,
-    ):
+    def __init__(self, thread_type: Type[StabilityCheckThread] = StabilityCheckThread):
         """
-        :param instruments: Container for instruments.
         :param thread_type: The type of thread object to use when running stability checks.
         """
-        super().__init__("Temperature Stability Check", QVBoxLayout(), instruments)
+        super().__init__("Temperature Stability Check", QVBoxLayout())
 
         self.thread_type = thread_type
 
@@ -66,8 +61,8 @@ class StabilityCheckWidget(GroupBox):
 
     def connect_signals(self):
         """Connect external signals."""
-        self.instruments.oven.connectionChanged.connect(self.handle_connection_change)
-        self.instruments.oven.lockChanged.connect(self.handle_lock_change)
+        INSTRUMENTS.oven.connectionChanged.connect(self.handle_connection_change)
+        INSTRUMENTS.oven.lockChanged.connect(self.handle_lock_change)
 
     def handle_stability_change(self, status: StabilityStatus):
         """Handle a stability change."""
@@ -77,7 +72,7 @@ class StabilityCheckWidget(GroupBox):
     def handle_status_change(self, running: bool):
         """Handle a status change."""
         self.update_button_states(
-            self.instruments.oven.is_connected(), self.instruments.oven.is_unlocked(), running
+            INSTRUMENTS.oven.is_connected(), INSTRUMENTS.oven.is_unlocked(), running
         )
         if not running:
             self.progressbar.setValue(self.progressbar.maximum())
@@ -85,11 +80,11 @@ class StabilityCheckWidget(GroupBox):
 
     def handle_connection_change(self, connected: bool):
         """Handle the oven's connectionChanged signal."""
-        self.update_button_states(connected, self.instruments.oven.is_unlocked(), self.is_running())
+        self.update_button_states(connected, INSTRUMENTS.oven.is_unlocked(), self.is_running())
 
     def handle_lock_change(self, unlocked: bool):
         """Handle the oven's lockChanged signal."""
-        self.update_button_states(self.instruments.oven.is_connected(), unlocked, self.is_running())
+        self.update_button_states(INSTRUMENTS.oven.is_connected(), unlocked, self.is_running())
         if not self.is_running() and not unlocked:
             self.reset()
 
@@ -108,7 +103,7 @@ class StabilityCheckWidget(GroupBox):
 
     def detect_setpoint(self):
         """Attempt to autofill the setpoint box with the oven's current setpoint."""
-        setpoint = self.instruments.oven.get_setpoint()
+        setpoint = INSTRUMENTS.oven.get_setpoint()
         if setpoint is not None:
             self.setpoint_spinbox.setValue(setpoint)
         else:
@@ -120,7 +115,7 @@ class StabilityCheckWidget(GroupBox):
         if not self.is_running():
             self.progressbar.setValue(0)
 
-            thread = self.thread_type(self.instruments, self.setpoint_spinbox.value())
+            thread = self.thread_type(INSTRUMENTS, self.setpoint_spinbox.value())
             thread.signals.statusChanged.connect(self.handle_status_change)
             thread.signals.stabilityChanged.connect(self.handle_stability_change)
             thread.signals.progressed.connect(self.progressbar.increment)

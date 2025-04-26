@@ -3,11 +3,11 @@ from .tablemodel import TableModel, Column
 import time
 from os import path
 import os
-from ..instruments import InstrumentSet  # ../instruments.py
-from ..enums.status import StabilityStatus, OldSequenceStatus  # ../enums
-from ..classes.plotting import TemperaturePoint  # ../classes
-from ..classes.mutex import DataMutex  # ../classes
-from ..utility.graph import graph_from_folder  # ../utility
+from ..instruments import INSTRUMENTS
+from ..enums.status import StabilityStatus, OldSequenceStatus
+from ..classes.plotting import TemperaturePoint
+from ..classes.mutex import DataMutex
+from ..utility.graph import graph_from_folder
 from .. import Files
 
 
@@ -41,11 +41,11 @@ class SequenceThread(QRunnable):
         f"Time Cycle Began (seconds)"
     )
 
-    def __init__(self, instruments: InstrumentSet, model: TableModel):
+    def __init__(self, model: TableModel):
         super().__init__()
         self.signals = Signals()
 
-        self.oven = instruments.oven
+        self.oven = INSTRUMENTS.oven
         self.model = model
 
         self.cycle_number = 0

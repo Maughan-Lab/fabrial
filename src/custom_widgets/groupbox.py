@@ -1,18 +1,15 @@
 from PyQt6.QtWidgets import QGroupBox, QSizePolicy, QLayout
-from ..instruments import InstrumentSet
 
 
 class GroupBox(QGroupBox):
-    """QGroupBox with that automatically sets the SizePolicy and title and assigns instruments."""
+    """QGroupBox with that automatically sets the SizePolicy and title."""
 
-    def __init__(self, title: str | None, layout: QLayout, instruments: InstrumentSet):
+    def __init__(self, title: str | None, layout: QLayout):
         """
         :param title: The window's title.
         :param layout: The layout to initialize with.
-        :param instruments: The instruments used by the widget.
         """
         super().__init__()
         self.setTitle(title)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        self.instruments = instruments
         self.setLayout(layout)

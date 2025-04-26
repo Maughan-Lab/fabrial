@@ -2,6 +2,7 @@ from ..enums.status import SequenceStatus
 from ..enums.status import StatusStateMachine
 from ..utility.events import PROCESS_EVENTS
 from ..utility.datetime import get_datetime
+from ..instruments import INSTRUMENTS
 from ..classes.plotting import LineSettings
 from .. import Files
 from PyQt6.QtCore import QObject, pyqtSignal
@@ -76,18 +77,18 @@ class BaseProcess(QObject):
         """Cancel the current process gracefully (do not emit signals)."""
         self.process_status.set(SequenceStatus.CANCELED)
 
-    def metadata(self, start_time: float, end_time: float) -> pl.DataFrame:
+    def metadata(self, end_time: float) -> pl.DataFrame:
         """
         Create a DataFrame containing metadata for the process. By default, this DataFrame contains
         the start time, duration, and oven setpoint. You can override this method to add additional
         metadata.
 
-        :param start_time: The start time of the process, as returned by `time.time()`.
         :param end_time: The end time of the process, as returned by `time.time()`.
         """
         HEADERS = Files.Process.Headers.Metadata
+        start_time = self.start_time()
         duration = end_time - start_time
-        setpoint = self.runner().instruments().oven.get_setpoint()
+        setpoint = INSTRUMENTS.oven.get_setpoint()
         metadata = pl.DataFrame(
             {
                 HEADERS.START_DATETIME: get_datetime(start_time),

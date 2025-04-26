@@ -1,4 +1,3 @@
-from ..instruments import InstrumentSet
 from ..enums.status import SequenceStatus
 from ..utility.events import PROCESS_EVENTS
 from PyQt6.QtCore import QThread, QObject
@@ -15,14 +14,12 @@ if TYPE_CHECKING:
 class ProcessRunner(QObject):
     """Runs **Process**es. Contains parameters used by the `run()` method of a **Process**."""
 
-    def __init__(self, parent: QObject, instruments: InstrumentSet, data_directory: str):
+    def __init__(self, parent: QObject, data_directory: str):
         """
         :param parent: The QObject that owns this runner. The parent should be in the same thread.
-        :param instruments: The application's instruments.
         :param data_directory: The folder where all sequence data will be stored.
         """
         super().__init__(parent)
-        self.application_instruments = instruments
         self.data_directory = data_directory
         self.current_process: Process | BackgroundProcess
         self.item: "TreeItem" | None = None
@@ -102,10 +99,6 @@ class ProcessRunner(QObject):
     def current_item(self) -> Union["TreeItem", None]:
         """Get the current item."""
         return self.item
-
-    def instruments(self) -> InstrumentSet:
-        """Get the instruments."""
-        return self.application_instruments
 
     def directory(self) -> str:
         """Get the sequence data directory."""

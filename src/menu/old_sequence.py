@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QMenu, QMenuBar, QFileDialog
 from polars.exceptions import ColumnNotFoundError
 from ..classes.actions import Action
-from ..instruments import InstrumentSet
+from ..instruments import INSTRUMENTS
 from ..sequence.widgets import SequenceWidget
 from ..custom_widgets.dialog import OkDialog
 from ..custom_widgets.plot import OldPlotWidget
@@ -23,10 +23,9 @@ class OldSequenceMenu(QMenu):
         parent: QMenuBar,
         widget: SequenceWidget,
         main_window: "MainWindow",
-        instruments: InstrumentSet,
     ):
         super().__init__("&OldSequence", parent)
-        self.oven = instruments.oven
+        self.oven = INSTRUMENTS.oven
         self.widget = widget
 
         self.create_actions(parent)

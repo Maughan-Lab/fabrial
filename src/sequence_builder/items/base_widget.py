@@ -27,6 +27,10 @@ class BaseWidget(ParameterDescriptionWidget):
     ICON = "script.png"
 
     def __init__(self, layout: QLayout, display_name: str = ""):
+        """
+        :param layout: The layout to use for the parameter tab.
+        :param display_name: The name displayed on the widget's item and window.
+        """
         super().__init__(layout)
         self.set_display_name(display_name)
         self.setWindowModality(Qt.WindowModality.ApplicationModal)

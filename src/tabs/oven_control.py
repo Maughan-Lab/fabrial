@@ -5,7 +5,6 @@ from ..instrument_connection.widgets import InstrumentConnectionWidget
 from ..stability_check.widgets import StabilityCheckWidget
 from ..sequence.widgets import SequenceWidget
 from ..graph.widgets import GraphWidget
-from ..instruments import InstrumentSet
 from ..secondary_window import SecondaryWindow
 from ..classes.actions import Shortcut
 from ..custom_widgets.plot import OldPlotWidget
@@ -14,8 +13,7 @@ from ..custom_widgets.plot import OldPlotWidget
 class OvenControlTab(QWidget):
     """First tab in the application, used for directly controlling the oven."""
 
-    def __init__(self, instruments: InstrumentSet):
-        """:param instruments: The application's instruments."""
+    def __init__(self) -> None:
         # data members
         self.setpoint_widget: SetpointWidget
         self.stability_check_widget: StabilityCheckWidget
@@ -27,17 +25,17 @@ class OvenControlTab(QWidget):
 
         super().__init__()
 
-        self.create_widgets(instruments)
+        self.create_widgets()
         self.create_popped_graph(self.graph_widget.plot)
         self.connect_signals()
 
-    def create_widgets(self, instruments: InstrumentSet):
+    def create_widgets(self):
         """Create subwidgets."""
         # create the layout
         layout = QGridLayout()
         self.setLayout(layout)
 
-        self.initialize_widgets(instruments)
+        self.initialize_widgets()
         # add the widgets
         layout.addWidget(self.setpoint_widget, 0, 0)
         layout.addWidget(self.stability_check_widget, 1, 0)
@@ -48,15 +46,15 @@ class OvenControlTab(QWidget):
         layout.addWidget(self.sequence_widget, 2, 0)
         layout.addWidget(self.graph_widget, 1, 1, 2, 2)
 
-    def initialize_widgets(self, instruments: InstrumentSet):  # this is necessary for testing
+    def initialize_widgets(self):  # this is necessary for testing
         """Store subwidgets in variables."""
-        self.setpoint_widget = SetpointWidget(instruments)
-        self.stability_check_widget = StabilityCheckWidget(instruments)
-        self.sequence_widget = SequenceWidget(instruments)
+        self.setpoint_widget = SetpointWidget()
+        self.stability_check_widget = StabilityCheckWidget()
+        self.sequence_widget = SequenceWidget()
         self.graph_widget = GraphWidget()
         # do not move these two above the other ones
-        self.passive_monitoring_widget = PassiveMonitoringWidget(instruments)
-        self.instrument_connection_widget = InstrumentConnectionWidget(instruments)
+        self.passive_monitoring_widget = PassiveMonitoringWidget()
+        self.instrument_connection_widget = InstrumentConnectionWidget()
 
     def create_popped_graph(self, plot: OldPlotWidget):
         self.popped_graph = SecondaryWindow("Quincy - Popped Graph", None)

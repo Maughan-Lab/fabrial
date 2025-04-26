@@ -1,7 +1,7 @@
-Set the oven's temperature and wait for it to stabilize. Record the oven's temperature every {{ MEASUREMENT_INTERVAL }} ms.
+Increment the oven's temperature and wait for it to stabilize. Record the oven's temperature every {{ MEASUREMENT_INTERVAL }} ms.
 
 # Parameters
-- **Setpoint** - the temperature to set the oven to.
+- **Setpoint Increment** - the amount to increment the setpoint by.
 
 # Visuals
 The oven's temperature over time is shown graphically.

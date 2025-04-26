@@ -52,3 +52,4 @@ coll = COLLECT(
 # copy the dependencies into dist/Quincy
 shutil.copytree("../icons", f"dist/{name}/icons")
 shutil.copytree("../initialization", f"dist/{name}/initialization")
+shutil.copyfile("../oven_settings.json", f"dist/{name}/oven_settings.json")

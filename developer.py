@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
 )
 from src.main_window import MainWindow
-from src.instruments import Oven, InstrumentSet, ConnectionStatus
+from src.instruments import Oven, ConnectionStatus
 from src.stability_check.stability_check import StabilityCheckThread
 from src.sequence.sequence import SequenceThread
 from src.custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
@@ -12,6 +12,7 @@ from src.custom_widgets.groupbox import GroupBox
 from src.utility.layouts import add_to_layout, add_sublayout  # ../utility
 import time
 from main import main
+from src.instruments import INSTRUMENTS
 
 
 class DeveloperOven(Oven):
@@ -81,10 +82,10 @@ class DeveloperOven(Oven):
 
 
 class DeveloperWidget(GroupBox):
-    def __init__(self, instruments: InstrumentSet):
+    def __init__(self):
         layout = QVBoxLayout()
-        super().__init__("Developer", layout, instruments)
-        self.oven = instruments.oven
+        super().__init__("Developer", layout)
+        self.oven = INSTRUMENTS.oven
         self.create_connection_widgets(layout)
         self.create_connection_signal_widgets(layout)
         self.create_lock_widgets(layout)
@@ -159,10 +160,10 @@ class DeveloperMainWindow(MainWindow):
     Add a DeveloperWidget for controlling the oven and use Developer versions of other widgets.
     """
 
-    def __init__(self, instruments):
-        super().__init__(instruments)
+    def __init__(self):
+        super().__init__()
         layout = self.oven_control_tab.layout()
-        layout.addWidget(DeveloperWidget(instruments), 0, 3)
+        layout.addWidget(DeveloperWidget(), 0, 3)
         # use the developer versions of threads
         stability_check_widget = self.oven_control_tab.stability_check_widget
         sequence_widget = self.oven_control_tab.sequence_widget
@@ -191,4 +192,5 @@ class DeveloperSequenceThread(SequenceThread):
 
 
 if __name__ == "__main__":
-    main(DeveloperOven, DeveloperMainWindow)
+    INSTRUMENTS.oven = DeveloperOven()
+    main(DeveloperMainWindow)

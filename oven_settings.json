@@ -1,0 +1,7 @@
+{
+    "temperature-register": 1,
+    "setpoint_register": 0,
+    "max-temperature": 232.0,
+    "min-temperature": 0.0,
+    "number-of-decimals": 1
+}

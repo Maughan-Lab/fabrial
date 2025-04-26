@@ -21,7 +21,7 @@ class EISWidget(BaseWidget):
     def __init__(self):
         """Create a new instance."""
         super().__init__(QVBoxLayout(), "Electrochemical Impedance Spectroscopy")
-        self.devices_list = []
+        self.devices_list: list[str] = []
         self.create_widgets()
 
     def create_widgets(self) -> None:

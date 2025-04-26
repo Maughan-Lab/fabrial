@@ -21,6 +21,18 @@ class SavedSettings:
     SEQUENCE_DIRECTORY = os.path.join(SAVED_SETTINGS_FOLDER, "sequence_directory.csv")
 
 
+class Oven:
+    """File/folder names and dictionary keys for the oven."""
+
+    SETTINGS_FILE = "./oven_settings.json"
+
+    TEMPERATURE_REGISTER = "temperature-register"
+    SETPOINT_REGISTER = "setpoint_register"
+    MAX_TEMPERATURE = "max-temperature"
+    MIN_TEMPERATURE = "min-temperature"
+    NUM_DECIMALS = "number-of-decimals"
+
+
 # TODO: murder this
 class Sequence:
     """File/folder names for the sequence."""
@@ -100,6 +112,9 @@ class Process:
             END_DATETIME = f"End Time ({Datetime.HEADER})"
             DURATION = "Duration (seconds)"
             SETPOINT = "Oven Setpoint (degrees C)"
+
+        class Oven:
+            TEMPERATURE = "Oven Temperature (degrees C)"
 
     class Filenames:
         METADATA = "metadata.csv"

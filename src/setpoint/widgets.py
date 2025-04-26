@@ -3,16 +3,16 @@ from ..custom_widgets.spin_box import TemperatureSpinBox
 from ..custom_widgets.label import Label
 from ..custom_widgets.groupbox import GroupBox
 from ..custom_widgets.dialog import OkDialog
-from ..instruments import InstrumentSet
+from ..instruments import INSTRUMENTS
 from ..utility.layouts import add_to_layout
 
 
 class SetpointWidget(GroupBox):
     """Widget for changing the setpoint."""
 
-    def __init__(self, instruments: InstrumentSet):
-        """:param instruments: Container for instruments."""
-        super().__init__("Setpoint", QVBoxLayout(), instruments)
+    def __init__(self):
+        super().__init__("Setpoint", QVBoxLayout())
+        self.oven = INSTRUMENTS.oven
 
         self.create_widgets()
         self.connect_widgets()
@@ -35,16 +35,12 @@ class SetpointWidget(GroupBox):
     def connect_signals(self):
         """Connect external signals."""
         # oven connection
-        self.instruments.oven.connectionChanged.connect(
-            lambda connected: self.update_button_states(
-                connected, self.instruments.oven.is_unlocked()
-            )
+        self.oven.connectionChanged.connect(
+            lambda connected: self.update_button_states(connected, self.oven.is_unlocked())
         )
         # oven lock
-        self.instruments.oven.lockChanged.connect(
-            lambda unlocked: self.update_button_states(
-                self.instruments.oven.is_connected(), unlocked
-            )
+        self.oven.lockChanged.connect(
+            lambda unlocked: self.update_button_states(self.oven.is_connected(), unlocked)
         )
 
     def update_button_states(self, connected: bool, unlocked: bool):
@@ -55,7 +51,7 @@ class SetpointWidget(GroupBox):
     def change_setpoint(self):
         """Change the oven's setpoint."""
         # intentionally not locking the oven because this is such a fast operation
-        success = self.instruments.oven.change_setpoint(self.setpoint_spinbox.value())
+        success = self.oven.change_setpoint(self.setpoint_spinbox.value())
         if not success:
             # this will probably never run, but it could if the read operation fails
             OkDialog("Error", "Failed to change setpoint, please try again.").exec()

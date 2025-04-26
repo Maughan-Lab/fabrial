@@ -2,17 +2,16 @@ from PyQt6.QtWidgets import QTabWidget, QWidget
 from .oven_control import OvenControlTab
 from .sequence_builder import SequenceBuilderTab
 from .sequence_display import SequenceDisplayTab
-from ..instruments import InstrumentSet
 from ..utility.images import make_icon
 
 
 class TabWidget(QTabWidget):
-    def __init__(self, parent: QWidget | None, instruments: InstrumentSet):
+    def __init__(self, parent: QWidget | None):
         super().__init__(parent)
         self.setDocumentMode(True)
         self.sequence_visuals_tab = SequenceDisplayTab()
-        self.sequence_builder_tab = SequenceBuilderTab(instruments, self.sequence_visuals_tab)
-        self.oven_control_tab = OvenControlTab(instruments)
+        self.sequence_builder_tab = SequenceBuilderTab(self.sequence_visuals_tab)
+        self.oven_control_tab = OvenControlTab()
 
         self.addTab(self.sequence_builder_tab, make_icon("script-block.png"), "Sequence Builder")
         self.addTab(self.sequence_visuals_tab, make_icon("chart.png"), "Sequence Visuals")

@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QRunnable
-from ..instruments import InstrumentSet
+from ..instruments import INSTRUMENTS
 from ..enums.status import StabilityStatus
 import time
 
@@ -12,13 +12,13 @@ class StabilityCheckThread(QRunnable):
     MEASUREMENT_INTERVAL = 5  # seconds
     WAIT_INTERVAL = 0.01  # seconds
 
-    def __init__(self, instruments: InstrumentSet, setpoint: float):
+    def __init__(self, setpoint: float):
         super().__init__()
         # signals
         self.signals = Signals()
 
         self.setpoint = setpoint
-        self.oven = instruments.oven
+        self.oven = INSTRUMENTS.oven
         self.cancel = False
         self.connection_problem = False
 

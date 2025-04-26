@@ -15,7 +15,6 @@ from ...utility.layouts import add_to_layout, add_sublayout
 from ...utility.images import make_pixmap
 from typing import Self
 from ..sequence_runner import SequenceRunner
-from ...instruments import InstrumentSet
 from ... import Files
 import os
 
@@ -89,11 +88,7 @@ class SequenceTreeWidget(Container):
     sequenceStatusChanged = pyqtSignal(SequenceStatus)
     graphSignalsChanged = pyqtSignal(GraphSignals)
 
-    def __init__(self, instruments: InstrumentSet):
-        """
-        :param instruments: The application's instruments.
-        :param tabs: The
-        """
+    def __init__(self) -> None:
         super().__init__(QVBoxLayout())
 
         self.view: SequenceTreeView
@@ -102,7 +97,6 @@ class SequenceTreeWidget(Container):
         self.directory_label: IconLabel
         self.create_widgets().connect_signals()
 
-        self.instruments = instruments
         self.threads: list[SequenceRunner] = []
 
         self.command_signals = CommandSignals()
@@ -232,7 +226,7 @@ class SequenceTreeWidget(Container):
         #         return self
 
         thread = QThread(self)
-        runner = SequenceRunner(self.instruments, directory, self.view.model().root())
+        runner = SequenceRunner(directory, self.view.model().root())
         runner.moveToThread(thread)
         self.connect_sequence_signals(runner, thread)
         self.graphSignalsChanged.emit(runner.graph_signals)

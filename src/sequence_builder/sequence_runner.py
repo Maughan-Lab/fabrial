@@ -1,6 +1,5 @@
 from PyQt6.QtCore import pyqtSignal, QObject
 from ..classes.process_runner import ProcessRunner
-from ..instruments import InstrumentSet
 from typing import Self
 from .tree_item import TreeItem
 from ..enums.status import SequenceStatus
@@ -12,16 +11,15 @@ class SequenceRunner(QObject):
 
     finished = pyqtSignal()
 
-    def __init__(self, instruments: InstrumentSet, data_directory: str, root_item: TreeItem):
+    def __init__(self, data_directory: str, root_item: TreeItem):
         """
-        :param instruments: The applications instruments.
         :param data_directory: The name of the base directory to write all data to.
         :root_item: The root item of the sequence builder.
         """
         super().__init__()
         self.data_directory = data_directory
         self.root_item = root_item
-        self.process_runner = ProcessRunner(self, instruments, data_directory)
+        self.process_runner = ProcessRunner(self, data_directory)
         self.canceled = False
 
         self.command_signals = self.process_runner.command_signals

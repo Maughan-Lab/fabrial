@@ -1,7 +1,6 @@
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
 from src.main_window import MainWindow
-from src.instruments import Oven, InstrumentSet
 from src import Files
 import sys
 import os
@@ -24,16 +23,14 @@ def make_application_folders():
         os.makedirs(folder, exist_ok=True)
 
 
-def main(oven_type: type[Oven] = Oven, main_window_type: type[MainWindow] = MainWindow):
+def main(main_window_type: type[MainWindow] = MainWindow):
     update_id()
     make_application_folders()
 
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(Files.Icons.MAIN_ICON))
-    # create the instrument using `oven_type`
-    instruments = InstrumentSet(oven_type(), None)  # necessary for testing
     # create the main window using `main_window_type`
-    main_window = main_window_type(instruments)  # necessary for testing
+    main_window = main_window_type()  # necessary for testing
     main_window.show()
 
     app.exec()

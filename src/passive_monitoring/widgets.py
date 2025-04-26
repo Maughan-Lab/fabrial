@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QGridLayout
 from PyQt6.QtCore import Qt
 from ..custom_widgets.label import Label
 from ..custom_widgets.groupbox import GroupBox
-from ..instruments import InstrumentSet
+from ..instruments import INSTRUMENTS
 
 
 class PassiveMonitoringWidget(GroupBox):
@@ -10,9 +10,9 @@ class PassiveMonitoringWidget(GroupBox):
 
     NULL_TEXT = "-----"
 
-    def __init__(self, instruments: InstrumentSet):
-        """:param instruments: Container for instruments."""
-        super().__init__("Measurements", QGridLayout(), instruments)
+    def __init__(self):
+        super().__init__("Measurements", QGridLayout())
+        self.oven = INSTRUMENTS.oven
 
         self.create_widgets()
         self.connect_signals()
@@ -38,9 +38,9 @@ class PassiveMonitoringWidget(GroupBox):
         layout.addWidget(label_widget, row, 1)
 
     def connect_signals(self):
-        self.instruments.oven.connectionChanged.connect(self.handle_connection_change)
-        self.instruments.oven.temperatureChanged.connect(self.handle_temperature_change)
-        self.instruments.oven.setpointChanged.connect(self.handle_setpoint_change)
+        self.oven.connectionChanged.connect(self.handle_connection_change)
+        self.oven.temperatureChanged.connect(self.handle_temperature_change)
+        self.oven.setpointChanged.connect(self.handle_setpoint_change)
 
     def handle_connection_change(self, connected: bool):
         if not connected:
