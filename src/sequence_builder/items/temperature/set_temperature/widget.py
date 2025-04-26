@@ -19,7 +19,7 @@ class SetTemperatureWidget(BaseWidget):
         layout = QFormLayout()
         super().__init__(layout, self.DISPLAY_NAME_PREFIX)
         self.set_description_from_file(
-            "oven_control",
+            "temperature",
             "set_temperature.md",
             {
                 "MEASUREMENT_INTERVAL": str(self.PROCESS_TYPE.MEASUREMENT_INTERVAL),

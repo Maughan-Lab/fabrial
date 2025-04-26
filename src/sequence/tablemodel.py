@@ -5,7 +5,7 @@ from polars import col
 import polars as pl
 from enum import Enum
 from .. import Files
-from ..instruments import Oven
+from ..instruments import INSTRUMENTS
 
 
 class Column(Enum):
@@ -67,10 +67,10 @@ class SequenceTableModel(TableModel):
                         case Column.TEMPERATURE.value:
                             new_value = round(float(value), 1)
                             # MINIMUM_TEMPERATURE <= temperature <= MAXIMUM_TEMPERATURE
-                            if new_value > Oven.MAXIMUM_TEMPERATURE:
-                                new_value = Oven.MAXIMUM_TEMPERATURE
-                            elif new_value < Oven.MINIMUM_TEMPERATURE:
-                                new_value = Oven.MINIMUM_TEMPERATURE
+                            if new_value > INSTRUMENTS.oven.maximum_temperature():
+                                new_value = INSTRUMENTS.oven.maximum_temperature()
+                            elif new_value < INSTRUMENTS.oven.minimum_temperature():
+                                new_value = INSTRUMENTS.oven.minimum_temperature()
                         case Column.BUFFER_HOURS.value | Column.HOLD_HOURS.value:
                             new_value = int(float(value))
                             # hours >= 0
@@ -129,7 +129,7 @@ class SequenceTableModel(TableModel):
         """
         cycles = [i for i in range(starting_cycle_number, starting_cycle_number + row_count)]
         times = [0 for i in range(row_count)]
-        temperatures = [Oven.MINIMUM_TEMPERATURE for i in range(row_count)]
+        temperatures = [INSTRUMENTS.oven.minimum_temperature() for i in range(row_count)]
         new_rows = pl.DataFrame(
             {
                 str(Column.CYCLE): cycles,

@@ -1,6 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-from os import path
+import os
 import shutil
 
 name = "Quincy"
@@ -50,6 +50,10 @@ coll = COLLECT(
 )
 
 # copy the dependencies into dist/Quincy
-shutil.copytree("../icons", f"dist/{name}/icons")
-shutil.copytree("../initialization", f"dist/{name}/initialization")
-shutil.copyfile("../oven_settings.json", f"dist/{name}/oven_settings.json")
+# filenames are relative to the base directory
+FILES_TO_COPY = ["oven_settings.json"]
+FOLDERS_TO_COPY = ["icons", "initialization", "item_descriptions"]
+for file in FILES_TO_COPY:
+    shutil.copyfile(os.path.join("..", file), os.path.join("dist", name, file))
+for folder in FOLDERS_TO_COPY:
+    shutil.copytree(os.path.join("..", folder), os.path.join("dist", name, folder))
