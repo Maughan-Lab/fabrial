@@ -5,6 +5,7 @@ AC_VOLTAGE = "AC-voltage"
 DC_voltage = "DC-voltage"
 AREA = "area"
 ESTIMATED_IMPEDANCE = "estimated-impedance"
+SELECTED_PSTATS = "selected-potentiostats"
 
 
 class Headers:

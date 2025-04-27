@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
 from src.main_window import MainWindow
 from src import Files
+from src.gamry_integration.Gamry import GAMRY
 import sys
 import os
 
@@ -32,8 +33,10 @@ def main(main_window_type: type[MainWindow] = MainWindow):
     # create the main window using `main_window_type`
     main_window = main_window_type()  # necessary for testing
     main_window.show()
-
+    # run Quincy
     app.exec()
+    # close GamryCOM
+    GAMRY.cleanup()
 
 
 if __name__ == "__main__":

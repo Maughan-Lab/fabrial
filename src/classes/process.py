@@ -123,14 +123,15 @@ class Process(BaseProcess):
         super().__init__(runner, data)
         self.info_signals = InformationSignals(self)
 
-    def wait(self, delay_ms: int, unpause_fn: Callable[[], bool] = lambda: False) -> bool:
+    def wait(self, delay_ms: int, unerror_fn: Callable[[], bool] = lambda: False) -> bool:
         """
         Hold for **delay** milliseconds or as long as the process is paused, whichever is longer.
         This is where signals are processed, so be sure to call this frequently.
 
         :param delay_ms: How long to hold for.
-        :param unpause_fn: A function that can cause the sequence to unpause if it is paused. This
-        function takes no arguments and should return **True** to unpause, **False** otherwise.
+        :param unerror_fn: If the sequence is paused in an error state, this function can cause it
+        to unpause and exit the error state. This function takes no arguments and should return
+        **True** to unpause, **False** otherwise.
 
         :returns: Whether the process should continue (i.e. it was not cancelled).
         """
@@ -144,8 +145,9 @@ class Process(BaseProcess):
             if self.is_canceled():
                 return False
             PROCESS_EVENTS()  # process events for 10 ms
-            if unpause_fn():
-                self.unpause()
+            if self.is_errored():
+                if unerror_fn():
+                    self.unpause()
 
         return True
 

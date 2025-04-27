@@ -3,7 +3,7 @@ from enum import Enum
 import json
 from PyQt6.QtCore import pyqtSignal, QObject, QMutex
 import minimalmodbus as modbus  # type: ignore
-from .classes.mutex import SignalMutex
+from .classes.mutex import SignalMutex, DataMutex
 from typing import Union, TYPE_CHECKING
 from .utility.timers import Timer
 from . import Files
@@ -54,7 +54,7 @@ class Instrument(QObject):
         super().__init__()
         self.connection_status = ConnectionStatus.NULL
 
-        # this lock indicates to the rest of the application the instrument is not available
+        # this lock indicates to the rest of the application whether the instrument is available
         self.lock = SignalMutex()  # do not manually access the lock ever
         self.lockChanged = self.lock.lockChanged  # shortcut to signal inside self.lock
 
@@ -75,6 +75,12 @@ class Instrument(QObject):
     def release(self):
         """Make the instrument mutable for other processes."""
         self.lock.unlock()
+
+    def try_device_lock(self) -> bool:
+        """Try to acquire the device lock with a timeout of 10 ms."""
+        if self.device_lock.tryLock(10):
+            return True
+        return False
 
     def update_connection_status(self, connection_status: ConnectionStatus):
         """
@@ -98,11 +104,26 @@ class Instrument(QObject):
 
 
 class Oven(Instrument):
-    """Class to represent the physical oven Quincy controls."""
+    """
+    Class to represent the physical oven the application controls. Once `start()` is called, the
+    oven will attempt to connect automatically and will also run a stability check.
+    """
 
     # signals
     temperatureChanged = pyqtSignal(float)
+    """Fires whenever the oven's temperature *changes*. Sends the temperature as a **float**."""
     setpointChanged = pyqtSignal(float)
+    """Fires whenever the oven's setpoint *changes*. Sends the setpoint as a **float**."""
+    stabilityChanged = pyqtSignal(bool)
+    """
+    Fires whenever the oven's stability status changes. Sends a **bool** indicating whether the
+    temperature is stable.
+    """
+    stabilityCountChanged = pyqtSignal(int)
+    """
+    Fires whenever the oven's stability measurement count changes. Sends the new count as an
+    **int**.
+    """
 
     class ClampResult(Enum):
         """Result enum used by the `clamp_setpoint()` method."""
@@ -123,10 +144,19 @@ class Oven(Instrument):
         self.setpoint_register: int
         self.temperature_register: int
         self.number_of_decimals: int
+        self.stability_tolerance: float
+        self.minimum_stability_measurements: int
         self.load_settings()
+        # do not access these directly
+        self.last_temperature: float | None = None
+        self.last_setpoint: float | None = None
+        self.stability_measurement_count = 0
+        self.stable = DataMutex(False)
+        self.disconnected_count = 0
         # timers for connection and reading the temperature and setpoint
         self.temperature_timer = Timer(self, 1000, self.read_temp)
         self.setpoint_timer = Timer(self, 1000, self.get_setpoint)
+        self.stability_timer = Timer(self, 5000, self.check_stability)
         self.connection_timer = Timer(self, 1000, self.connect)
         self.connectionChanged.connect(self.handle_connection_change)
 
@@ -147,6 +177,8 @@ class Oven(Instrument):
         self.setpoint_register = settings[Files.Oven.SETPOINT_REGISTER]
         self.temperature_register = settings[Files.Oven.TEMPERATURE_REGISTER]
         self.number_of_decimals = settings[Files.Oven.NUM_DECIMALS]
+        self.stability_tolerance = settings[Files.Oven.STABILITY_TOLERANCE]
+        self.minimum_stability_measurements = settings[Files.Oven.MINIMUM_STABILITY_MEASUREMENTS]
 
     def save_settings(self):
         """Save the oven settings to the oven settings file."""
@@ -156,6 +188,8 @@ class Oven(Instrument):
             Files.Oven.SETPOINT_REGISTER: self.setpoint_register,
             Files.Oven.TEMPERATURE_REGISTER: self.temperature_register,
             Files.Oven.NUM_DECIMALS: self.number_of_decimals,
+            Files.Oven.STABILITY_TOLERANCE: self.stability_tolerance,
+            Files.Oven.MINIMUM_STABILITY_MEASUREMENTS: self.minimum_stability_measurements,
         }
         with open(Files.Oven.SETTINGS_FILE, "w") as f:
             json.dump(settings, f)
@@ -168,6 +202,8 @@ class Oven(Instrument):
         else:
             self.temperature_timer.stop()
             self.setpoint_timer.stop()
+            self.last_temperature = None
+            self.last_setpoint = None
             self.connection_timer.start()
 
     def read_temp(self) -> float | None:
@@ -180,10 +216,10 @@ class Oven(Instrument):
             temperature = float(
                 self.device.read_register(self.temperature_register, self.number_of_decimals)
             )
-            self.temperatureChanged.emit(temperature)
+            self.update_temperature(temperature)
         except Exception:
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
-            return None
+            temperature = None
         finally:
             self.device_lock.unlock()
 
@@ -203,7 +239,8 @@ class Oven(Instrument):
             self.device.write_register(
                 self.setpoint_register, self.clamp_setpoint(setpoint)[0], self.number_of_decimals
             )
-            self.setpointChanged.emit(setpoint)
+            self.update_setpoint(setpoint)
+            self.reset_stability()
             success = True
         except Exception:
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
@@ -222,11 +259,24 @@ class Oven(Instrument):
             setpoint = float(
                 self.device.read_register(self.setpoint_register, self.number_of_decimals)
             )
+            self.update_setpoint(setpoint)
         except Exception:
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
         finally:
             self.device_lock.unlock()
         return setpoint
+
+    def update_temperature(self, temperature: float):
+        """Update the last temperature and emit signals on a change. This method is private."""
+        if self.last_temperature is None or self.last_temperature != temperature:
+            self.last_temperature = temperature
+            self.temperatureChanged.emit(temperature)
+
+    def update_setpoint(self, setpoint: float):
+        """Update the last setpoint and emit signals on a change. This method is private."""
+        if self.last_setpoint is None or self.last_setpoint != setpoint:
+            self.last_setpoint = setpoint
+            self.setpointChanged.emit(setpoint)
 
     def clamp_setpoint(self, setpoint: float) -> tuple[float, ClampResult]:
         """Clamp the provided **setpoint** to be within the oven's physical limits."""
@@ -235,12 +285,6 @@ class Oven(Instrument):
         elif setpoint < self.min_temperature:
             return (self.min_temperature, Oven.ClampResult.MIN_CLAMP)
         return (setpoint, Oven.ClampResult.NO_CLAMP)
-
-    def try_device_lock(self) -> bool:
-        """Try to acquire the device lock with a timeout of 10 ms."""
-        if self.device_lock.tryLock(10):
-            return True
-        return False
 
     def connect(self):
         """Attempts to connect to the oven."""
@@ -262,6 +306,61 @@ class Oven(Instrument):
         instrument.
         """
         self.connection_timer.start()
+        self.stability_timer.start()
+
+    def check_stability(self):
+        """Check whether the oven's temperature is stable."""
+        if not self.is_connected():
+            # if we're not connected for 10 stability checks, we are unstable
+            if self.disconnected_count >= 10 - 1:  # arbitrary value, 10 - 1 because of structure
+                self.reset_stability()
+            else:
+                self.disconnected_count += 1
+        else:
+            self.disconnected_count = 0
+            # if there are values ready
+            if self.last_temperature is not None and self.last_setpoint is not None:
+                # if the last temperature measurement is within the stability tolerance
+                if self.measurement_is_stable(self.last_temperature, self.last_setpoint):
+                    # if we're not already stable, check to see if we can enter the stable state
+                    if not self.is_stable():
+                        self.increment_stability_count()
+
+                        if self.stability_measurement_count >= self.minimum_stability_measurements:
+                            self.update_stability_status(True)
+                else:
+                    # we're not stable, update accordingly
+                    self.reset_stability()
+
+    def measurement_is_stable(self, temperature: float, setpoint: float) -> bool:
+        """Whether the temperature is within the oven's stability tolerance."""
+        return abs(temperature - setpoint) <= self.stability_tolerance
+
+    def update_stability_count(self, count: int):
+        """Update the stability measurement count and emit signals on a change."""
+        if self.stability_measurement_count != count:
+            self.stability_measurement_count = count
+            self.stabilityCountChanged.emit(count)
+
+    def increment_stability_count(self):
+        """Increment the stability measurement count by 1 and emit signals."""
+        self.stability_measurement_count += 1
+        self.stabilityCountChanged.emit(self.stability_measurement_count)
+
+    def update_stability_status(self, stable: bool):
+        """Update the oven's stability status and emit signals on a change."""
+        if self.stable.get() != stable:
+            self.stable.set(stable)
+            self.stabilityChanged.emit(stable)
+
+    def reset_stability(self):
+        """Reset the oven's stability status and counter."""
+        self.update_stability_count(0)
+        self.update_stability_status(False)
+
+    def is_stable(self):
+        """Whether the oven's temperature is stable. This is thread safe."""
+        return self.stable.get()
 
 
 @dataclass

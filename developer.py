@@ -51,7 +51,7 @@ class DeveloperOven(Oven):
     def read_temp(self) -> float | None:
         """Return the previously set temperature if connected, else None."""
         if self.is_connected():
-            self.temperatureChanged.emit(self.developer_temperature)
+            self.update_temperature(self.developer_temperature)
             return self.developer_temperature
         else:
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
@@ -62,11 +62,13 @@ class DeveloperOven(Oven):
         self.developer_setpoint = setpoint
         if not self.is_connected():
             self.update_connection_status(ConnectionStatus.DISCONNECTED)
+        else:
+            self.update_setpoint(setpoint)
         return self.is_connected()
 
     def get_setpoint(self) -> float | None:
         if self.is_connected():
-            self.setpointChanged.emit(self.developer_setpoint)
+            self.update_setpoint(self.developer_setpoint)
             return self.developer_setpoint
         else:
             self.update_connection_status(ConnectionStatus.DISCONNECTED)

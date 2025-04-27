@@ -40,7 +40,7 @@ class SignalMutex(QMutex):
 
 
 class DataMutex[Data](QReadWriteLock):  # generic class
-    """Mutex with associated data."""
+    """QReadWriteMutex with associated data."""
 
     def __init__(self, data: Data):
         super().__init__()

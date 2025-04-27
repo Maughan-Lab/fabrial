@@ -1,7 +1,9 @@
 from .....classes.process import Process
+from .....gamry_integration.DrewEIS import main
 
 
 class EISProcess(Process):
     def run(self):
-        # TODO: implement
-        pass
+        print("Starting")
+        main()
+        print("Ending")

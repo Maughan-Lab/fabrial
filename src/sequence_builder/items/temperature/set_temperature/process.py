@@ -50,14 +50,9 @@ class SetTemperatureProcess(GraphingProcess):
     def run(self):  # overridden
         if self.pre_run():
             try:
-                stable_count = 0
-                while stable_count < self.MINIMUM_MEASUREMENTS:
+                while not self.oven.is_stable():
                     temperature = self.oven.read_temp()
                     if temperature is not None:  # we read successfully
-                        if abs(temperature - self.setpoint) <= self.TOLERANCE:
-                            stable_count += 1
-                        else:
-                            stable_count = 0
                         self.record_temperature(temperature)
                     else:  # connection problem
                         self.error_pause()

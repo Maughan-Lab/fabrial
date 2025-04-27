@@ -31,6 +31,8 @@ class Oven:
     MAX_TEMPERATURE = "max-temperature"
     MIN_TEMPERATURE = "min-temperature"
     NUM_DECIMALS = "number-of-decimals"
+    STABILITY_TOLERANCE = "stability-tolerance"
+    MINIMUM_STABILITY_MEASUREMENTS = "minimum-measurements-for-stability"
 
 
 # TODO: murder this

@@ -3,5 +3,7 @@
     "setpoint_register": 0,
     "max-temperature": 232.0,
     "min-temperature": 0.0,
-    "number-of-decimals": 1
+    "number-of-decimals": 1,
+    "stability-tolerance": 1.0,
+    "minimum-measurements-for-stability": 2
 }

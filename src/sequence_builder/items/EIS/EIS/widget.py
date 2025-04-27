@@ -3,13 +3,11 @@ from .....utility.layouts import add_sublayout, add_to_layout, add_to_form_layou
 from .....custom_widgets.spin_box import SpinBox, DoubleSpinBox
 from .....custom_widgets.button import Button
 from .....custom_widgets.label import Label
-from typing import Self
-from . import encoding as DATA
+from typing import Any, Self
+from . import encoding
 from ...base_widget import BaseWidget
 from .process import EISProcess
-
-from .....gamry_integration.GamryCOM import GamryCOM
-import comtypes.client as client  # type: ignore
+from .....gamry_integration.Gamry import GAMRY
 
 
 class EISWidget(BaseWidget):
@@ -18,10 +16,10 @@ class EISWidget(BaseWidget):
     PROCESS_TYPE = EISProcess
     ICON = "battery-charge.png"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Create a new instance."""
         super().__init__(QVBoxLayout(), "Electrochemical Impedance Spectroscopy")
-        self.devices_list: list[str] = []
+        self.pstat_checkboxes: dict[str, QCheckBox] = {}
         self.create_widgets()
 
     def create_widgets(self) -> None:
@@ -29,16 +27,14 @@ class EISWidget(BaseWidget):
         layout: QVBoxLayout = self.parameter_widget().layout()  # type: ignore
 
         button_layout = add_sublayout(layout, QHBoxLayout)
-        add_to_layout(
-            button_layout,
-            Button("Default", self.restore_defaults),
-            Button("Reload Device List", self.reload_device_list),
+        self.reload_button = Button(
+            "Reload Device List", lambda: self.reload_pstat_list(self.selected_pstats())
         )
+        add_to_layout(button_layout, self.reload_button)
 
         device_list_layout = add_sublayout(layout, QHBoxLayout)
         device_list_layout.addWidget(Label("Potentiostat(s)"))
         self.devices_layout = add_sublayout(device_list_layout, QVBoxLayout)
-        self.reload_device_list()
 
         parameter_layout = add_sublayout(layout, QFormLayout)
 
@@ -61,43 +57,53 @@ class EISWidget(BaseWidget):
             ("Estimated Z (ohms)", self.estimated_impedance_spinbox),
         )
 
-    def reload_device_list(self):
-        """Reload the list of available devices."""
-        # get the device list from GamryCOM
-        # clear the widgets in self.devices_layout
-        # remake the widgets with the available list of devices
-        # TODO: figure out if this is fast or slow
-        clear_layout(self.devices_layout)
-        devices = client.CreateObject(GamryCOM.GamryDeviceList)
-        names = devices.EnumSections()
-        for name in names:
-            self.devices_layout.addWidget(QCheckBox(name))
+    def reload_pstat_list(self, selected_pstats: list[str]) -> None:
+        """
+        Reload the list of available potentiostats.
 
-    def restore_defaults(self):
-        """Set all values to their default value."""
-        # TODO: implement this or delete it if you don't need it
-        pass
+        :param selected_pstats: A list of potentiostat identifiers which should be checked.
+        """
+        identifiers: list[str] = GAMRY.get_pstat_list()
+        clear_layout(self.devices_layout)
+        self.pstat_checkboxes.clear()
+
+        for identifier in identifiers:
+            checkbox = QCheckBox(identifier)
+            self.pstat_checkboxes.update({identifier: checkbox})
+            if identifier in selected_pstats:
+                checkbox.setChecked(True)
+            self.devices_layout.addWidget(checkbox)
+
+    def selected_pstats(self) -> list[str]:
+        """Get a list of the selected potentiostats. The list contains pstat identifiers."""
+        selected_pstats: list[str] = []
+        for identifier, checkbox in self.pstat_checkboxes.items():
+            if checkbox.isChecked():
+                selected_pstats.append(identifier)
+        return selected_pstats
 
     @classmethod
-    def from_dict(cls: type[Self], data_as_dict: dict) -> Self:
+    def from_dict(cls: type[Self], data_as_dict: dict[str, Any]) -> Self:
         widget = cls()
-        widget.initial_frequency_spinbox.setValue(data_as_dict[DATA.INITIAL_FREQUENCY])
-        widget.final_frequency_spinbox.setValue(data_as_dict[DATA.FINAL_FREQUENCY])
-        widget.points_per_decade_spinbox.setValue(data_as_dict[DATA.POINTS_PER_DECADE])
-        widget.AC_voltage_spinbox.setValue(data_as_dict[DATA.AC_VOLTAGE])
-        widget.DC_voltage_spinbox.setValue(data_as_dict[DATA.DC_voltage])
-        widget.area_spinbox.setValue(data_as_dict[DATA.AREA])
-        widget.estimated_impedance_spinbox.setValue(data_as_dict[DATA.ESTIMATED_IMPEDANCE])
+        widget.initial_frequency_spinbox.setValue(data_as_dict[encoding.INITIAL_FREQUENCY])
+        widget.final_frequency_spinbox.setValue(data_as_dict[encoding.FINAL_FREQUENCY])
+        widget.points_per_decade_spinbox.setValue(data_as_dict[encoding.POINTS_PER_DECADE])
+        widget.AC_voltage_spinbox.setValue(data_as_dict[encoding.AC_VOLTAGE])
+        widget.DC_voltage_spinbox.setValue(data_as_dict[encoding.DC_voltage])
+        widget.area_spinbox.setValue(data_as_dict[encoding.AREA])
+        widget.estimated_impedance_spinbox.setValue(data_as_dict[encoding.ESTIMATED_IMPEDANCE])
+        widget.reload_pstat_list(data_as_dict[encoding.SELECTED_PSTATS])
         return widget
 
     def to_dict(self) -> dict:
         data = {
-            DATA.INITIAL_FREQUENCY: self.initial_frequency_spinbox.value(),
-            DATA.FINAL_FREQUENCY: self.final_frequency_spinbox.value(),
-            DATA.POINTS_PER_DECADE: self.points_per_decade_spinbox.value(),
-            DATA.AC_VOLTAGE: self.AC_voltage_spinbox.value(),
-            DATA.DC_voltage: self.DC_voltage_spinbox.value(),
-            DATA.AREA: self.area_spinbox.value(),
-            DATA.ESTIMATED_IMPEDANCE: self.estimated_impedance_spinbox.value(),
+            encoding.INITIAL_FREQUENCY: self.initial_frequency_spinbox.value(),
+            encoding.FINAL_FREQUENCY: self.final_frequency_spinbox.value(),
+            encoding.POINTS_PER_DECADE: self.points_per_decade_spinbox.value(),
+            encoding.AC_VOLTAGE: self.AC_voltage_spinbox.value(),
+            encoding.DC_voltage: self.DC_voltage_spinbox.value(),
+            encoding.AREA: self.area_spinbox.value(),
+            encoding.ESTIMATED_IMPEDANCE: self.estimated_impedance_spinbox.value(),
+            encoding.SELECTED_PSTATS: self.selected_pstats(),
         }
         return data
