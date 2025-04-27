@@ -11,14 +11,20 @@ class GraphSignals(QObject):
     """
 
     initPlot = pyqtSignal(LineSettings)
+    """Initialize the plot. Emit with a **LineSettings** object."""
     clear = pyqtSignal()
+    """Clear the plot. Emit with no parameters."""
     addPoint = pyqtSignal(float, float)  # x, y
+    """Add a point to the plot. Emit with `x`, `y`, where `x` and `y` are **float**s."""
+    saveFig = pyqtSignal(str)
+    """Save the figure. Emit with the filename as a **str**."""
 
     def connect_to_other(self, other: Self) -> Self:
         """All of **other**'s signals will fire this object's corresponding signal."""
         other.initPlot.connect(self.initPlot)
         other.clear.connect(self.clear)
         other.addPoint.connect(self.addPoint)
+        other.saveFig.connect(self.saveFig)
 
         return self
 

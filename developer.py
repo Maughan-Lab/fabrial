@@ -77,7 +77,7 @@ class DeveloperOven(Oven):
     def connect(self):
         return
 
-    def update_port(self, port):
+    def set_port(self, port):
         """Update the port variable and do nothing else."""
         self.port = port
         pass
@@ -165,15 +165,7 @@ class DeveloperMainWindow(MainWindow):
     def __init__(self):
         super().__init__()
         layout = self.oven_control_tab.layout()
-        layout.addWidget(DeveloperWidget(), 0, 3)
-        # use the developer versions of threads
-        stability_check_widget = self.oven_control_tab.stability_check_widget
-        sequence_widget = self.oven_control_tab.sequence_widget
-        stability_check_widget.thread_type = DeveloperStabilityCheckThread
-        stability_check_widget.progressbar.setMaximum(
-            stability_check_widget.thread_type.MINIMUM_MEASUREMENTS
-        )
-        sequence_widget.thread_type = DeveloperSequenceThread
+        layout.addWidget(DeveloperWidget())
 
 
 class DeveloperStabilityCheckThread(StabilityCheckThread):

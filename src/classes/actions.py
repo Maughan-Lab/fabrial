@@ -13,6 +13,7 @@ class Action(QAction):
         action: Callable[..., Any] | pyqtBoundSignal | None = None,
         status_tip: str | None = None,
         shortcut: str | None = None,
+        shortcut_context: Qt.ShortcutContext = Qt.ShortcutContext.WindowShortcut,
     ):
         """
         Creates a QAction tied to **parent**.
@@ -22,6 +23,8 @@ class Action(QAction):
         :param action: The function this action calls.
         :param status_tip: Optional text that is shown when a user hovers over the action.
         :param shortcut: An optional keyboard shortcut in the form of "Ctrl+A".
+        :param shortcut_context: The shortcut context. Defaults to
+        `Qt.ShortcutContext.WindowShortcut`.
         """
         super().__init__(name, parent)
         if action is not None:
@@ -29,6 +32,7 @@ class Action(QAction):
         self.setStatusTip(status_tip)
         if shortcut is not None:
             self.setShortcut(QKeySequence(shortcut))
+            self.setShortcutContext(shortcut_context)
 
 
 class Shortcut(QShortcut):

@@ -1,7 +1,7 @@
 from .....classes.process import GraphingProcess
 from .....classes.process_runner import ProcessRunner
 from .....utility.temperature import create_temperature_file, record_temperature_data
-from .....instruments import INSTRUMENTS
+from .....instruments import INSTRUMENTS, InstrumentLocker
 from . import encoding
 from typing import Any
 import time
@@ -35,9 +35,8 @@ class SetTemperatureProcess(GraphingProcess):
         self.temperature_file: TextIOWrapper
         self.setpoint = data[encoding.SETPOINT]
 
-    def pre_run(self) -> bool:
+    def pre_run(self):
         """Pre-run tasks. Returns whether the process should continue."""
-        self.oven.acquire()
         self.init_scatter_plot(
             self.title(),
             "Time (seconds)",
@@ -45,11 +44,11 @@ class SetTemperatureProcess(GraphingProcess):
             "Oven Temperature",
         )
         self.create_files()
-        return self.change_setpoint()
 
     def run(self):  # overridden
-        if self.pre_run():
-            try:
+        with InstrumentLocker(self.oven):
+            self.pre_run()
+            if self.change_setpoint():
                 while not self.oven.is_stable():
                     temperature = self.oven.read_temp()
                     if temperature is not None:  # we read successfully
@@ -58,17 +57,12 @@ class SetTemperatureProcess(GraphingProcess):
                         self.error_pause()
                     if not self.wait(self.MEASUREMENT_INTERVAL, self.oven.is_connected):
                         break
-            except Exception:
-                pass
-        self.post_run()
+            self.post_run()
 
     def post_run(self):
         """Post-run tasks."""
-        try:
-            self.temperature_file.close()
-            self.write_metadata(self.metadata(time.time()))
-        finally:
-            self.oven.release()
+        self.temperature_file.close()
+        self.write_metadata(self.metadata(time.time()))
 
     def create_files(self):
         """Create data files and write headers."""
@@ -79,7 +73,7 @@ class SetTemperatureProcess(GraphingProcess):
     def change_setpoint(self) -> bool:
         """
         Change the oven's setpoint, going into an error state on failure. Retry until the setpoint
-        is changed.
+        is changed. Returns whether the process should continue.
         """
         if not self.oven.change_setpoint(self.setpoint):
             self.error_pause()

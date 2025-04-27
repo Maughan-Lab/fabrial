@@ -16,3 +16,5 @@ class TabWidget(QTabWidget):
         self.addTab(self.sequence_builder_tab, make_icon("script-block.png"), "Sequence Builder")
         self.addTab(self.sequence_visuals_tab, make_icon("chart.png"), "Sequence Visuals")
         self.addTab(self.oven_control_tab, make_icon("thermometer.png"), "Oven Control")
+
+        self.currentChanged.connect(lambda index: self.widget(index).setFocus())  # type: ignore

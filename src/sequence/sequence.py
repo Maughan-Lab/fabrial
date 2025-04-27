@@ -6,7 +6,7 @@ import os
 from ..instruments import INSTRUMENTS
 from ..enums.status import StabilityStatus, OldSequenceStatus
 from ..classes.plotting import TemperaturePoint
-from ..classes.mutex import DataMutex
+from ..classes.lock import DataMutex
 from ..utility.graph import graph_from_folder
 from .. import Files
 

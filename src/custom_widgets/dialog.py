@@ -1,28 +1,26 @@
-from PyQt6.QtWidgets import QVBoxLayout, QDialog, QDialogButtonBox
-from .label import Label
-from ..utility.layouts import add_to_layout
+from PyQt6.QtWidgets import QMessageBox
 
 
-class Dialog(QDialog):
+class Dialog(QMessageBox):
     """Base class for dialog pop-ups."""
 
-    def __init__(self, title: str, message: str, buttons: QDialogButtonBox.StandardButton):
+    def __init__(
+        self,
+        title: str,
+        message: str,
+        buttons: QMessageBox.StandardButton,
+        default_button: QMessageBox.StandardButton,
+    ):
         super().__init__()
 
         self.setWindowTitle(title)
-        self.button_box = QDialogButtonBox(buttons)
-
-        self.button_box.accepted.connect(self.accept)
-        self.button_box.rejected.connect(self.reject)
-
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-        add_to_layout(layout, Label(message), self.button_box)
-
-        self.setFixedSize(self.sizeHint())
+        self.setText(message)
+        self.setStandardButtons(buttons)
+        self.setDefaultButton(default_button)
 
     def run(self) -> bool:
-        return bool(self.exec())
+        """Virtual, return whether the proposed action was accepted."""
+        return True
 
 
 class YesCancelDialog(Dialog):
@@ -32,15 +30,22 @@ class YesCancelDialog(Dialog):
         super().__init__(
             title,
             message,
-            QDialogButtonBox.StandardButton.Yes | QDialogButtonBox.StandardButton.Cancel,
+            Dialog.StandardButton.Yes | Dialog.StandardButton.Cancel,
+            Dialog.StandardButton.Yes,
         )
+
+    def run(self) -> bool:
+        match self.exec():
+            case Dialog.StandardButton.Yes:
+                return True
+        return False
 
 
 class OkDialog(Dialog):
-    """Dialog pop-up with an Ok button."""
+    """Dialog pop-up with an Ok button. `run()` always returns **True**."""
 
     def __init__(self, title: str, message: str):
-        super().__init__(title, message, QDialogButtonBox.StandardButton.Ok)
+        super().__init__(title, message, Dialog.StandardButton.Ok, Dialog.StandardButton.Ok)
 
 
 class OkCancelDialog(Dialog):
@@ -50,8 +55,15 @@ class OkCancelDialog(Dialog):
         super().__init__(
             title,
             message,
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel,
+            Dialog.StandardButton.Ok | Dialog.StandardButton.Cancel,
+            Dialog.StandardButton.Ok,
         )
+
+    def run(self) -> bool:
+        match self.exec():
+            case Dialog.StandardButton.Ok:
+                return True
+        return False
 
 
 class YesNoDialog(Dialog):
@@ -59,5 +71,14 @@ class YesNoDialog(Dialog):
 
     def __init__(self, title: str, message: str):
         super().__init__(
-            title, message, QDialogButtonBox.StandardButton.Yes | QDialogButtonBox.StandardButton.No
+            title,
+            message,
+            Dialog.StandardButton.Yes | Dialog.StandardButton.No,
+            Dialog.StandardButton.Yes,
         )
+
+    def run(self):
+        match self.exec():
+            case Dialog.StandardButton.Yes:
+                return True
+        return False

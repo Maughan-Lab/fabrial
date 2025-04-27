@@ -8,9 +8,6 @@
 - Loop
 - TODO more items
 
-# Remove unnecessary items from the first tab
-- sequence, stability check, the graph
-
 # Constant background stability check
 - Have Quincy always take samples from the oven to check stability. Compare the current temperature to the current setpoint. Use a progressbar to indicate progress (WOW!!!). Each time the measurement is within tolerances, increment a counter and send a signal with that counter to indicate progress. If a measurement is not within tolerance, set the counter to zero (and send the signal again). Quincy should always be checking stability, since the oven temperature could suddenly dip or spike even if the setpoint doesn't change.
 - This is partially complete. The oven automatically checks for stability and emits signals, you just need to display this information in a widget.
@@ -26,6 +23,3 @@
 - Let the user enable/disable Gamry support in Quincy.
 - If Gamry is enabled and Quincy cannot load it, prompt the user to either disable Gamry or abort opening Quincy.
 - If Gamry is disabled, remove the Gamry category entirely from the options treeview. Also, ensure that all Gamry-related items are not shown in the application. You probably need to add a method to the `BaseWidget` class that dictates whether the widget can be created and displayed.
-
-# Add an exception hook to catch any uncaught exceptions
-It's in the title, look up how to do this

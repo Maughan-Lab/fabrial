@@ -134,6 +134,10 @@ class PlotWidget(Widget):
         """Get the underlying **PlotItem**."""
         return self.view.getPlotItem()
 
+    def plot_view(self) -> PlotView:
+        """Get the underlying **PlotView**."""
+        return self.view
+
     def save_as_image(self):
         filename, _ = QFileDialog.getSaveFileName(
             None, "Save Graph", "", "Portable Network Graphics (*.png)"

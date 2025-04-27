@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from enum import Enum
 import json
-from PyQt6.QtCore import pyqtSignal, QObject, QMutex
+from PyQt6.QtCore import pyqtSignal, QObject, QMutex, QMutexLocker
 import minimalmodbus as modbus  # type: ignore
-from .classes.mutex import SignalMutex, DataMutex
+from .classes.lock import DataMutex
 from typing import Union, TYPE_CHECKING
 from .utility.timers import Timer
 from . import Files
@@ -48,39 +48,47 @@ class Instrument(QObject):
     """
 
     # signals
-    connectionChanged = pyqtSignal(bool)  # True if connected False if disconnected
+    connectionChanged = pyqtSignal(bool)
+    """
+    Fires whenever the connection status changes. Sends whether the instrument is connected as a
+    **bool**.
+    """
+    lockChanged = pyqtSignal(bool)
+    """
+    Fires whenever the instrument is locked/unlocked. Sends whether the instrument is unlocked as a
+    **bool**.
+    """
 
     def __init__(self):
         super().__init__()
         self.connection_status = ConnectionStatus.NULL
 
-        # this lock indicates to the rest of the application whether the instrument is available
-        self.lock = SignalMutex()  # do not manually access the lock ever
-        self.lockChanged = self.lock.lockChanged  # shortcut to signal inside self.lock
-
+        # this lock system indicates to the rest of the application whether the instrument is
+        # available
+        self.unlocked = True
         # this lock ensures accessing the physical device is thread safe
-        self.device_lock = QMutex()
+        self.physical_device_lock = QMutex()
 
-    def get_lock(self) -> SignalMutex:
-        """Access the lock."""
-        return self.lock
-
-    def acquire(self):
+    def lock(self):
         """
-        Make the instrument mutable for only one process. This should be followed by a call to
-        **release()**.
+        Make the instrument available for only one process. This should be followed by a call to
+        **unlock()**. Emits signals.
         """
-        self.lock.lock()
+        self.unlocked = False
+        self.lockChanged.emit(False)
 
-    def release(self):
-        """Make the instrument mutable for other processes."""
-        self.lock.unlock()
+    def unlock(self):
+        """Make the instrument available for other processes. Emits signals."""
+        self.unlocked = True
+        self.lockChanged.emit(True)
 
-    def try_device_lock(self) -> bool:
-        """Try to acquire the device lock with a timeout of 10 ms."""
-        if self.device_lock.tryLock(10):
-            return True
-        return False
+    def is_unlocked(self) -> bool:
+        """Whether the instrument is available."""
+        return self.unlocked
+
+    def device_lock(self) -> QMutex:
+        """Get the device lock, which ensures accessing the physical device is thread safe."""
+        return self.physical_device_lock
 
     def update_connection_status(self, connection_status: ConnectionStatus):
         """
@@ -95,12 +103,20 @@ class Instrument(QObject):
         """Get the connection status of this instrument as a **bool**."""
         return bool(self.connection_status)
 
-    def is_unlocked(self) -> bool:
-        """Get the lock status of this instrument as a bool."""
-        acquired = self.lock.tryLock()
-        if acquired:
-            self.lock.unlock()
-        return acquired
+
+class InstrumentLocker[InstrumentType: Instrument]:  # generic
+    """Locks and unlocks an instrument using the context manager."""
+
+    def __init__(self, instrument: InstrumentType):
+        self.instrument = instrument
+
+    def __enter__(self) -> InstrumentType:
+        self.instrument.lock()
+        return self.instrument
+
+    def __exit__(self, *exception_info):
+        # we don't care about exceptions here
+        self.instrument.unlock()
 
 
 class Oven(Instrument):
@@ -207,64 +223,53 @@ class Oven(Instrument):
             self.connection_timer.start()
 
     def read_temp(self) -> float | None:
-        """Returns the oven's temperature if on a successful read, None otherwise."""
-        if not self.try_device_lock():
-            return None
-
-        temperature: float | None = None
-        try:
-            temperature = float(
-                self.device.read_register(self.temperature_register, self.number_of_decimals)
-            )
-            self.update_temperature(temperature)
-        except Exception:
-            self.update_connection_status(ConnectionStatus.DISCONNECTED)
-            temperature = None
-        finally:
-            self.device_lock.unlock()
-
-        return temperature
+        """
+        Returns the oven's temperature if on a successful read, **None** otherwise. This is
+        thread-safe.
+        """
+        with QMutexLocker(self.device_lock()):
+            try:
+                temperature = float(
+                    self.device.read_register(self.temperature_register, self.number_of_decimals)
+                )
+                self.update_temperature(temperature)
+                return temperature
+            except Exception:
+                self.update_connection_status(ConnectionStatus.DISCONNECTED)
+                return None
 
     def change_setpoint(self, setpoint: float) -> bool:
         """
-        Sets the oven's temperature to **setpoint**. Returns True if the operation was successful,
-        False otherwise. If the provided setpoint is outside the oven's setpoint range, it is
-        clamped.
+        Sets the oven's temperature to **setpoint**. Returns **True** if the operation was
+        successful, **False** otherwise. If the provided setpoint is outside the oven's setpoint
+        range, it is clamped. This reset's the oven's stability. This is thread-safe.
         """
-        if not self.try_device_lock():
-            return False
-
-        success = False
-        try:
-            self.device.write_register(
-                self.setpoint_register, self.clamp_setpoint(setpoint)[0], self.number_of_decimals
-            )
-            self.update_setpoint(setpoint)
-            self.reset_stability()
-            success = True
-        except Exception:
-            self.update_connection_status(ConnectionStatus.DISCONNECTED)
-        finally:
-            self.device_lock.unlock()
-
-        return success
+        with QMutexLocker(self.device_lock()):
+            try:
+                self.device.write_register(
+                    self.setpoint_register,
+                    self.clamp_setpoint(setpoint)[0],
+                    self.number_of_decimals,
+                )
+                self.update_setpoint(setpoint)
+                self.reset_stability()
+                return True
+            except Exception:
+                self.update_connection_status(ConnectionStatus.DISCONNECTED)
+                return False
 
     def get_setpoint(self) -> float | None:
-        """Get the oven's setpoint. Returns **None** if the read fails."""
-        if not self.try_device_lock():
-            return None
-
-        setpoint: float | None = None
-        try:
-            setpoint = float(
-                self.device.read_register(self.setpoint_register, self.number_of_decimals)
-            )
-            self.update_setpoint(setpoint)
-        except Exception:
-            self.update_connection_status(ConnectionStatus.DISCONNECTED)
-        finally:
-            self.device_lock.unlock()
-        return setpoint
+        """Get the oven's setpoint. Returns **None** if the read fails. This is thread-safe."""
+        with QMutexLocker(self.device_lock()):
+            try:
+                setpoint = float(
+                    self.device.read_register(self.setpoint_register, self.number_of_decimals)
+                )
+                self.update_setpoint(setpoint)
+                return setpoint
+            except Exception:
+                self.update_connection_status(ConnectionStatus.DISCONNECTED)
+                return None
 
     def update_temperature(self, temperature: float):
         """Update the last temperature and emit signals on a change. This method is private."""
@@ -287,26 +292,14 @@ class Oven(Instrument):
         return (setpoint, Oven.ClampResult.NO_CLAMP)
 
     def connect(self):
-        """Attempts to connect to the oven."""
-        try:
-            self.device = modbus.Instrument(self.port, 1, close_port_after_each_call=True)
-            connection_status = ConnectionStatus.CONNECTED
-        except Exception:
-            connection_status = ConnectionStatus.DISCONNECTED
-        self.update_connection_status(connection_status)
-
-    def update_port(self, port: str):
-        """Updates the oven's connection port."""
-        self.port = port
-        self.connect()
-
-    def start(self):
-        """
-        Start the oven's connection timer, which handles maintaining a connection to the physical
-        instrument.
-        """
-        self.connection_timer.start()
-        self.stability_timer.start()
+        """Attempts to connect to the oven. This is thread-safe."""
+        with QMutexLocker(self.device_lock()):
+            try:
+                self.device = modbus.Instrument(self.port, 1, close_port_after_each_call=True)
+                connection_status = ConnectionStatus.CONNECTED
+            except Exception:
+                connection_status = ConnectionStatus.DISCONNECTED
+            self.update_connection_status(connection_status)
 
     def check_stability(self):
         """Check whether the oven's temperature is stable."""
@@ -331,10 +324,6 @@ class Oven(Instrument):
                 else:
                     # we're not stable, update accordingly
                     self.reset_stability()
-
-    def measurement_is_stable(self, temperature: float, setpoint: float) -> bool:
-        """Whether the temperature is within the oven's stability tolerance."""
-        return abs(temperature - setpoint) <= self.stability_tolerance
 
     def update_stability_count(self, count: int):
         """Update the stability measurement count and emit signals on a change."""
@@ -361,6 +350,26 @@ class Oven(Instrument):
     def is_stable(self):
         """Whether the oven's temperature is stable. This is thread safe."""
         return self.stable.get()
+
+    def measurement_is_stable(self, temperature: float, setpoint: float) -> bool:
+        """Whether the temperature is within the oven's stability tolerance."""
+        return abs(temperature - setpoint) <= self.stability_tolerance
+
+    def set_port(self, port: str):
+        """
+        Updates the oven's connection port. The oven automatically tries to reconnect. This is
+        thread-safe.
+        """
+        self.port = port
+        self.connect()
+
+    def start(self):
+        """
+        Start the oven's connection timer, which handles maintaining a connection to the physical
+        instrument.
+        """
+        self.connection_timer.start()
+        self.stability_timer.start()
 
 
 @dataclass

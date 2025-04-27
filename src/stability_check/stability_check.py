@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QRunnable
-from ..instruments import INSTRUMENTS
+from ..instruments import INSTRUMENTS, InstrumentLocker
 from ..enums.status import StabilityStatus
 import time
 
@@ -25,41 +25,40 @@ class StabilityCheckThread(QRunnable):
     @pyqtSlot()
     def run(self):
         """Run a stability check in another thread."""
-        self.pre_run()
-        final_stability = StabilityStatus.STABLE
+        with InstrumentLocker(self.oven):
+            self.pre_run()
+            final_stability = StabilityStatus.STABLE
 
-        measurement_count = 0
-        while True:
-            temperature = self.oven.read_temp()
-            if temperature is None:
-                self.process_connection_problem()
-            else:
-                if abs(temperature - self.setpoint) > self.VARIANCE_TOLERANCE:  # unstable
-                    final_stability = StabilityStatus.UNSTABLE
+            measurement_count = 0
+            while True:
+                temperature = self.oven.read_temp()
+                if temperature is None:
+                    self.process_connection_problem()
+                else:
+                    if abs(temperature - self.setpoint) > self.VARIANCE_TOLERANCE:  # unstable
+                        final_stability = StabilityStatus.UNSTABLE
+                        break
+                    measurement_count += 1
+                    self.signals.progressed.emit()
+                    if measurement_count >= self.MINIMUM_MEASUREMENTS:
+                        break  # end the sequence
+
+                proceed = self.wait()
+                if not proceed:
+                    final_stability = StabilityStatus.NULL
                     break
-                measurement_count += 1
-                self.signals.progressed.emit()
-                if measurement_count >= self.MINIMUM_MEASUREMENTS:
-                    break  # end the sequence
 
-            proceed = self.wait()
-            if not proceed:
-                final_stability = StabilityStatus.NULL
-                break
-
-        # if we make it here, we're stable!
-        self.post_run(final_stability)
+            # if we make it here, we're stable!
+            self.post_run(final_stability)
 
     def pre_run(self):
         """Pre-run tasks."""
         self.signals.statusChanged.emit(True)
-        self.oven.acquire()
         self.update_stability(StabilityStatus.CHECKING)
 
     def post_run(self, final_stability: StabilityStatus):
         """Post-run tasks."""
         self.update_stability(final_stability)
-        self.oven.release()
         self.signals.statusChanged.emit(False)
 
     def wait(self) -> bool:

@@ -50,7 +50,7 @@ class SetpointWidget(GroupBox):
 
     def change_setpoint(self):
         """Change the oven's setpoint."""
-        # intentionally not locking the oven because this is such a fast operation
+        # intentionally not locking the oven because this operation is fast
         success = self.oven.change_setpoint(self.setpoint_spinbox.value())
         if not success:
             # this will probably never run, but it could if the read operation fails

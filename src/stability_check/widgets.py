@@ -115,7 +115,7 @@ class StabilityCheckWidget(GroupBox):
         if not self.is_running():
             self.progressbar.setValue(0)
 
-            thread = self.thread_type(INSTRUMENTS, self.setpoint_spinbox.value())
+            thread = self.thread_type(self.setpoint_spinbox.value())
             thread.signals.statusChanged.connect(self.handle_status_change)
             thread.signals.stabilityChanged.connect(self.handle_stability_change)
             thread.signals.progressed.connect(self.progressbar.increment)

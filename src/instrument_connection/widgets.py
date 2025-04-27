@@ -16,7 +16,7 @@ class InstrumentConnectionWidget(GroupBox):
     """Widget for changing the instrument connection ports."""
 
     def __init__(self):
-        super().__init__("Instrument Connections", QHBoxLayout())
+        super().__init__("Instrument Connection", QHBoxLayout())
         self.oven = INSTRUMENTS.oven
 
         self.create_widgets()
@@ -73,7 +73,7 @@ class InstrumentConnectionWidget(GroupBox):
 
     def update_port(self, index: int | None = None):
         """Update the oven's port (this is a slot)."""
-        self.oven.update_port(self.oven_combobox.currentText())
+        self.oven.set_port(self.oven_combobox.currentText())
 
     def save_ports(self, index: int):
         """Writes the current port selections to a file."""
@@ -89,4 +89,4 @@ class InstrumentConnectionWidget(GroupBox):
             # if the combobox contains the previously stored port
             if self.oven_combobox.findText(port) != -1:
                 self.oven_combobox.setCurrentText(port)
-                self.oven.update_port(port)
+                self.oven.set_port(port)

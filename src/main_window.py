@@ -17,6 +17,7 @@ class MainWindow(QMainWindow):
         # shortcuts
         self.oven_control_tab = self.tabs.oven_control_tab
         self.sequence_tab = self.tabs.sequence_builder_tab
+        self.sequence_visuals_tab = self.tabs.sequence_visuals_tab
         self.sequence_builder = self.sequence_tab.sequence_tree
         # create menu bar
         self.menu_bar = MenuBar(self)
@@ -29,9 +30,6 @@ class MainWindow(QMainWindow):
     def connect_signals(self):
         """Connect widget signals."""
         # ensure the menubar responds to the popped graph being closed
-        self.oven_control_tab.popped_graph.closed.connect(
-            self.menu_bar.view.handle_popped_graph_destruction
-        )
         self.tabs.currentChanged.connect(
             lambda *args: self.menu_bar.view.handle_tab_change(self.tabs)
         )
@@ -49,7 +47,7 @@ class MainWindow(QMainWindow):
         """Shrink the window to its minimum size. Exits fullscreen mode."""
         if self.isFullScreen():
             self.showNormal()
-        self.resize(self.minimumSize())
+        self.resize(self.sizeHint())
 
     # ----------------------------------------------------------------------------------------------
     # multiple windows

@@ -3,6 +3,7 @@
 import os
 
 SAVED_SETTINGS_FOLDER = "saved_settings"
+APPLICATION_NAME = "Quincy"
 
 
 class Icons:
