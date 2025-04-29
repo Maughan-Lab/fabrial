@@ -15,4 +15,3 @@ pyserial==3.5
 pywin32==310
 pywin32-ctypes==0.2.3
 setuptools==78.1.0
-show-in-file-manager==1.1.5

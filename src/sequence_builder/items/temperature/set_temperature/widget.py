@@ -1,5 +1,6 @@
 from ...base_widget import BaseWidget
 from .....custom_widgets.spin_box import TemperatureSpinBox
+from .....instruments import INSTRUMENTS
 from .process import SetTemperatureProcess
 from . import encoding
 from PyQt6.QtWidgets import QFormLayout
@@ -29,7 +30,7 @@ class SetTemperatureWidget(BaseWidget):
             },
         )
 
-        self.temperature_spinbox = TemperatureSpinBox()
+        self.temperature_spinbox = TemperatureSpinBox(INSTRUMENTS.oven)
         self.temperature_spinbox.textChanged.connect(
             lambda value_as_str: self.setWindowTitle(
                 f"{self.DISPLAY_NAME_PREFIX} ({value_as_str} degrees)"

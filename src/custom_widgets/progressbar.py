@@ -1,4 +1,5 @@
-from PyQt6.QtWidgets import QProgressBar
+from PyQt6.QtWidgets import QProgressBar, QWidget
+from ..instruments import Oven
 
 
 class ProgressBar(QProgressBar):
@@ -18,3 +19,23 @@ class ProgressBar(QProgressBar):
     def increment(self):
         """Increment the progressbar."""
         self.setValue(self.value() + self.increment_value)
+
+
+class StabilityProgressBar(QProgressBar):
+    """QProgressBar for oven stability."""
+
+    def __init__(self, oven: Oven, parent: QWidget | None = None):
+        """
+        Automatically sets the minimum and maximum based on the oven.
+
+        :param oven: The oven to base the maximum on.
+        :param parent: The widget's parent.
+        """
+        super().__init__(parent)
+        self.setMinimum(0)
+        self.setMaximum(oven.minimum_measurements())
+
+    def sizeHint(self):
+        size = super().sizeHint()
+        size.setWidth(size.width() * 2)  # arbitrary, this just looks better
+        return size

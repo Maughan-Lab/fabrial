@@ -1,6 +1,8 @@
 from ...base_widget import BaseWidget
 from .process import LoopProcess
-from PyQt6.QtWidgets import QHBoxLayout, QLabel
+from . import encoding
+from PyQt6.QtWidgets import QFormLayout
+from .....custom_widgets.spin_box import SpinBox
 from typing import Any
 
 
@@ -12,16 +14,19 @@ class LoopWidget(BaseWidget):
     DISPLAY_NAME_PREFIX = "Loop"
 
     def __init__(self):
-        # TODO: implement
-        layout = QHBoxLayout()
+        layout = QFormLayout()
         super().__init__(layout, self.DISPLAY_NAME_PREFIX)
-        self.parameter_widget().layout().addWidget(QLabel("TODO"))  # type: ignore
+        self.loop_spinbox = SpinBox()
+        self.loop_spinbox.setMinimum(1)
+        layout.addRow("Number of Loops", self.loop_spinbox)
+
+        # TODO: implement
 
     @classmethod
     def from_dict(cls, data_as_dict: dict[str, Any]):
-        # TODO: implement
-        return cls()
+        widget = cls()
+        widget.loop_spinbox.setValue(data_as_dict[encoding.NUMBER_OF_LOOPS])
+        return widget
 
     def to_dict(self) -> dict[str, Any]:
-        # TODO: implement
-        return dict()
+        return {encoding.NUMBER_OF_LOOPS: self.loop_spinbox.value()}

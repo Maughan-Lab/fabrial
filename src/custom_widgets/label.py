@@ -17,6 +17,11 @@ class Label(QLabel):
         self.setStyleSheet("color: " + color)
         return self
 
+    def reset(self, reset_text: str) -> Self:
+        """Reset the label's color and set the text to **reset_text**."""
+        self.set_color("")
+        self.setText(reset_text)
+
 
 class IconLabel(Container):
     """Label with an icon on the left. Both are contained in a Container (this widget)."""

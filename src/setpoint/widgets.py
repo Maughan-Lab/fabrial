@@ -22,7 +22,7 @@ class SetpointWidget(GroupBox):
         """Create subwidgets."""
         layout = self.layout()
 
-        self.setpoint_spinbox = TemperatureSpinBox()
+        self.setpoint_spinbox = TemperatureSpinBox(self.oven)
         self.button = QPushButton("Change Setpoint")
         add_to_layout(layout, Label("Setpoint"), self.setpoint_spinbox, self.button)
 

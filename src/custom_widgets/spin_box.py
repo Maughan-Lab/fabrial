@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QPushButton
-from ..instruments import INSTRUMENTS
+from ..instruments import Oven
 
 
 class DoubleSpinBox(QDoubleSpinBox):
@@ -23,11 +23,10 @@ class DoubleSpinBox(QDoubleSpinBox):
 class TemperatureSpinBox(DoubleSpinBox):
     """DoubleSpinBox for temperatures."""
 
-    def __init__(self):
+    def __init__(self, oven: Oven):
         """:param oven: The oven to use for setting the maximum/minimum temperatures."""
         super().__init__()
         # temperatures must be between MIN and MAX degrees C
-        oven = INSTRUMENTS.oven
         self.setMinimum(oven.minimum_temperature())
         self.setMaximum(oven.maximum_temperature())
         self.setSingleStep(10)  # using the up/down arrow keys will change the temperature by 10

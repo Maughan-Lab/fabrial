@@ -1,8 +1,9 @@
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QFormLayout
 from ..custom_widgets.label import Label
 from ..custom_widgets.combo_box import ComboBox
 from ..custom_widgets.groupbox import GroupBox
-from ..instruments import INSTRUMENTS, to_str, to_color
+from ..instruments import INSTRUMENTS
+from ..enums.status import ConnectionStatus
 from ..utility.layouts import add_sublayout, add_to_layout
 from .ports import get_ports_list
 from os import path
@@ -10,10 +11,10 @@ from .. import Files
 
 
 class InstrumentConnectionWidget(GroupBox):
-    MAX_COMBOBOX_ITEMS = 500
-    NULL_TEXT = "------------------------"
-
     """Widget for changing the instrument connection ports."""
+
+    MAX_COMBOBOX_ITEMS = 500
+    NULL_TEXT = "------------"
 
     def __init__(self):
         super().__init__("Instrument Connection", QHBoxLayout())
@@ -40,8 +41,8 @@ class InstrumentConnectionWidget(GroupBox):
         # the top label and combobox
         add_to_layout(inner_layout, Label("Oven Port"), self.oven_combobox)
         # the two bottom labels with the connection status
-        label_layout = add_sublayout(inner_layout, QHBoxLayout)
-        add_to_layout(label_layout, Label("Status:"), self.oven_connection_label)
+        label_layout = add_sublayout(inner_layout, QFormLayout)
+        label_layout.addRow("Status:", self.oven_connection_label)
 
     def connect_signals(self):
         """Give widgets logic."""
@@ -63,10 +64,12 @@ class InstrumentConnectionWidget(GroupBox):
 
     def update_connection_label(self, connected: bool):
         """Update the connection status label's text and color."""
-        text = to_str(connected)
+        text = ConnectionStatus.bool_to_str(connected)
         self.oven_connection_label.setText(text)
         # this is HTML syntax
-        self.oven_connection_label.setStyleSheet("color: " + to_color(connected))
+        self.oven_connection_label.setStyleSheet(
+            "color: " + ConnectionStatus.bool_to_color(connected)
+        )
 
     def handle_connection_change(self, connected: bool):
         self.update_connection_label(connected)

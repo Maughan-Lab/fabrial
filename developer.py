@@ -5,8 +5,6 @@ from PyQt6.QtWidgets import (
 )
 from src.main_window import MainWindow
 from src.instruments import Oven, ConnectionStatus
-from src.stability_check.stability_check import StabilityCheckThread
-from src.sequence.sequence import SequenceThread
 from src.custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
 from src.custom_widgets.groupbox import GroupBox
 from src.utility.layouts import add_to_layout, add_sublayout  # ../utility
@@ -127,7 +125,7 @@ class DeveloperWidget(GroupBox):
         add_to_layout(add_sublayout(layout, QHBoxLayout), release_button, acquire_button)
 
     def create_temperature_widgets(self, layout):
-        temperature_spinbox = TemperatureSpinBox()
+        temperature_spinbox = TemperatureSpinBox(INSTRUMENTS.oven)
         temperature_spinbox.lineEdit().returnPressed.connect(
             lambda: self.oven.set_temperature(temperature_spinbox.value())
         )
@@ -138,7 +136,7 @@ class DeveloperWidget(GroupBox):
         add_to_layout(add_sublayout(layout, QHBoxLayout), temperature_spinbox, temperature_button)
 
     def create_setpoint_widgets(self, layout):
-        setpoint_spinbox = TemperatureSpinBox()
+        setpoint_spinbox = TemperatureSpinBox(INSTRUMENTS.oven)
         setpoint_spinbox.lineEdit().returnPressed.connect(
             lambda: self.oven.change_setpoint(setpoint_spinbox.value())
         )
@@ -162,29 +160,13 @@ class DeveloperMainWindow(MainWindow):
     Add a DeveloperWidget for controlling the oven and use Developer versions of other widgets.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        layout = self.oven_control_tab.layout()
+        layout: QHBoxLayout = self.oven_control_tab.layout().itemAt(0).layout()  # type: ignore
         layout.addWidget(DeveloperWidget())
 
 
-class DeveloperStabilityCheckThread(StabilityCheckThread):
-    """Faster stabilization."""
-
-    MEASUREMENT_INTERVAL = 1
-    MINIMUM_MEASUREMENTS = 10
-
-
-class DeveloperSequenceThread(SequenceThread):
-    """Faster stabilization."""
-
-    MEASUREMENT_INTERVAL = 1
-    MINIMUM_MEASUREMENTS = 10
-
-
 # --------------------------------------------------------------------------------------------------
-
-
 if __name__ == "__main__":
     INSTRUMENTS.oven = DeveloperOven()
     main(DeveloperMainWindow)

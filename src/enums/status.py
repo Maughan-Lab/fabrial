@@ -26,6 +26,45 @@ class StabilityStatus(Enum):
         """Return a boolean representation of stability."""
         return self.truth_value
 
+    @staticmethod
+    def bool_to_str(stable: bool):
+        """Convert a bool representing stability to text."""
+        if stable:
+            return "Stable"
+        return "Not Stable"
+
+    @staticmethod
+    def bool_to_color(stable: bool):
+        """Convert a bool representing stability to a color string."""
+        if stable:
+            return "green"
+        return "red"
+
+
+class ConnectionStatus(Enum):
+    """Enum to represent connection states."""
+
+    CONNECTED = 0
+    DISCONNECTED = 1
+    NULL = 2
+
+    def __bool__(self):
+        return self == ConnectionStatus.CONNECTED
+
+    @staticmethod
+    def bool_to_str(connected: bool) -> str:
+        """Convert a bool representing the connection status to text."""
+        if connected:
+            return "Connected"
+        return "Disconnected"
+
+    @staticmethod
+    def bool_to_color(connected: bool) -> str:
+        """Convert a bool representing the connection status to a color string."""
+        if connected:
+            return "green"
+        return "red"
+
 
 class OldSequenceStatus(Flag):
     """States representing the status of a sequence."""

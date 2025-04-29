@@ -8,10 +8,6 @@
 - Loop
 - TODO more items
 
-# Constant background stability check
-- Have Quincy always take samples from the oven to check stability. Compare the current temperature to the current setpoint. Use a progressbar to indicate progress (WOW!!!). Each time the measurement is within tolerances, increment a counter and send a signal with that counter to indicate progress. If a measurement is not within tolerance, set the counter to zero (and send the signal again). Quincy should always be checking stability, since the oven temperature could suddenly dip or spike even if the setpoint doesn't change.
-- This is partially complete. The oven automatically checks for stability and emits signals, you just need to display this information in a widget.
-
 # Allow users to edit the temperature and setpoint registers of the oven, and the min and max setpoints, and the stability parameters
 - The oven already reads from a file, but you need to be able to edit that from within the application.
 - You should save the data to a file when the widget you use to edit the settings is closed. Use `Oven.save_settings()`.

@@ -1,8 +1,10 @@
-from PyQt6.QtWidgets import QHBoxLayout, QWidget
-from ..utility.layouts import add_to_layout
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
+from PyQt6.QtCore import Qt
+from ..utility.layouts import add_to_layout, add_sublayout
 from ..setpoint.widgets import SetpointWidget
 from ..passive_monitoring.widgets import PassiveMonitoringWidget
 from ..instrument_connection.widgets import InstrumentConnectionWidget
+from ..stability_check.widgets import StabilityCheckWidget
 
 
 class OvenControlTab(QWidget):
@@ -13,6 +15,7 @@ class OvenControlTab(QWidget):
         self.setpoint_widget: SetpointWidget
         self.passive_monitoring_widget: PassiveMonitoringWidget
         self.instrument_connection_widget: InstrumentConnectionWidget
+        self.stability_widget: StabilityCheckWidget
 
         super().__init__()
 
@@ -21,21 +24,20 @@ class OvenControlTab(QWidget):
     def create_widgets(self):
         """Create subwidgets."""
         # create the layout
-        layout = QHBoxLayout()
+        layout = QVBoxLayout()
+        top_layout = add_sublayout(layout, QHBoxLayout)
         self.setLayout(layout)
 
-        self.initialize_widgets()
+        self.setpoint_widget = SetpointWidget()
+        self.stability_widget = StabilityCheckWidget()
+        # do not move these two above the other ones
+        self.passive_monitoring_widget = PassiveMonitoringWidget()
+        self.instrument_connection_widget = InstrumentConnectionWidget()
         # add the widgets
         add_to_layout(
-            layout,
+            top_layout,
             self.setpoint_widget,
             self.passive_monitoring_widget,
             self.instrument_connection_widget,
         )
-
-    def initialize_widgets(self):  # this is necessary for testing
-        """Store subwidgets in variables."""
-        self.setpoint_widget = SetpointWidget()
-        # do not move these two above the other ones
-        self.passive_monitoring_widget = PassiveMonitoringWidget()
-        self.instrument_connection_widget = InstrumentConnectionWidget()
+        layout.addWidget(self.stability_widget, alignment=Qt.AlignmentFlag.AlignHCenter)

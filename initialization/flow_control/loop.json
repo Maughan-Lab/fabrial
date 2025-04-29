@@ -1,3 +1,6 @@
 {
-    "type": "LOOP"
+    "type": "LOOP",
+    "linked-widget-data": {
+        "number-of-loops": 1
+    }
 }

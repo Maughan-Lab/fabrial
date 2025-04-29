@@ -6,39 +6,11 @@ import minimalmodbus as modbus  # type: ignore
 from .classes.lock import DataMutex
 from typing import Union, TYPE_CHECKING
 from .utility.timers import Timer
+from .enums.status import ConnectionStatus
 from . import Files
 
 if TYPE_CHECKING:
     from developer import DeveloperOven
-
-
-# TODO: this does not belong here
-def to_str(connected: bool) -> str:
-    """Convert a bool representing the connection status to text."""
-    if connected:
-        return "CONNECTED"
-    else:
-        return "DISCONNECTED"
-
-
-# TODO: this does not belong here
-def to_color(connected: bool) -> str:
-    """Convert a bool representing the connection status to a color string."""
-    if connected:
-        return "green"
-    else:
-        return "red"
-
-
-class ConnectionStatus(Enum):
-    """Enum to represent connection states."""
-
-    CONNECTED = 0
-    DISCONNECTED = 1
-    NULL = 2
-
-    def __bool__(self):
-        return self == ConnectionStatus.CONNECTED
 
 
 class Instrument(QObject):
@@ -172,17 +144,21 @@ class Oven(Instrument):
         # timers for connection and reading the temperature and setpoint
         self.temperature_timer = Timer(self, 1000, self.read_temp)
         self.setpoint_timer = Timer(self, 1000, self.get_setpoint)
-        self.stability_timer = Timer(self, 5000, self.check_stability)
+        self.stability_timer = Timer(self, 50, self.check_stability)
         self.connection_timer = Timer(self, 1000, self.connect)
         self.connectionChanged.connect(self.handle_connection_change)
 
-    def maximum_temperature(self):
+    def maximum_temperature(self) -> float:
         """Get the oven's maximum allowed temperature."""
         return self.max_temperature
 
-    def minimum_temperature(self):
+    def minimum_temperature(self) -> float:
         """Get the oven's minimum allowed temperature."""
         return self.min_temperature
+
+    def minimum_measurements(self) -> int:
+        """Get the oven's minimum number of measurements for stability."""
+        return self.minimum_stability_measurements
 
     def load_settings(self):
         """Load the oven's settings from the oven settings file."""
@@ -303,12 +279,15 @@ class Oven(Instrument):
 
     def check_stability(self):
         """Check whether the oven's temperature is stable."""
+        MAX_DICONNECTS = 10
+
         if not self.is_connected():
-            # if we're not connected for 10 stability checks, we are unstable
-            if self.disconnected_count >= 10 - 1:  # arbitrary value, 10 - 1 because of structure
+            # if we're not connected for MAX_DISCONNECTS stability checks, we are unstable
+            self.disconnected_count += 1
+            if self.disconnected_count == MAX_DICONNECTS:  # arbitrary value
                 self.reset_stability()
-            else:
-                self.disconnected_count += 1
+            elif self.disconnected_count > MAX_DICONNECTS:
+                self.disconnected_count == MAX_DICONNECTS + 1
         else:
             self.disconnected_count = 0
             # if there are values ready
@@ -347,9 +326,13 @@ class Oven(Instrument):
         self.update_stability_count(0)
         self.update_stability_status(False)
 
-    def is_stable(self):
+    def is_stable(self) -> bool:
         """Whether the oven's temperature is stable. This is thread safe."""
         return self.stable.get()
+
+    def stability_count(self) -> int:
+        """Get the number of stability counts on the oven."""
+        return self.stability_measurement_count
 
     def measurement_is_stable(self, temperature: float, setpoint: float) -> bool:
         """Whether the temperature is within the oven's stability tolerance."""
