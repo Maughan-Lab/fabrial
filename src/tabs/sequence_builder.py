@@ -56,9 +56,9 @@ class SequenceBuilderTab(QWidget):
         self.unpause_button = BiggerButton(
             "Unpause", self.sequence_tree.command_signals.unpauseCommand, size_scalars=SIZE_SCALARS
         )
-        self.button_container.addWidget(self.start_button)
-        self.button_container.addWidget(self.pause_button)
-        self.button_container.addWidget(self.unpause_button)
+        add_to_layout(
+            self.button_container, self.start_button, self.pause_button, self.unpause_button
+        )
         # status label
         INITIAL_STATUS = SequenceStatus.INACTIVE
         self.status_label = Label(INITIAL_STATUS.status_text()).set_color(INITIAL_STATUS.color())

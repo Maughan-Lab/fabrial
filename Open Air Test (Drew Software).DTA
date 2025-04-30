@@ -1,0 +1,6 @@
+EXPLAIN
+TAG	EISPOT
+TITLE	LABEL	Potentiostatic EIS	Test &Identifier
+ZCURVE	TABLE
+	Pt	Time	Freq	Zreal	Zimag	Zsig	Zmod	Zphz	Idc	Vdc	IERange
+	#	s	Hz	ohm	ohm	V	ohm	°	A	V	#

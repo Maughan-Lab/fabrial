@@ -2,4 +2,5 @@ from ..base_widget import CategoryWidget
 
 
 class TemperatureCategoryWidget(CategoryWidget):
-    DISPLAY_NAME = "Temperature"
+    def __init__(self):
+        super().__init__("Temperature")

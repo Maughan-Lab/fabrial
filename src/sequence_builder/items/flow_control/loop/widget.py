@@ -7,20 +7,21 @@ from typing import Any
 
 
 class LoopWidget(BaseWidget):
-    PROCESS_TYPE = LoopProcess
-    SUPPORTS_SUBITEMS = True
-    ICON = "arrow-repeat.png"
-
     DISPLAY_NAME_PREFIX = "Loop"
 
     def __init__(self):
         layout = QFormLayout()
-        super().__init__(layout, self.DISPLAY_NAME_PREFIX)
+        # TODO: description
+        super().__init__(
+            layout, self.DISPLAY_NAME_PREFIX, LoopProcess, "arrow-repeat.png", None, True
+        )
+
         self.loop_spinbox = SpinBox()
         self.loop_spinbox.setMinimum(1)
         layout.addRow("Number of Loops", self.loop_spinbox)
-
-        # TODO: implement
+        self.loop_spinbox.textChanged.connect(
+            lambda value_as_str: self.setWindowTitle(f"{self.DISPLAY_NAME_PREFIX} ({value_as_str})")
+        )
 
     @classmethod
     def from_dict(cls, data_as_dict: dict[str, Any]):

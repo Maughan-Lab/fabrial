@@ -11,23 +11,25 @@ from ..... import Files
 class SetTemperatureWidget(BaseWidget):
     """Set the oven's temperature and wait for it to stabilize."""
 
-    PROCESS_TYPE: type[SetTemperatureProcess] = SetTemperatureProcess
-    ICON = "thermometer--arrow.png"
-
     DISPLAY_NAME_PREFIX = "Set Oven Temperature"
 
     def __init__(self):
         layout = QFormLayout()
-        super().__init__(layout, self.DISPLAY_NAME_PREFIX)
-        self.set_description_from_file(
-            "temperature",
-            "set_temperature.md",
-            {
-                "MEASUREMENT_INTERVAL": str(self.PROCESS_TYPE.MEASUREMENT_INTERVAL),
-                "DIRECTORY_NAME": self.PROCESS_TYPE.DIRECTORY,
-                "TEMPERATURE_FILE": encoding.Filenames.TEMPERATURES,
-                "METADATA_FILE": Files.Process.Filenames.METADATA,
-            },
+        super().__init__(
+            layout,
+            self.DISPLAY_NAME_PREFIX,
+            SetTemperatureProcess,
+            "thermometer--arrow.png",
+            self.DescriptionInfo(
+                "temperature",
+                "set_temperature.md",
+                {
+                    "MEASUREMENT_INTERVAL": str(SetTemperatureProcess.MEASUREMENT_INTERVAL),
+                    "DIRECTORY_NAME": SetTemperatureProcess.directory_name(),
+                    "TEMPERATURE_FILE": encoding.Filenames.TEMPERATURES,
+                    "METADATA_FILE": Files.Process.Filenames.METADATA,
+                },
+            ),
         )
 
         self.temperature_spinbox = TemperatureSpinBox(INSTRUMENTS.oven)

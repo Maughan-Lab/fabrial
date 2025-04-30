@@ -9,12 +9,12 @@ from ...custom_widgets.container import Container
 from ...custom_widgets.label import IconLabel
 from ...custom_widgets.dialog import OkDialog, YesNoDialog
 from ...classes.actions import Shortcut
-from ...classes.signals import CommandSignals, GraphSignals
+from ...classes.signals import GraphSignals, CommandSignals
 from ...enums.status import SequenceStatus
 from ...utility.layouts import add_to_layout, add_sublayout
 from ...utility.images import make_pixmap
 from typing import Self
-from ..sequence_runner import SequenceRunner
+from ...classes.runners import SequenceRunner
 from ... import Files
 import os
 
@@ -100,7 +100,7 @@ class SequenceTreeWidget(Container):
         self.threads: list[SequenceRunner] = []
 
         self.command_signals = CommandSignals()
-        self.cancelCommand = self.command_signals.cancelCommand  # shortcut
+        self.cancelCommand = self.command_signals.cancelCommand  # shortcut for external users
 
     def create_widgets(self) -> Self:
         layout: QVBoxLayout = self.layout()  # type: ignore
@@ -229,7 +229,7 @@ class SequenceTreeWidget(Container):
         runner = SequenceRunner(directory, self.view.model().root())
         runner.moveToThread(thread)
         self.connect_sequence_signals(runner, thread)
-        self.graphSignalsChanged.emit(runner.graph_signals)
+        self.graphSignalsChanged.emit(runner.graphing_signals())
         # run
         thread.started.connect(runner.run)
         thread.start()
@@ -237,9 +237,9 @@ class SequenceTreeWidget(Container):
 
     def connect_sequence_signals(self, runner: SequenceRunner, thread: QThread) -> Self:
         # up towards the parent
-        runner.info_signals.errorOccurred.connect(lambda message: OkDialog("Error", message).exec())
-        runner.info_signals.currentItemChanged.connect(self.handle_item_change)
-        runner.info_signals.statusChanged.connect(self.sequenceStatusChanged)
+        runner.errorOccurred.connect(lambda message: OkDialog("Error", message).exec())
+        runner.currentItemChanged.connect(self.handle_item_change)
+        runner.statusChanged.connect(self.sequenceStatusChanged)
         # down towards the child
         self.command_signals.cancelCommand.connect(runner.cancel)
         self.command_signals.pauseCommand.connect(runner.pause)

@@ -1,5 +1,5 @@
-from .....classes.process import GraphingProcess
-from .....classes.process_runner import ProcessRunner
+from .....classes.process import AbstractGraphingProcess
+from .....classes.runners import ProcessRunner
 from .....utility.temperature import create_temperature_file, record_temperature_data
 from .....instruments import INSTRUMENTS, InstrumentLocker
 from . import encoding
@@ -10,17 +10,14 @@ from io import TextIOWrapper
 import polars as pl
 
 
-class SetTemperatureProcess(GraphingProcess):
+class SetTemperatureProcess(AbstractGraphingProcess):
     """
     Set the oven's temperature and record the temperature while waiting for it to stabilize.
 
     When subclassing, you should override:
-    - `DIRECTORY`
     - `title()` - Returns the title used on the graph.
     - `metadata()` - You should probably call **Process**'s `metadata()` method.
     """
-
-    DIRECTORY = "Set Temperature"
 
     MEASUREMENT_INTERVAL = 5000
     """Measurement interval in milliseconds."""
@@ -34,6 +31,10 @@ class SetTemperatureProcess(GraphingProcess):
         self.oven = INSTRUMENTS.oven
         self.temperature_file: TextIOWrapper
         self.setpoint = data[encoding.SETPOINT]
+
+    @staticmethod
+    def directory_name():
+        return "Set Temperature"
 
     def pre_run(self):
         """Pre-run tasks. Returns whether the process should continue."""
@@ -87,7 +88,7 @@ class SetTemperatureProcess(GraphingProcess):
         time_since_start = record_temperature_data(
             self.temperature_file, self.start_time(), temperature
         )
-        self.graph_signals.addPoint.emit(time_since_start, temperature)
+        self.graphing_signals().addPoint.emit(time_since_start, temperature)
 
     def title(self) -> str:
         """Get the graph title."""

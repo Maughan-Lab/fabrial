@@ -1,13 +1,11 @@
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
 from src.main_window import MainWindow
-from src.custom_widgets.dialog import YesNoDialog
 from src import Files
+from src.utility.errors import generate_exception_handler
 from src.gamry_integration.Gamry import GAMRY
 import sys
 import os
-from types import TracebackType
-import traceback
 
 
 def update_id():
@@ -30,29 +28,6 @@ def make_application_folders():
         os.makedirs(folder, exist_ok=True)
 
 
-def exception_handler(
-    exception_type: type[BaseException], exception: BaseException, trace: TracebackType | None
-):
-    """
-    This gets called when an uncaught exception occurs. It notifies the user of a possibly fatal
-    exception and asks them if they want to quit.
-    """
-    if issubclass(exception_type, KeyboardInterrupt):
-        sys.__excepthook__(exception_type, exception, trace)
-        sys.exit()
-    else:
-        name = Files.APPLICATION_NAME
-        error_message = (
-            f"{name} encountered an application-level error. "
-            f"Unless the error is obviously unimportant, you should close {name}. "
-            "If possible, please report this error."
-        )
-        exception_text = "".join(traceback.format_exception(exception_type, exception, trace))
-        error_message = f"{error_message}\n\n{exception_text}\nClose Quincy?"
-        if YesNoDialog("Application Error", error_message).run():
-            sys.exit()
-
-
 def main(main_window_type: type[MainWindow] = MainWindow):
     update_id()
     make_application_folders()
@@ -62,8 +37,9 @@ def main(main_window_type: type[MainWindow] = MainWindow):
     # create the main window using `main_window_type`
     main_window = main_window_type()  # necessary for testing
     main_window.showMaximized()
+
     # catch all exceptions
-    sys.excepthook = exception_handler
+    sys.excepthook = generate_exception_handler(main_window)
     # run Quincy
     app.exec()
     # close GamryCOM

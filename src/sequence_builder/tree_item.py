@@ -150,15 +150,15 @@ class TreeItem:
 
     def supports_subitems(self) -> bool:
         """Return whether the item supports subitems."""
-        return self.linked_widget.SUPPORTS_SUBITEMS
+        return self.linked_widget.supports_subitems()
 
     def supports_dragging(self) -> bool:
         """Returns whether the item can be dragged."""
-        return self.linked_widget.DRAGGABLE
+        return self.linked_widget.supports_dragging()
 
     def process_type(self) -> type[Union["Process", "BackgroundProcess"]] | None:
         """Returns the type of the linked process."""
-        return self.linked_widget.PROCESS_TYPE
+        return self.linked_widget.process_type()
 
     def data(self) -> dict[str, Any]:
         """Get this item's widget data."""

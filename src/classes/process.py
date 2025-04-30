@@ -4,26 +4,28 @@ from ..utility.events import PROCESS_EVENTS
 from ..utility.datetime import get_datetime
 from ..instruments import INSTRUMENTS
 from ..classes.plotting import LineSettings
+from ..classes.signals import GraphSignals
 from .. import Files
+from .metaclasses import ABCQObjectMeta
 from PyQt6.QtCore import QObject, pyqtSignal
 from typing import Any, Self, TYPE_CHECKING
-from .signals import GraphSignals, InformationSignals
 import time
 import os
 from typing import Callable
 import polars as pl
+from abc import abstractmethod
 
 if TYPE_CHECKING:
-    from .process_runner import ProcessRunner
+    from .runners import ProcessRunner
 
 
-class BaseProcess(QObject):
-    """Base class for all processes."""
+class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
+    """Abstract class for all processes."""
 
-    DIRECTORY = ""
+    errorOccurred = pyqtSignal(str)
+    """Send the error message as a **str**."""
 
     def __init__(self, runner: "ProcessRunner", data: dict[str, Any]):
-        """:param data: The data used tro run this process."""
         super().__init__()
         self.data_as_dict = data
         self.process_runner = runner
@@ -31,16 +33,26 @@ class BaseProcess(QObject):
         self.process_status = StatusStateMachine(SequenceStatus.INACTIVE)
         self.data_directory = ""
 
+    @abstractmethod
     def run(self):
         """
-        (Virtual) Run the process. When subclassing this method, you must ensure that long-running
+        Run the process. When subclassing this method, you must ensure that long-running
         processes frequently call `wait()`, otherwise they will freeze the application.
         """
         pass
 
-    def data(self) -> dict[str, Any]:
+    def data(self):
         """Get this process' data."""
         return self.data_as_dict
+
+    @staticmethod
+    @abstractmethod
+    def directory_name() -> str:
+        """
+        Get the name of the directory to store data in without preceding folder names. For example,
+        "Set Temperature". By default, this returns "", so no directory is created.
+        """
+        return ""
 
     def set_directory(self, data_directory: str):
         """Set the data directory."""
@@ -68,6 +80,15 @@ class BaseProcess(QObject):
     def status(self) -> SequenceStatus:
         """Get the process status."""
         return self.process_status.get()
+
+    @abstractmethod
+    def update_status(self, status: SequenceStatus) -> bool:
+        """
+        Set the status, possibly emitting signals.
+
+        :returns: Whether the status was updated (a valid state change occurred).
+        """
+        pass
 
     def is_canceled(self) -> bool:
         """Whether the process has been canceled."""
@@ -103,25 +124,18 @@ class BaseProcess(QObject):
         """Create a metadata file and write **metadata** to it."""
         metadata.write_csv(os.path.join(self.directory(), Files.Process.Filenames.METADATA))
 
+    def communicate_error(self, message: str):
+        """Communicate to the process runner that an error occurred."""
+        self.errorOccurred.emit(message)
 
-class Process(BaseProcess):
-    """
-    Base class for all foreground processes. You must override:
-    - `DIRECTORY`
-        - The name of the process' data directory.
-        - Optional if the process does not record data.
-    - `run()`
-        - You must frequently call `wait()` to process events and handle pausing and canceling.
-            - `wait()` returns a boolean indicating if the process has been canceled. If it has,
-            you MUST end the process by cleaning up resources and returning.
 
-    If you override `__init__()` make sure to call the base method.
-    """
+class AbstractForegroundProcess(AbstractProcess):
+    """Abstract class for foreground processes."""
 
-    def __init__(self, runner: "ProcessRunner", data: dict[str, Any]):
-        """:param data: The data used to run this process."""
-        super().__init__(runner, data)
-        self.info_signals = InformationSignals(self)
+    statusChanged = pyqtSignal(SequenceStatus)
+    """Send the status as a **SequenceStatus**."""
+    currentItemChanged = pyqtSignal(object, object)
+    """Send the current and previous items as **TreeItem | None**."""
 
     def wait(self, delay_ms: int, unerror_fn: Callable[[], bool] = lambda: False) -> bool:
         """
@@ -183,30 +197,22 @@ class Process(BaseProcess):
         return self
 
     def update_status(self, status: SequenceStatus) -> bool:
-        """
-        Set the status and emit signals.
-
-        :returns: Whether the status was updated (a valid state change occurred).
-        """
         changed = self.process_status.set(status)
         if changed:
-            self.info_signals.statusChanged.emit(status)
+            self.statusChanged.emit(status)
         return changed
 
-    def communicate_error(self, message: str) -> Self:
-        """Communicate to the process runner that an error occurred."""
-        self.info_signals.errorOccurred.emit(message)
-        return self
 
-
-class GraphingProcess(Process):
-    """
-    **Process** with graphing capabilities. This has the same override requirements as **Process**.
-    """
+class AbstractGraphingProcess(AbstractForegroundProcess):
+    """**AbstractForegroundProcess** with graphing capabilities."""
 
     def __init__(self, runner: "ProcessRunner", data: dict[str, Any]):
         super().__init__(runner, data)
         self.graph_signals = GraphSignals(self)
+
+    def graphing_signals(self) -> GraphSignals:
+        """Get the process' graphing signals."""
+        return self.graph_signals
 
     def init_line_plot(
         self,
@@ -259,26 +265,12 @@ class GraphingProcess(Process):
         self.graph_signals.initPlot.emit(settings)
 
 
-class BackgroundProcess(BaseProcess):
-    """
-    Base class for all background processes. You must override:
-    - DIRECTORY
-        - The directory to create for storing the process' data.
-        - Optional if there is no data to record.
-    - `run()`
-        - Make sure to frequently call `wait()`
-    """
+class AbstractBackgroundProcess(AbstractProcess):
+    """Abstract class for background processes."""
 
-    errorOccurred = pyqtSignal(str)
     finished = pyqtSignal()
 
-    def __init__(self, runner: "ProcessRunner", data: dict[str, Any]):
-        """
-        :param runner: The **ProcessRunner** running this process.
-        """
-        super().__init__(runner, data)
-
-    def wait(self, delay_ms: int, unpause_fn: Callable[[], bool] = lambda: False) -> bool:
+    def wait(self, delay_ms: int) -> bool:
         """
         Hold for **delay** milliseconds. This is where signals are processed, so be sure to call
         this frequently.
@@ -296,15 +288,5 @@ class BackgroundProcess(BaseProcess):
         return True
 
     def update_status(self, status: SequenceStatus) -> bool:
-        """
-        Set the status.
-
-        :returns: Whether the status changed.
-        """
         # there are no signals to emit here
         return self.process_status.set(status)
-
-    def communicate_error(self, message: str) -> Self:
-        """Communicate to the process runner that an error occurred."""
-        self.errorOccurred.emit(message)
-        return self

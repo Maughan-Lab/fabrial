@@ -11,27 +11,28 @@ from ..... import Files
 class IncrementTemperatureWidget(BaseWidget):
     """Increment the oven's temperature and wait for it to stabilize."""
 
-    PROCESS_TYPE: type[IncrementTemperatureProcess] = IncrementTemperatureProcess
-    ICON = "thermometer--plus.png"
-
     DISPLAY_NAME_PREFIX = "Increment Oven Temperature"
 
     def __init__(self):
         layout = QFormLayout()
-        super().__init__(layout, self.DISPLAY_NAME_PREFIX)
-        self.set_description_from_file(
-            "temperature",
-            "increment_temperature.md",
-            {
-                "MEASUREMENT_INTERVAL": str(self.PROCESS_TYPE.MEASUREMENT_INTERVAL),
-                "DIRECTORY_NAME": self.PROCESS_TYPE.DIRECTORY,
-                "TEMPERATURE_FILE": Filenames.TEMPERATURES,
-                "METADATA_FILE": Files.Process.Filenames.METADATA,
-            },
+        super().__init__(
+            layout,
+            self.DISPLAY_NAME_PREFIX,
+            IncrementTemperatureProcess,
+            "thermometer--plus.png",
+            self.DescriptionInfo(
+                "temperature",
+                "increment_temperature.md",
+                {
+                    "MEASUREMENT_INTERVAL": str(IncrementTemperatureProcess.MEASUREMENT_INTERVAL),
+                    "DIRECTORY_NAME": IncrementTemperatureProcess.directory_name(),
+                    "TEMPERATURE_FILE": Filenames.TEMPERATURES,
+                    "METADATA_FILE": Files.Process.Filenames.METADATA,
+                },
+            ),
         )
 
-        self.increment_spinbox = DoubleSpinBox()
-        self.increment_spinbox.setDecimals(1)
+        self.increment_spinbox = DoubleSpinBox(1)
         self.increment_spinbox.textChanged.connect(
             lambda value_as_str: self.setWindowTitle(
                 f"{self.DISPLAY_NAME_PREFIX} ({value_as_str} degrees)"

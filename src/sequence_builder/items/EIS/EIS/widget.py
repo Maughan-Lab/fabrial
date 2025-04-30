@@ -13,12 +13,15 @@ from .....gamry_integration.Gamry import GAMRY
 class EISWidget(BaseWidget):
     """Contains entries for EIS experiments."""
 
-    PROCESS_TYPE = EISProcess
-    ICON = "battery-charge.png"
-
     def __init__(self) -> None:
         """Create a new instance."""
-        super().__init__(QVBoxLayout(), "Electrochemical Impedance Spectroscopy")
+        # TODO: description
+        super().__init__(
+            QVBoxLayout(),
+            "Electrochemical Impedance Spectroscopy",
+            EISProcess,
+            "battery-charge.png",
+        )
         self.pstat_checkboxes: dict[str, QCheckBox] = {}
         self.create_widgets()
 
@@ -38,13 +41,13 @@ class EISWidget(BaseWidget):
 
         parameter_layout = add_sublayout(layout, QFormLayout)
 
-        self.initial_frequency_spinbox = DoubleSpinBox()
-        self.final_frequency_spinbox = DoubleSpinBox()
+        self.initial_frequency_spinbox = DoubleSpinBox(4)
+        self.final_frequency_spinbox = DoubleSpinBox(4)
         self.points_per_decade_spinbox = SpinBox()
-        self.AC_voltage_spinbox = DoubleSpinBox()
-        self.DC_voltage_spinbox = DoubleSpinBox()
-        self.area_spinbox = DoubleSpinBox()
-        self.estimated_impedance_spinbox = DoubleSpinBox()
+        self.AC_voltage_spinbox = DoubleSpinBox(4)
+        self.DC_voltage_spinbox = DoubleSpinBox(4)
+        self.area_spinbox = DoubleSpinBox(4)
+        self.estimated_impedance_spinbox = DoubleSpinBox(4)
 
         add_to_form_layout(
             parameter_layout,

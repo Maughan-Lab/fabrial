@@ -5,9 +5,10 @@ from ..instruments import Oven
 class DoubleSpinBox(QDoubleSpinBox):
     """QDoubleSpinBox class without up/down buttons."""
 
-    def __init__(self):
+    def __init__(self, number_of_decimals: int):
         super().__init__()
         self.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
+        self.setDecimals(number_of_decimals)
 
     def connect_to_button(self, button: QPushButton):
         """
@@ -25,7 +26,7 @@ class TemperatureSpinBox(DoubleSpinBox):
 
     def __init__(self, oven: Oven):
         """:param oven: The oven to use for setting the maximum/minimum temperatures."""
-        super().__init__()
+        super().__init__(oven.num_decimals())
         # temperatures must be between MIN and MAX degrees C
         self.setMinimum(oven.minimum_temperature())
         self.setMaximum(oven.maximum_temperature())

@@ -1,4 +1,22 @@
+from abc import ABC, abstractmethod
 
-x = [1]
 
-print(x[0:])
+class One(ABC):
+    @classmethod
+    @abstractmethod
+    def poo(self):
+        pass
+
+
+class Two(ABC):
+    @classmethod
+    @abstractmethod
+    def poo(self):
+        pass
+
+
+class Three(Two):
+    pass
+
+
+x = Three()

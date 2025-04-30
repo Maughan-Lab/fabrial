@@ -1,12 +1,18 @@
 from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QCloseEvent
 from .tabs.tab_widget import TabWidget
 from .custom_widgets.dialog import YesCancelDialog
 from .secondary_window import SecondaryWindow
 from .menu.menu_bar import MenuBar
 
+from .custom_widgets.dialog import YesNoDialog
+import sys
+
 
 class MainWindow(QMainWindow):
+    showError = pyqtSignal(str)
+
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Quincy")
@@ -33,6 +39,7 @@ class MainWindow(QMainWindow):
         self.tabs.currentChanged.connect(
             lambda *args: self.menu_bar.view.handle_tab_change(self.tabs)
         )
+        self.showError.connect(self.show_error)
 
     # ----------------------------------------------------------------------------------------------
     # resizing
@@ -90,3 +97,10 @@ class MainWindow(QMainWindow):
             else:
                 return False
         return True
+
+    # ----------------------------------------------------------------------------------------------
+    # errors
+    def show_error(self, message: str):
+        """Show a (likely) fatal error and ask to close."""
+        if YesNoDialog("Application Error", message).run():
+            QApplication.exit()

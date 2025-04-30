@@ -160,6 +160,10 @@ class Oven(Instrument):
         """Get the oven's minimum number of measurements for stability."""
         return self.minimum_stability_measurements
 
+    def num_decimals(self) -> int:
+        """Get the oven's number of decimals."""
+        return self.number_of_decimals
+
     def load_settings(self):
         """Load the oven's settings from the oven settings file."""
         with open(Files.Oven.SETTINGS_FILE, "r") as f:

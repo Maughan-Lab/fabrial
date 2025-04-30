@@ -1,7 +1,7 @@
-from .....classes.process import Process
+from .....classes.process import AbstractProcess
 from ..set_temperature.process import SetTemperatureProcess
 from ..set_temperature.encoding import SETPOINT
-from .....classes.process_runner import ProcessRunner
+from .....classes.runners import ProcessRunner
 from .....instruments import Oven
 from typing import Any
 from . import encoding
@@ -11,14 +11,15 @@ import polars as pl
 class IncrementTemperatureProcess(SetTemperatureProcess):
     """Increment the oven's temperature and record data while waiting for it to stabilize."""
 
-    DIRECTORY = "Increment Temperature"
-    TITLE_PREFIX = "Increment Temperature"
-
     def __init__(self, runner: ProcessRunner, data: dict[str, Any]):  # overridden
         data.update({SETPOINT: 0})
         super().__init__(runner, data)
 
         self.increment = data[encoding.INCREMENT]
+
+    @staticmethod
+    def directory_name():
+        return "Increment Temperature"
 
     def run(self):
         current_setpoint, proceed = self.get_setpoint()
@@ -41,7 +42,7 @@ class IncrementTemperatureProcess(SetTemperatureProcess):
         return f"Increment Temperature ({self.increment} °C)"
 
     def metadata(self, end_time: float) -> pl.DataFrame:
-        metadata = Process.metadata(self, end_time)
+        metadata = AbstractProcess.metadata(self, end_time)
         metadata = pl.concat(
             [pl.DataFrame({"Selected Increment": self.increment}), metadata],
             how="horizontal",

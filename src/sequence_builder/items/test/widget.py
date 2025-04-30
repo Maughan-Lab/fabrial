@@ -10,11 +10,9 @@ from . import encoding as DATA
 class TestWidget(BaseWidget):
     """Test widget"""
 
-    PROCESS_TYPE = TestProcess
-
     def __init__(self):
         layout = QVBoxLayout()
-        super().__init__(layout, "Test Widget")
+        super().__init__(layout, "Test Widget", TestProcess)
 
         self.cry_count_label = Label("")
         self.average_cries_label = Label("")

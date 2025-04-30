@@ -2,4 +2,5 @@ from ..base_widget import CategoryWidget
 
 
 class EISCategoryWidget(CategoryWidget):
-    DISPLAY_NAME = "EIS"
+    def __init__(self):
+        super().__init__("EIS")

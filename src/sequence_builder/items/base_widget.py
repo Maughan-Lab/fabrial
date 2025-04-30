@@ -4,121 +4,168 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 from ...custom_widgets.parameter_description import ParameterDescriptionWidget
 from ...utility.images import make_icon
-from ...classes.process import Process, BackgroundProcess
+from ...classes.process import AbstractProcess
+from abc import ABC, ABCMeta, abstractmethod
 
 
-class BaseWidget(ParameterDescriptionWidget):
-    """
-    Base class for all linked widgets in the tree view.
-    You must override:
-    - `PROCESS_TYPE`
+class AbstractWidget(ABC):
+    """Abstract class for sequence builder widgets."""
 
-    - `__init__()`: Call the base method.
-    - `from_dict()`: Base method optional.
-    - `to_dict()`: Base method optional.
-
-    You can also override `ICON` to change the item's icon. This parameter is the name of an icon
-    file.
-    """
-
-    PROCESS_TYPE: type[Process] | type[BackgroundProcess] | None = None
-    SUPPORTS_SUBITEMS: bool = False
-    DRAGGABLE: bool = True
-    ICON = "script.png"
-
-    def __init__(self, layout: QLayout, display_name: str = ""):
+    def __init__(
+        self,
+        display_name: str = "",
+        process_type: type[AbstractProcess] | None = None,
+        supports_subitems: bool = True,
+        draggable: bool = False,
+    ):
         """
         :param layout: The layout to use for the parameter tab.
         :param display_name: The name displayed on the widget's item and window.
+        :param process_type: The type of the widget's associated **Process**.
+        :param icon_filename: The name of the icon file in the application's internal icon folder.
+        :param description_info: Information for setting the text of the description tab.
+        :param supports_subitems: Whether the associated item can have subitems.
+        :param draggable: Whether the associated item can be dragged.
         """
-        super().__init__(layout)
+        super().__init__()
+        self.linked_process_type = process_type
+        self.item_supports_subitems = supports_subitems
+        self.draggable = draggable
         self.set_display_name(display_name)
-        self.setWindowModality(Qt.WindowModality.ApplicationModal)
-        self.setWindowIcon(make_icon(self.ICON))
-
-    def show_disabled(self):
-        """Show the widget with the parameter tab disabled."""
-        self.parameter_widget().setDisabled(True)
-        self.show()
-
-    def display_name(self) -> str:
-        """Get the text displayed on the window."""
-        return self.windowTitle()
-
-    def set_display_name(self, display_name: str):
-        """Set the text displayed on the window."""
-        self.setWindowTitle(display_name)
-
-    def icon(self) -> QIcon:
-        """Get the widget's icon."""
-        return self.windowIcon()
-
-    def expand_event(self):
-        """(Virtual) Handle the item being expanded."""
-        pass
-
-    def collapse_event(self):
-        """(Virtual) Handle the item being collapsed."""
-        pass
 
     @classmethod
+    @abstractmethod
     def from_dict(cls: type[Self], data_as_dict: dict[str, Any]) -> Self:
         """
         Create a widget from a JSON-style dictionary.
 
         :param data_as_dict: A dictionary representing the widget's data in JSON format.
         """
-        return cls(QLayout())
+        raise TypeError(f"You must implement 'from_dict()' for {cls.__name__}.")
 
     def to_dict(self) -> dict[str, Any]:
-        """
-        Convert all of this item's data into a JSON-like dictionary. The base method returns an
-        empty dictionary.
-        """
+        """Convert all of this item's data into a JSON-like dictionary."""
         return dict()
 
+    def show(self):
+        """Show the widget."""
+        pass
 
-class CategoryWidget:
+    def show_disabled(self):
+        """Show the widget with the parameter tab disabled."""
+        pass
+
+    @abstractmethod
+    def display_name(self) -> str:
+        """Get the text displayed on the window."""
+        pass
+
+    def set_display_name(self, display_name: str):
+        """Set the text displayed on the window."""
+        pass
+
+    @abstractmethod
+    def icon(self) -> QIcon:
+        """Get the widget's icon."""
+        pass
+
+    def process_type(self) -> type[AbstractProcess] | None:
+        """Get the process type."""
+        return None
+
+    def supports_subitems(self) -> bool:
+        """Whether the associated item supports subitems."""
+        return self.item_supports_subitems
+
+    def supports_dragging(self) -> bool:
+        """Whether the associated item can be dragged."""
+        return self.draggable
+
+    def expand_event(self):
+        """Handle the item being expanded."""
+        pass
+
+    def collapse_event(self):
+        """Handle the item being collapsed."""
+        pass
+
+
+class ABCWidgetMeta(type(ParameterDescriptionWidget), ABCMeta):  # type: ignore
+    """Metaclass combining **ParameterDescriptionWidget** and **ABCMeta**."""
+
+
+class BaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=ABCWidgetMeta):
     """
-    Fake widget class for category items (i.e. non-sequence items). You must override:
-    - `DISPLAY_NAME`
-
-    You can also override
-    - `COLLAPSED_ICON` to change the icon used when the item is collapsed.
-    - `EXPANDED_ICON` to change the icon used when the item is expanded.
+    Base class for all linked widgets in the tree view.
+    You must override:
+    - `from_dict()`
+    - `to_dict()`
     """
 
-    PROCESS_TYPE = None
-    SUPPORTS_SUBITEMS = True
-    DRAGGABLE = False
-    COLLAPSED_ICON = "folder-horizontal.png"
-    EXPANDED_ICON = "folder-horizontal-open.png"
+    def __init__(
+        self,
+        layout: QLayout,
+        display_name: str = "",
+        process_type: type[AbstractProcess] | None = None,
+        icon_filename: str = "script.png",
+        description_info: ParameterDescriptionWidget.DescriptionInfo | None = None,
+        supports_subitems: bool = False,
+    ):
+        """
+        :param layout: The layout to use for the parameter tab.
+        :param display_name: The name displayed on the widget's item and window.
+        :param process_type: The type of the widget's associated **Process**.
+        :param icon_filename: The name of the icon file in the application's internal icon folder.
+        :param description_info: Information for setting the text of the description tab.
+        :param supports_subitems: Whether the associated item can have subitems.
+        :param draggable: Whether the associated item can be dragged.
+        """
+        ParameterDescriptionWidget.__init__(self, layout)
+        AbstractWidget.__init__(self, display_name, process_type, supports_subitems, True)
 
-    DISPLAY_NAME = ""
+        self.setWindowModality(Qt.WindowModality.ApplicationModal)
+        self.setWindowIcon(make_icon(icon_filename))
+        if description_info is not None:
+            self.set_description_from_file(
+                description_info.category_folder,
+                description_info.filename,
+                description_info.template_dict,
+            )
 
-    def __init__(self):
-        self.collapsed_icon = make_icon(self.COLLAPSED_ICON)
-        self.expanded_icon = make_icon(self.EXPANDED_ICON)
+    def show_disabled(self):
+        self.parameter_widget().setDisabled(True)
+        self.show()
+
+    def display_name(self) -> str:
+        return self.windowTitle()
+
+    def set_display_name(self, display_name: str):
+        self.setWindowTitle(display_name)
+
+    def icon(self) -> QIcon:
+        return self.windowIcon()
+
+    def process_type(self) -> type[AbstractProcess] | None:
+        return self.linked_process_type
+
+
+class CategoryWidget(AbstractWidget):
+    """Fake widget class for category items (i.e. non-sequence items)."""
+
+    def __init__(self, display_name: str = ""):
+        """:param display_name: The text to display on the item."""
+        super().__init__(display_name)
+        self.collapsed_icon = make_icon("folder-horizontal.png")
+        self.expanded_icon = make_icon("folder-horizontal-open.png")
         self.display_icon = self.collapsed_icon
+        self.name = display_name
 
     @classmethod
     def from_dict(cls: type[Self], data_as_dict: dict[str, Any]) -> Self:
         return cls()
 
-    def to_dict(self) -> dict[str, Any]:
-        return dict()
-
-    def show(self):  # there is nothing to show
-        pass
-
-    def show_disabled(self):
-        pass
-
     def display_name(self) -> str:
-        return self.DISPLAY_NAME
-
-    def set_display_name(self, display_name: str):  # display name is constant
-        pass
+        return self.name
 
     def icon(self) -> QIcon:
         return self.display_icon
