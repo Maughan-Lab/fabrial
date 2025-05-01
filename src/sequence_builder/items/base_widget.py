@@ -4,7 +4,9 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 from ...custom_widgets.parameter_description import ParameterDescriptionWidget
 from ...utility.images import make_icon
-from ...classes.process import AbstractProcess
+from ...classes.process import AbstractForegroundProcess, AbstractBackgroundProcess
+from ...classes.descriptions import DescriptionInfo
+from ...utility.descriptions import get_description
 from abc import ABC, ABCMeta, abstractmethod
 
 
@@ -14,7 +16,7 @@ class AbstractWidget(ABC):
     def __init__(
         self,
         display_name: str = "",
-        process_type: type[AbstractProcess] | None = None,
+        process_type: type[AbstractForegroundProcess | AbstractBackgroundProcess] | None = None,
         supports_subitems: bool = True,
         draggable: bool = False,
     ):
@@ -69,7 +71,7 @@ class AbstractWidget(ABC):
         """Get the widget's icon."""
         pass
 
-    def process_type(self) -> type[AbstractProcess] | None:
+    def process_type(self) -> type[AbstractForegroundProcess | AbstractBackgroundProcess] | None:
         """Get the process type."""
         return None
 
@@ -94,7 +96,7 @@ class ABCWidgetMeta(type(ParameterDescriptionWidget), ABCMeta):  # type: ignore
     """Metaclass combining **ParameterDescriptionWidget** and **ABCMeta**."""
 
 
-class BaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=ABCWidgetMeta):
+class AbstractBaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=ABCWidgetMeta):
     """
     Base class for all linked widgets in the tree view.
     You must override:
@@ -106,9 +108,9 @@ class BaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=ABCWidget
         self,
         layout: QLayout,
         display_name: str = "",
-        process_type: type[AbstractProcess] | None = None,
+        process_type: type[AbstractForegroundProcess | AbstractBackgroundProcess] | None = None,
         icon_filename: str = "script.png",
-        description_info: ParameterDescriptionWidget.DescriptionInfo | None = None,
+        description_info: DescriptionInfo = DescriptionInfo(),
         supports_subitems: bool = False,
     ):
         """
@@ -125,12 +127,7 @@ class BaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=ABCWidget
 
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.setWindowIcon(make_icon(icon_filename))
-        if description_info is not None:
-            self.set_description_from_file(
-                description_info.category_folder,
-                description_info.filename,
-                description_info.template_dict,
-            )
+        self.set_description(get_description(description_info))
 
     def show_disabled(self):
         self.parameter_widget().setDisabled(True)
@@ -145,7 +142,7 @@ class BaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=ABCWidget
     def icon(self) -> QIcon:
         return self.windowIcon()
 
-    def process_type(self) -> type[AbstractProcess] | None:
+    def process_type(self) -> type[AbstractForegroundProcess | AbstractBackgroundProcess] | None:
         return self.linked_process_type
 
 

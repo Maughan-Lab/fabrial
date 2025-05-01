@@ -10,9 +10,6 @@
 ## Instructions
 Update the instructions for implementing new items
 
-# Stability Check
-- In `Oven.check_stability()`, call `read_temp()` and `get_setpoint()` instead of relying on previous values.
-
 # Allow users to edit the temperature and setpoint registers of the oven, and the min and max setpoints, and the stability parameters
 - The oven already reads from a file, but you need to be able to edit that from within the application.
 - You should save the data to a file when the widget you use to edit the settings is closed. Use `Oven.save_settings()`.

@@ -164,7 +164,7 @@ class StatusStateMachine:
 
         :returns: True if the status changed (a valid state transition occurred), False otherwise.
         """
-        match self.get():
+        match self.status:
             case SequenceStatus.INACTIVE | SequenceStatus.COMPLETED | SequenceStatus.CANCELED:
                 # these can only go to ACTIVE
                 match status:

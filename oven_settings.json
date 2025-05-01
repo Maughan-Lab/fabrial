@@ -5,5 +5,7 @@
     "min-temperature": 0.0,
     "number-of-decimals": 1,
     "stability-tolerance": 1.0,
-    "minimum-measurements-for-stability": 150
+    "minimum-measurements-for-stability": 150,
+    "measurement-interval": 1000,
+    "stability-measurement-interval": 50
 }

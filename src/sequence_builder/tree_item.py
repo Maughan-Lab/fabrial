@@ -1,11 +1,11 @@
 from typing import Union, Any, TYPE_CHECKING
-from .items.base_widget import BaseWidget, CategoryWidget
+from .items.base_widget import AbstractWidget, CategoryWidget
 from .items.item_types import ItemType
 from .. import Files
 from functools import cmp_to_key
 
 if TYPE_CHECKING:
-    from ..classes.process import Process, BackgroundProcess
+    from ..classes.process import AbstractForegroundProcess, AbstractBackgroundProcess
 
 
 class TreeItem:
@@ -13,7 +13,7 @@ class TreeItem:
 
     def __init__(
         self,
-        linked_widget: BaseWidget | CategoryWidget,
+        linked_widget: AbstractWidget,
         parent: Union["TreeItem", None] = None,
     ):
         self.parent_item = parent
@@ -37,7 +37,7 @@ class TreeItem:
         """Show the linked widget in its own window."""
         self.linked_widget.show()
 
-    def widget(self) -> BaseWidget | CategoryWidget:
+    def widget(self) -> AbstractWidget:
         """Get the this item's linked widget."""
         return self.linked_widget
 
@@ -156,7 +156,9 @@ class TreeItem:
         """Returns whether the item can be dragged."""
         return self.linked_widget.supports_dragging()
 
-    def process_type(self) -> type[Union["Process", "BackgroundProcess"]] | None:
+    def process_type(
+        self,
+    ) -> type[Union["AbstractForegroundProcess", "AbstractBackgroundProcess"]] | None:
         """Returns the type of the linked process."""
         return self.linked_widget.process_type()
 

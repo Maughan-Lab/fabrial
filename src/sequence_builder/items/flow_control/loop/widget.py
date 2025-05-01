@@ -1,24 +1,41 @@
-from ...base_widget import BaseWidget
+from ...base_widget import AbstractBaseWidget
 from .process import LoopProcess
 from . import encoding
 from PyQt6.QtWidgets import QFormLayout
 from .....custom_widgets.spin_box import SpinBox
 from typing import Any
+from .....classes.descriptions import DescriptionInfo
+from ..... import Files
 
 
-class LoopWidget(BaseWidget):
+class LoopWidget(AbstractBaseWidget):
     DISPLAY_NAME_PREFIX = "Loop"
 
     def __init__(self):
         layout = QFormLayout()
         # TODO: description
         super().__init__(
-            layout, self.DISPLAY_NAME_PREFIX, LoopProcess, "arrow-repeat.png", None, True
+            layout,
+            self.DISPLAY_NAME_PREFIX,
+            LoopProcess,
+            "arrow-repeat.png",
+            DescriptionInfo(
+                "flow_control",
+                "loop",
+                DescriptionInfo.Substitutions(
+                    parameters_dict={"NUM_LOOPS": encoding.NUMBER_OF_LOOPS},
+                    data_recording_dict={
+                        "DIRECTORY_NAME": LoopProcess.directory_name(),
+                        "METADATA_FILE": Files.Process.Filenames.METADATA,
+                    },
+                ),
+            ),
+            True,
         )
 
         self.loop_spinbox = SpinBox()
         self.loop_spinbox.setMinimum(1)
-        layout.addRow("Number of Loops", self.loop_spinbox)
+        layout.addRow(encoding.NUMBER_OF_LOOPS, self.loop_spinbox)
         self.loop_spinbox.textChanged.connect(
             lambda value_as_str: self.setWindowTitle(f"{self.DISPLAY_NAME_PREFIX} ({value_as_str})")
         )

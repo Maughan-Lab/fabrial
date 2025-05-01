@@ -34,6 +34,8 @@ class Oven:
     NUM_DECIMALS = "number-of-decimals"
     STABILITY_TOLERANCE = "stability-tolerance"
     MINIMUM_STABILITY_MEASUREMENTS = "minimum-measurements-for-stability"
+    MEASUREMENT_INTERVAL = "measurement-interval"
+    STABILITY_MEASUREMENT_INTERVAL = "stability-measurement-interval"
 
 
 # TODO: murder this
@@ -91,10 +93,40 @@ class SequenceBuilder:
 
     # file/folder names
     OPTIONS_INITIALIZER = "initialization"
-    DESCRIPTIONS = "item_descriptions"
     DEFAULT_DATA_FOLDER = "./Data Files"
 
     DIRECTORY_KEY = "data-directory"
+
+    class Descriptions:
+        """File/folder names and dictionary keys for descriptions."""
+
+        FOLDER = "item_descriptions"
+        TEMPLATE_FILENAME = "template.md"
+        DEFAULT_FOLDER = "default"
+
+        class Overview:
+            """Overview section."""
+
+            FILENAME = "overview.md"
+            KEY = "OVERVIEW_TEXT"
+
+        class Parameters:
+            """Parameters section."""
+
+            FILENAME = "parameters.md"
+            KEY = "PARAMETERS_TEXT"
+
+        class Visuals:
+            """Visuals section."""
+
+            FILENAME = "visuals.md"
+            KEY = "VISUALS_TEXT"
+
+        class DataRecording:
+            """Data recording section."""
+
+            FILENAME = "data_recording.md"
+            KEY = "DATA_RECORDING_TEXT"
 
 
 class Datetime:

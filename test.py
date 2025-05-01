@@ -1,22 +1,10 @@
-from abc import ABC, abstractmethod
+for i in range(2):
+    for j in range(3):
+        x = input('Enter "q" to break: ')
+        if x == "q":
+            break
+    else:
+        continue
+    break
 
-
-class One(ABC):
-    @classmethod
-    @abstractmethod
-    def poo(self):
-        pass
-
-
-class Two(ABC):
-    @classmethod
-    @abstractmethod
-    def poo(self):
-        pass
-
-
-class Three(Two):
-    pass
-
-
-x = Three()
+print("we done")

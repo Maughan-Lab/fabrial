@@ -7,13 +7,15 @@ from .classes.lock import DataMutex
 from typing import Union, TYPE_CHECKING
 from .utility.timers import Timer
 from .enums.status import ConnectionStatus
+from .classes.metaclasses import ABCQObjectMeta
+from abc import abstractmethod
 from . import Files
 
 if TYPE_CHECKING:
     from developer import DeveloperOven
 
 
-class Instrument(QObject):
+class Instrument(QObject, metaclass=ABCQObjectMeta):
     """
     Abstract class to represent instruments. When using methods that change the physical oven,
     call acquire() followed at some point by release().
@@ -34,7 +36,6 @@ class Instrument(QObject):
     def __init__(self):
         super().__init__()
         self.connection_status = ConnectionStatus.NULL
-
         # this lock system indicates to the rest of the application whether the instrument is
         # available
         self.unlocked = True
@@ -69,11 +70,33 @@ class Instrument(QObject):
         """
         if self.connection_status != connection_status:
             self.connection_status = connection_status
-            self.connectionChanged.emit(self.is_connected())
+            connected = self.is_connected()
+            self.handle_connection_change(connected)
+            self.connectionChanged.emit(connected)
+
+    @abstractmethod
+    def handle_connection_change(self, connected: bool):
+        """Handle the instrument's connection status changing."""
+        pass
+
+    @abstractmethod
+    def connect(self):
+        """Connect to the physical device."""
+        pass
 
     def is_connected(self) -> bool:
         """Get the connection status of this instrument as a **bool**."""
         return bool(self.connection_status)
+
+    @abstractmethod
+    def load_settings(self):
+        """Load the instrument's settings from a file."""
+        pass
+
+    @abstractmethod
+    def save_settings(self):
+        """Save the instrument's settings to a file."""
+        pass
 
 
 class InstrumentLocker[InstrumentType: Instrument]:  # generic
@@ -134,6 +157,8 @@ class Oven(Instrument):
         self.number_of_decimals: int
         self.stability_tolerance: float
         self.minimum_stability_measurements: int
+        self.measurement_interval: int
+        self.stability_measurement_interval: int
         self.load_settings()
         # do not access these directly
         self.last_temperature: float | None = None
@@ -142,11 +167,51 @@ class Oven(Instrument):
         self.stable = DataMutex(False)
         self.disconnected_count = 0
         # timers for connection and reading the temperature and setpoint
-        self.temperature_timer = Timer(self, 1000, self.read_temp)
-        self.setpoint_timer = Timer(self, 1000, self.get_setpoint)
-        self.stability_timer = Timer(self, 50, self.check_stability)
-        self.connection_timer = Timer(self, 1000, self.connect)
-        self.connectionChanged.connect(self.handle_connection_change)
+        self.measurement_timer = Timer(
+            self, self.measurement_interval, self.read_temp, self.get_setpoint
+        )
+        self.stability_timer = Timer(
+            self, self.stability_measurement_interval, self.check_stability
+        )
+        self.connection_timer = Timer(self, 1000, self.connect)  # arbitrary interval
+
+    def load_settings(self):
+        with open(Files.Oven.SETTINGS_FILE, "r") as f:
+            settings = json.load(f)
+        self.max_temperature = settings[Files.Oven.MAX_TEMPERATURE]
+        self.min_temperature = settings[Files.Oven.MIN_TEMPERATURE]
+        self.setpoint_register = settings[Files.Oven.SETPOINT_REGISTER]
+        self.temperature_register = settings[Files.Oven.TEMPERATURE_REGISTER]
+        self.number_of_decimals = settings[Files.Oven.NUM_DECIMALS]
+        self.stability_tolerance = settings[Files.Oven.STABILITY_TOLERANCE]
+        self.minimum_stability_measurements = settings[Files.Oven.MINIMUM_STABILITY_MEASUREMENTS]
+        self.measurement_interval = settings[Files.Oven.MEASUREMENT_INTERVAL]
+        self.stability_measurement_interval = settings[Files.Oven.STABILITY_MEASUREMENT_INTERVAL]
+
+    def save_settings(self):
+        settings = {
+            Files.Oven.MAX_TEMPERATURE: self.max_temperature,
+            Files.Oven.MIN_TEMPERATURE: self.min_temperature,
+            Files.Oven.SETPOINT_REGISTER: self.setpoint_register,
+            Files.Oven.TEMPERATURE_REGISTER: self.temperature_register,
+            Files.Oven.NUM_DECIMALS: self.number_of_decimals,
+            Files.Oven.STABILITY_TOLERANCE: self.stability_tolerance,
+            Files.Oven.MINIMUM_STABILITY_MEASUREMENTS: self.minimum_stability_measurements,
+            Files.Oven.MEASUREMENT_INTERVAL: self.measurement_interval,
+            Files.Oven.STABILITY_MEASUREMENT_INTERVAL: self.stability_measurement_interval,
+        }
+        with open(Files.Oven.SETTINGS_FILE, "w") as f:
+            json.dump(settings, f)
+
+    def handle_connection_change(self, connected: bool):
+        if connected:
+            self.connection_timer.stop()
+            self.measurement_timer.start()
+        else:
+            self.measurement_timer.stop()
+            self.last_temperature = None
+            self.last_setpoint = None
+            self.connection_timer.start()
 
     def maximum_temperature(self) -> float:
         """Get the oven's maximum allowed temperature."""
@@ -163,44 +228,6 @@ class Oven(Instrument):
     def num_decimals(self) -> int:
         """Get the oven's number of decimals."""
         return self.number_of_decimals
-
-    def load_settings(self):
-        """Load the oven's settings from the oven settings file."""
-        with open(Files.Oven.SETTINGS_FILE, "r") as f:
-            settings = json.load(f)
-        self.max_temperature = settings[Files.Oven.MAX_TEMPERATURE]
-        self.min_temperature = settings[Files.Oven.MIN_TEMPERATURE]
-        self.setpoint_register = settings[Files.Oven.SETPOINT_REGISTER]
-        self.temperature_register = settings[Files.Oven.TEMPERATURE_REGISTER]
-        self.number_of_decimals = settings[Files.Oven.NUM_DECIMALS]
-        self.stability_tolerance = settings[Files.Oven.STABILITY_TOLERANCE]
-        self.minimum_stability_measurements = settings[Files.Oven.MINIMUM_STABILITY_MEASUREMENTS]
-
-    def save_settings(self):
-        """Save the oven settings to the oven settings file."""
-        settings = {
-            Files.Oven.MAX_TEMPERATURE: self.max_temperature,
-            Files.Oven.MIN_TEMPERATURE: self.min_temperature,
-            Files.Oven.SETPOINT_REGISTER: self.setpoint_register,
-            Files.Oven.TEMPERATURE_REGISTER: self.temperature_register,
-            Files.Oven.NUM_DECIMALS: self.number_of_decimals,
-            Files.Oven.STABILITY_TOLERANCE: self.stability_tolerance,
-            Files.Oven.MINIMUM_STABILITY_MEASUREMENTS: self.minimum_stability_measurements,
-        }
-        with open(Files.Oven.SETTINGS_FILE, "w") as f:
-            json.dump(settings, f)
-
-    def handle_connection_change(self, connected: bool):
-        if connected:
-            self.connection_timer.stop()
-            self.temperature_timer.start()
-            self.setpoint_timer.start()
-        else:
-            self.temperature_timer.stop()
-            self.setpoint_timer.stop()
-            self.last_temperature = None
-            self.last_setpoint = None
-            self.connection_timer.start()
 
     def read_temp(self) -> float | None:
         """
@@ -284,29 +311,25 @@ class Oven(Instrument):
     def check_stability(self):
         """Check whether the oven's temperature is stable."""
         MAX_DICONNECTS = 10
-
-        if not self.is_connected():
-            # if we're not connected for MAX_DISCONNECTS stability checks, we are unstable
+        temperature = self.read_temp()
+        setpoint = self.get_setpoint()
+        if temperature is None or setpoint is None:
             self.disconnected_count += 1
-            if self.disconnected_count == MAX_DICONNECTS:  # arbitrary value
+            if self.disconnected_count == MAX_DICONNECTS:
                 self.reset_stability()
             elif self.disconnected_count > MAX_DICONNECTS:
-                self.disconnected_count == MAX_DICONNECTS + 1
-        else:
+                self.disconnected_count = MAX_DICONNECTS + 1  # clamp the value to prevent overflow
+        else:  # we are connected and have measurements
             self.disconnected_count = 0
-            # if there are values ready
-            if self.last_temperature is not None and self.last_setpoint is not None:
-                # if the last temperature measurement is within the stability tolerance
-                if self.measurement_is_stable(self.last_temperature, self.last_setpoint):
-                    # if we're not already stable, check to see if we can enter the stable state
-                    if not self.is_stable():
-                        self.increment_stability_count()
-
-                        if self.stability_measurement_count >= self.minimum_stability_measurements:
-                            self.update_stability_status(True)
-                else:
-                    # we're not stable, update accordingly
-                    self.reset_stability()
+            if self.measurement_is_stable(temperature, setpoint):
+                # if we're not already stable, check to see if we can enter the stable state
+                if not self.is_stable():
+                    self.increment_stability_count()
+                    if self.stability_measurement_count >= self.minimum_stability_measurements:
+                        self.update_stability_status(True)
+            else:
+                # we're not stable, update accordingly
+                self.reset_stability()
 
     def update_stability_count(self, count: int):
         """Update the stability measurement count and emit signals on a change."""

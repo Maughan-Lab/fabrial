@@ -5,12 +5,12 @@ from .....custom_widgets.button import Button
 from .....custom_widgets.label import Label
 from typing import Any, Self
 from . import encoding
-from ...base_widget import BaseWidget
+from ...base_widget import AbstractBaseWidget
 from .process import EISProcess
 from .....gamry_integration.Gamry import GAMRY
 
 
-class EISWidget(BaseWidget):
+class EISWidget(AbstractBaseWidget):
     """Contains entries for EIS experiments."""
 
     def __init__(self) -> None:
@@ -36,28 +36,28 @@ class EISWidget(BaseWidget):
         add_to_layout(button_layout, self.reload_button)
 
         device_list_layout = add_sublayout(layout, QHBoxLayout)
-        device_list_layout.addWidget(Label("Potentiostat(s)"))
+        device_list_layout.addWidget(Label(encoding.SELECTED_PSTATS))
         self.devices_layout = add_sublayout(device_list_layout, QVBoxLayout)
 
         parameter_layout = add_sublayout(layout, QFormLayout)
 
+        self.DC_voltage_spinbox = DoubleSpinBox(4)
         self.initial_frequency_spinbox = DoubleSpinBox(4)
         self.final_frequency_spinbox = DoubleSpinBox(4)
         self.points_per_decade_spinbox = SpinBox()
         self.AC_voltage_spinbox = DoubleSpinBox(4)
-        self.DC_voltage_spinbox = DoubleSpinBox(4)
         self.area_spinbox = DoubleSpinBox(4)
         self.estimated_impedance_spinbox = DoubleSpinBox(4)
 
         add_to_form_layout(
             parameter_layout,
-            ("Initial Freq. (Hz)", self.initial_frequency_spinbox),
-            ("Final Freq. (Hz)", self.final_frequency_spinbox),
-            ("Points/decade", self.points_per_decade_spinbox),
-            ("AC Voltage (mV rms)", self.AC_voltage_spinbox),
-            ("DC Voltage (V)", self.DC_voltage_spinbox),
-            ("Area (cm^2)", self.area_spinbox),
-            ("Estimated Z (ohms)", self.estimated_impedance_spinbox),
+            (encoding.DC_voltage, self.DC_voltage_spinbox),
+            (encoding.INITIAL_FREQUENCY, self.initial_frequency_spinbox),
+            (encoding.FINAL_FREQUENCY, self.final_frequency_spinbox),
+            (encoding.POINTS_PER_DECADE, self.points_per_decade_spinbox),
+            (encoding.AC_VOLTAGE, self.AC_voltage_spinbox),
+            (encoding.AREA, self.area_spinbox),
+            (encoding.ESTIMATED_IMPEDANCE, self.estimated_impedance_spinbox),
         )
 
     def reload_pstat_list(self, selected_pstats: list[str]) -> None:
@@ -88,23 +88,24 @@ class EISWidget(BaseWidget):
     @classmethod
     def from_dict(cls: type[Self], data_as_dict: dict[str, Any]) -> Self:
         widget = cls()
+        widget.DC_voltage_spinbox.setValue(data_as_dict[encoding.DC_voltage])
         widget.initial_frequency_spinbox.setValue(data_as_dict[encoding.INITIAL_FREQUENCY])
         widget.final_frequency_spinbox.setValue(data_as_dict[encoding.FINAL_FREQUENCY])
         widget.points_per_decade_spinbox.setValue(data_as_dict[encoding.POINTS_PER_DECADE])
         widget.AC_voltage_spinbox.setValue(data_as_dict[encoding.AC_VOLTAGE])
-        widget.DC_voltage_spinbox.setValue(data_as_dict[encoding.DC_voltage])
         widget.area_spinbox.setValue(data_as_dict[encoding.AREA])
         widget.estimated_impedance_spinbox.setValue(data_as_dict[encoding.ESTIMATED_IMPEDANCE])
         widget.reload_pstat_list(data_as_dict[encoding.SELECTED_PSTATS])
+
         return widget
 
     def to_dict(self) -> dict:
         data = {
+            encoding.DC_voltage: self.DC_voltage_spinbox.value(),
             encoding.INITIAL_FREQUENCY: self.initial_frequency_spinbox.value(),
             encoding.FINAL_FREQUENCY: self.final_frequency_spinbox.value(),
             encoding.POINTS_PER_DECADE: self.points_per_decade_spinbox.value(),
             encoding.AC_VOLTAGE: self.AC_voltage_spinbox.value(),
-            encoding.DC_voltage: self.DC_voltage_spinbox.value(),
             encoding.AREA: self.area_spinbox.value(),
             encoding.ESTIMATED_IMPEDANCE: self.estimated_impedance_spinbox.value(),
             encoding.SELECTED_PSTATS: self.selected_pstats(),

@@ -5,23 +5,11 @@ from PyQt6.QtWidgets import QVBoxLayout, QLayout, QTabWidget, QWidget
 from PyQt6.QtCore import Qt
 from .. import Files
 from ..utility.jinja import parse_template
-from dataclasses import dataclass
 import os
 
 
 class ParameterDescriptionWidget(Widget):
     """Widget with two tabs: one for parameters and one for description text."""
-
-    @dataclass
-    class DescriptionInfo:
-        """Container for description information for sequence builder widgets."""
-
-        category_folder: str
-        """The name of the category folder containing the template file."""
-        filename: str
-        """The name of the file, not including any preceding folder names."""
-        template_dict: dict[str, str]
-        """A dictionary to pass to Template.render() in `jinja`."""
 
     def __init__(self, parameter_layout: QLayout):
         """:param layout: The layout for the parameter tab widget."""
@@ -72,5 +60,4 @@ class ParameterDescriptionWidget(Widget):
         """
         folder = os.path.join(Files.SequenceBuilder.DESCRIPTIONS, category_folder)
         markdown_text = parse_template(folder, filename, template_dict)
-        self.description_widget.setMarkdown(markdown_text)
-        return self
+        return self.set_description(markdown_text)

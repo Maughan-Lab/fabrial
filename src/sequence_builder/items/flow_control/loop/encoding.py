@@ -1,1 +1,1 @@
-NUMBER_OF_LOOPS = "number-of-loops"
+NUMBER_OF_LOOPS = "Number of Loops"

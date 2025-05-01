@@ -1,4 +1,4 @@
-from .....classes.process import AbstractProcess
+from .....classes.process import AbstractForegroundProcess
 from ..set_temperature.process import SetTemperatureProcess
 from ..set_temperature.encoding import SETPOINT
 from .....classes.runners import ProcessRunner
@@ -41,14 +41,6 @@ class IncrementTemperatureProcess(SetTemperatureProcess):
     def title(self) -> str:  # overridden
         return f"Increment Temperature ({self.increment} °C)"
 
-    def metadata(self, end_time: float) -> pl.DataFrame:
-        metadata = AbstractProcess.metadata(self, end_time)
-        metadata = pl.concat(
-            [pl.DataFrame({"Selected Increment": self.increment}), metadata],
-            how="horizontal",
-        )
-        return metadata
-
     def get_setpoint(self) -> tuple[float, bool]:
         """
         Get the oven's setpoint, going into an error state on failure. Retry until the read is
@@ -66,3 +58,13 @@ class IncrementTemperatureProcess(SetTemperatureProcess):
                     return (-1, False)
 
         return (setpoint, True)
+
+    def metadata(self) -> pl.DataFrame:  # overridden
+        metadata = pl.concat(
+            (
+                pl.DataFrame({"Selected Increment": self.increment}),
+                AbstractForegroundProcess.metadata(self),
+            ),
+            how="horizontal",
+        )
+        return metadata

@@ -1,15 +1,15 @@
 from enum import Enum, unique
 from typing import Self
 
-from .base_widget import BaseWidget, CategoryWidget
+from .base_widget import AbstractWidget, CategoryWidget
 
 # flow control
 from .flow_control.category_widget import FlowControlCategoryWidget
 from .flow_control.loop.widget import LoopWidget
 
 # EIS
-from .EIS.category_widget import EISCategoryWidget
-from .EIS.EIS.widget import EISWidget
+from .electrochemistry.category_widget import ElectrochemistryCategoryWidget
+from .electrochemistry.EIS.widget import EISWidget
 
 # oven control
 from .temperature.category_widget import TemperatureCategoryWidget
@@ -27,7 +27,7 @@ class ItemType(Enum):
     # root
     ROOT = CategoryWidget
     # EIS
-    EIS_CATEGORY = EISCategoryWidget
+    ELECTROCHEMISTRY_CATEGORY = ElectrochemistryCategoryWidget
     EIS = EISWidget
     # test
     TEST = TestWidget
@@ -41,10 +41,10 @@ class ItemType(Enum):
 
     @classmethod
     def from_name(cls: type[Self], name: str) -> Self:
-        # use this method to go from a file to an item
+        """Use this method to go from a file to an item."""
         return cls[name]
 
     @classmethod
-    def from_widget(cls: type[Self], widget: BaseWidget | CategoryWidget) -> Self:
-        # use this method to go from an item to a file
+    def from_widget(cls: type[Self], widget: AbstractWidget) -> Self:
+        """Use this method to go from an item to a file."""
         return cls(type(widget))

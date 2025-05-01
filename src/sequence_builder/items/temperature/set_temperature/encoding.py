@@ -1,4 +1,4 @@
-SETPOINT = "setpoint"
+SETPOINT = "Setpoint"
 
 
 class Headers:

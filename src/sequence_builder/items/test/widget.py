@@ -1,4 +1,4 @@
-from ..base_widget import BaseWidget
+from ..base_widget import AbstractBaseWidget
 from .process import TestProcess
 from PyQt6.QtWidgets import QVBoxLayout
 from ....utility.layouts import add_to_layout
@@ -7,7 +7,7 @@ from typing import Self
 from . import encoding as DATA
 
 
-class TestWidget(BaseWidget):
+class TestWidget(AbstractBaseWidget):
     """Test widget"""
 
     def __init__(self):

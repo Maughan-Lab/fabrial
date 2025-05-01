@@ -4,7 +4,6 @@ from .....utility.temperature import create_temperature_file, record_temperature
 from .....instruments import INSTRUMENTS, InstrumentLocker
 from . import encoding
 from typing import Any
-import time
 import os
 from io import TextIOWrapper
 import polars as pl
@@ -63,7 +62,6 @@ class SetTemperatureProcess(AbstractGraphingProcess):
     def post_run(self):
         """Post-run tasks."""
         self.temperature_file.close()
-        self.write_metadata(self.metadata(time.time()))
 
     def create_files(self):
         """Create data files and write headers."""
@@ -94,10 +92,9 @@ class SetTemperatureProcess(AbstractGraphingProcess):
         """Get the graph title."""
         return f"Set Temperature ({self.setpoint} °C)"
 
-    def metadata(self, end_time: float) -> pl.DataFrame:  # overridden
-        metadata = super().metadata(end_time)
+    def metadata(self) -> pl.DataFrame:  # overridden
         metadata = pl.concat(
-            [pl.DataFrame({"Selected Setpoint": self.setpoint}), metadata],
+            (pl.DataFrame({"Selected Setpoint": self.setpoint}), super().metadata()),
             how="horizontal",
         )
         return metadata

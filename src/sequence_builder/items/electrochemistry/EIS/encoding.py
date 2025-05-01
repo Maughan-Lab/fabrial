@@ -1,11 +1,11 @@
-INITIAL_FREQUENCY = "initial-frequency"
-FINAL_FREQUENCY = "final-frequency"
-POINTS_PER_DECADE = "points-per-decade"
-AC_VOLTAGE = "AC-voltage"
-DC_voltage = "DC-voltage"
-AREA = "area"
-ESTIMATED_IMPEDANCE = "estimated-impedance"
-SELECTED_PSTATS = "selected-potentiostats"
+INITIAL_FREQUENCY = "Initial Frequency (Hz)"
+FINAL_FREQUENCY = "Final Frequency (Hz)"
+POINTS_PER_DECADE = "Points Per Decade"
+AC_VOLTAGE = "AC Voltage (mV rms)"
+DC_voltage = "DC Voltage (V)"
+AREA = "Sample Area (cm^2)"
+ESTIMATED_IMPEDANCE = "Estimated Z (ohms)"
+SELECTED_PSTATS = "Potentiostat(s)"
 
 
 class Headers:

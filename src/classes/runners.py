@@ -12,6 +12,7 @@ from .process import (
     AbstractForegroundProcess,
 )
 import os
+from .. import Files
 
 if TYPE_CHECKING:
     from ..sequence_builder.tree_item import TreeItem
@@ -62,7 +63,6 @@ class SequenceRunner(AbstractRunner):
         self.data_directory = data_directory
         self.root_item = root_item
         self.process_runner = ProcessRunner(self, data_directory)
-        self.canceled = False
 
     def connect_runner_signals(self):
         """Connect signals before running."""
@@ -72,9 +72,9 @@ class SequenceRunner(AbstractRunner):
 
     def pre_run(self) -> bool:
         """Run this before `run()`. Returns whether the sequence should continue."""
-        if not self.root_item.child_count() > 0:
+        if not self.root_item.child_count() > 0:  # return early if there are no items to run
             return False
-        try:
+        try:  # make the data directory
             os.makedirs(self.data_directory, exist_ok=True)
         except Exception:
             self.errorOccurred.emit("Failed to create data directory, aborting.")
@@ -116,8 +116,8 @@ class SequenceRunner(AbstractRunner):
         if process_type is not None:
             # run
             process = process_type(self.process_runner, item.widget().to_dict())
-            self.process_runner.run_process(process, item)
-        return not self.canceled  # return whether we should keep going
+            return self.process_runner.run_process(process, item)
+        return True  # if we didn't run a process (for some reason (???)) we should continue
 
     def cleanup(self) -> Self:
         """This runs at the end of the sequence."""
@@ -127,7 +127,6 @@ class SequenceRunner(AbstractRunner):
         return self
 
     def cancel(self):
-        self.canceled = True
         self.process_runner.cancel()
 
     def pause(self):
@@ -162,27 +161,29 @@ class ProcessRunner(AbstractRunner):
         self.graph_signals = GraphSignals(self)
 
         self.process_number = 0  # for file names
+        self.canceled = False
 
     def pre_run(self, process: AbstractProcess):
         """Runs before the current process."""
         directory_name = process.directory_name()
-        if directory_name != "":
-            # example: "C:/Users/.../1 Set Temperature"
-            directory = os.path.join(self.directory(), f"{self.number()} {directory_name}")
-            os.makedirs(directory, exist_ok=True)
-            process.set_directory(directory)
+        # example: "C:/Users/.../1 Set Temperature"
+        directory = os.path.join(self.directory(), f"{self.number()} {directory_name}")
+        os.makedirs(directory, exist_ok=True)
+        process.set_directory(directory)
 
         process.update_status(SequenceStatus.ACTIVE)
         process.init_start_time()
 
     def run_process(
         self, process: AbstractForegroundProcess | AbstractBackgroundProcess, item: "TreeItem"
-    ):
+    ) -> bool:
         """
         Run a process.
 
         :param process: The process to run.
         :param item: The item associated with the process.
+
+        :returns: Whether the sequence was canceled.
         """
         self.currentItemChanged.emit(item, self.item)
         self.item = item
@@ -201,11 +202,19 @@ class ProcessRunner(AbstractRunner):
             self.pre_run(process)
             process.run()
             self.post_run(process)
+        return not self.canceled
 
     def post_run(self, process: AbstractProcess):
         """This runs when the current process completes."""
+        self.write_metadata(process)
         self.graph_signals.clear.emit()
         process.deleteLater()
+
+    def write_metadata(self, process: AbstractProcess):
+        """Create a metadata file and write to it. This calls the process' `metadata()` method."""
+        process.metadata().write_csv(
+            os.path.join(process.directory(), Files.Process.Filenames.METADATA), null_value="Null"
+        )
 
     def current_process(self) -> AbstractForegroundProcess:
         """Get the current process."""
@@ -219,9 +228,21 @@ class ProcessRunner(AbstractRunner):
         """Get the sequence data directory."""
         return self.data_directory
 
+    def set_directory(self, directory: str):
+        """Set the sequence data directory."""
+        self.data_directory = directory
+
     def number(self) -> int:
         """Get the process number."""
         return self.process_number
+
+    def set_number(self, number: int):
+        """Set the process number."""
+        self.process_number = number
+
+    def reset_number(self):
+        """Reset the process number."""
+        self.set_number(0)
 
     def graphing_signals(self) -> GraphSignals:
         """Get the runner's graphing signals."""
@@ -264,6 +285,7 @@ class ProcessRunner(AbstractRunner):
         self.process.unpause()
 
     def cancel(self):
+        self.canceled = True
         self.process.cancel()
 
     def skip(self):

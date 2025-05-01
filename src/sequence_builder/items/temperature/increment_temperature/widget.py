@@ -1,4 +1,4 @@
-from ...base_widget import BaseWidget
+from ...base_widget import AbstractBaseWidget
 from ..set_temperature.encoding import Filenames
 from .....custom_widgets.spin_box import DoubleSpinBox
 from .process import IncrementTemperatureProcess
@@ -6,9 +6,10 @@ from . import encoding
 from PyQt6.QtWidgets import QFormLayout
 from typing import Any, Self
 from ..... import Files
+from .....classes.descriptions import DescriptionInfo
 
 
-class IncrementTemperatureWidget(BaseWidget):
+class IncrementTemperatureWidget(AbstractBaseWidget):
     """Increment the oven's temperature and wait for it to stabilize."""
 
     DISPLAY_NAME_PREFIX = "Increment Oven Temperature"
@@ -20,15 +21,22 @@ class IncrementTemperatureWidget(BaseWidget):
             self.DISPLAY_NAME_PREFIX,
             IncrementTemperatureProcess,
             "thermometer--plus.png",
-            self.DescriptionInfo(
+            DescriptionInfo(
                 "temperature",
-                "increment_temperature.md",
-                {
-                    "MEASUREMENT_INTERVAL": str(IncrementTemperatureProcess.MEASUREMENT_INTERVAL),
-                    "DIRECTORY_NAME": IncrementTemperatureProcess.directory_name(),
-                    "TEMPERATURE_FILE": Filenames.TEMPERATURES,
-                    "METADATA_FILE": Files.Process.Filenames.METADATA,
-                },
+                "increment_temperature",
+                DescriptionInfo.Substitutions(
+                    overview_dict={
+                        "MEASUREMENT_INTERVAL": str(
+                            IncrementTemperatureProcess.MEASUREMENT_INTERVAL
+                        )
+                    },
+                    parameters_dict={"INCREMENT": encoding.INCREMENT},
+                    data_recording_dict={
+                        "DIRECTORY_NAME": IncrementTemperatureProcess.directory_name(),
+                        "TEMPERATURE_FILE": Filenames.TEMPERATURES,
+                        "METADATA_FILE": Files.Process.Filenames.METADATA,
+                    },
+                ),
             ),
         )
 
@@ -38,7 +46,7 @@ class IncrementTemperatureWidget(BaseWidget):
                 f"{self.DISPLAY_NAME_PREFIX} ({value_as_str} degrees)"
             )
         )
-        layout.addRow("Setpoint Increment", self.increment_spinbox)
+        layout.addRow(encoding.INCREMENT, self.increment_spinbox)
 
     def to_dict(self) -> dict[str, Any]:
         return {encoding.INCREMENT: self.increment_spinbox.value()}

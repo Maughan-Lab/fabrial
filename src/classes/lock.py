@@ -1,5 +1,4 @@
 from PyQt6.QtCore import QReadWriteLock, QWriteLocker, QReadLocker
-import time
 from typing import Any
 
 
@@ -17,16 +16,12 @@ class DataMutex[Data: Any](QReadWriteLock):  # generic class
 
     def try_set(self, data: Data):
         """
-        Try to set the data in this mutex twice, calling **time.sleep()** in between. Returns True
-        if successful, False otherwise.
+        Try to set the data in this mutex. Returns True if successful, False otherwise.
         """
-        for i in range(2):
-            if self.tryLockForWrite():
-                self.data = data
-                self.unlock()
-                return True
-            if i != 1:
-                time.sleep(0.01)
+        if self.tryLockForWrite(10):  # arbitrary time
+            self.data = data
+            self.unlock()
+            return True
         return False
 
     def get(self) -> Data:
@@ -39,11 +34,8 @@ class DataMutex[Data: Any](QReadWriteLock):  # generic class
         Try to set the data in this mutex twice, calling **time.sleep()** in between. Returns True
         if successful, False otherwise.
         """
-        for i in range(2):
-            if self.tryLockForRead():
-                data = self.data
-                self.unlock()
-                return data
-            if i != 1:
-                time.sleep(0.01)
+        if self.tryLockForRead(10):  # arbitrary time
+            data = self.data
+            self.unlock()
+            return data
         return None

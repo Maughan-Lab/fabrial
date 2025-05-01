@@ -10,7 +10,6 @@ from .metaclasses import ABCQObjectMeta
 from PyQt6.QtCore import QObject, pyqtSignal
 from typing import Any, Self, TYPE_CHECKING
 import time
-import os
 from typing import Callable
 import polars as pl
 from abc import abstractmethod
@@ -50,9 +49,9 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
     def directory_name() -> str:
         """
         Get the name of the directory to store data in without preceding folder names. For example,
-        "Set Temperature". By default, this returns "", so no directory is created.
+        "Set Temperature".
         """
-        return ""
+        pass
 
     def set_directory(self, data_directory: str):
         """Set the data directory."""
@@ -98,31 +97,21 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
         """Cancel the current process gracefully (do not emit signals)."""
         self.process_status.set(SequenceStatus.CANCELED)
 
-    def metadata(self, end_time: float) -> pl.DataFrame:
+    def metadata(self) -> pl.DataFrame:
         """
         Create a DataFrame containing metadata for the process. By default, this DataFrame contains
-        the start time, duration, and oven setpoint. You can override this method to add additional
-        metadata.
-
-        :param end_time: The end time of the process, as returned by `time.time()`.
+        the start time and oven setpoint. You can override this method to add additional metadata.
         """
         HEADERS = Files.Process.Headers.Metadata
         start_time = self.start_time()
-        duration = end_time - start_time
         setpoint = INSTRUMENTS.oven.get_setpoint()
         metadata = pl.DataFrame(
             {
-                HEADERS.START_DATETIME: get_datetime(start_time),
-                HEADERS.END_DATETIME: get_datetime(end_time),
-                HEADERS.DURATION: duration,
                 HEADERS.SETPOINT: setpoint,
+                HEADERS.START_DATETIME: get_datetime(start_time),
             }
         )
         return metadata
-
-    def write_metadata(self, metadata: pl.DataFrame):
-        """Create a metadata file and write **metadata** to it."""
-        metadata.write_csv(os.path.join(self.directory(), Files.Process.Filenames.METADATA))
 
     def communicate_error(self, message: str):
         """Communicate to the process runner that an error occurred."""
@@ -201,6 +190,22 @@ class AbstractForegroundProcess(AbstractProcess):
         if changed:
             self.statusChanged.emit(status)
         return changed
+
+    def metadata(self) -> pl.DataFrame:
+        """Adds in the end datetime and duration."""
+        HEADERS = Files.Process.Headers.Metadata
+        end_time = time.time()
+        duration = end_time - self.start_time()
+        metadata = pl.concat(
+            (
+                super().metadata(),
+                pl.DataFrame(
+                    {HEADERS.END_DATETIME: get_datetime(end_time), HEADERS.DURATION: duration}
+                ),
+            ),
+            how="horizontal",
+        )
+        return metadata
 
 
 class AbstractGraphingProcess(AbstractForegroundProcess):
@@ -290,3 +295,6 @@ class AbstractBackgroundProcess(AbstractProcess):
     def update_status(self, status: SequenceStatus) -> bool:
         # there are no signals to emit here
         return self.process_status.set(status)
+
+    def metadata(self):
+        return super().metadata()

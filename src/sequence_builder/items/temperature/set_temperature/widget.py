@@ -1,4 +1,4 @@
-from ...base_widget import BaseWidget
+from ...base_widget import AbstractBaseWidget
 from .....custom_widgets.spin_box import TemperatureSpinBox
 from .....instruments import INSTRUMENTS
 from .process import SetTemperatureProcess
@@ -6,9 +6,10 @@ from . import encoding
 from PyQt6.QtWidgets import QFormLayout
 from typing import Any, Self
 from ..... import Files
+from .....classes.descriptions import DescriptionInfo
 
 
-class SetTemperatureWidget(BaseWidget):
+class SetTemperatureWidget(AbstractBaseWidget):
     """Set the oven's temperature and wait for it to stabilize."""
 
     DISPLAY_NAME_PREFIX = "Set Oven Temperature"
@@ -20,15 +21,20 @@ class SetTemperatureWidget(BaseWidget):
             self.DISPLAY_NAME_PREFIX,
             SetTemperatureProcess,
             "thermometer--arrow.png",
-            self.DescriptionInfo(
+            DescriptionInfo(
                 "temperature",
-                "set_temperature.md",
-                {
-                    "MEASUREMENT_INTERVAL": str(SetTemperatureProcess.MEASUREMENT_INTERVAL),
-                    "DIRECTORY_NAME": SetTemperatureProcess.directory_name(),
-                    "TEMPERATURE_FILE": encoding.Filenames.TEMPERATURES,
-                    "METADATA_FILE": Files.Process.Filenames.METADATA,
-                },
+                "set_temperature",
+                DescriptionInfo.Substitutions(
+                    overview_dict={
+                        "MEASUREMENT_INTERVAL": str(SetTemperatureProcess.MEASUREMENT_INTERVAL)
+                    },
+                    parameters_dict={"SETPOINT": encoding.SETPOINT},
+                    data_recording_dict={
+                        "DIRECTORY_NAME": SetTemperatureProcess.directory_name(),
+                        "TEMPERATURE_FILE": encoding.Filenames.TEMPERATURES,
+                        "METADATA_FILE": Files.Process.Filenames.METADATA,
+                    },
+                ),
             ),
         )
 
@@ -38,7 +44,7 @@ class SetTemperatureWidget(BaseWidget):
                 f"{self.DISPLAY_NAME_PREFIX} ({value_as_str} degrees)"
             )
         )
-        layout.addRow("Setpoint", self.temperature_spinbox)
+        layout.addRow(encoding.SETPOINT, self.temperature_spinbox)
 
     def to_dict(self) -> dict[str, Any]:
         return {encoding.SETPOINT: self.temperature_spinbox.value()}
