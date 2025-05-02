@@ -1,4 +1,5 @@
 from abc import ABCMeta
+
 from PyQt6.QtCore import QObject
 
 

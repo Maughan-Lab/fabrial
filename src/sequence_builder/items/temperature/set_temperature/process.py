@@ -1,12 +1,14 @@
-from .....classes.process import AbstractGraphingProcess
-from .....classes.runners import ProcessRunner
-from .....utility.temperature import create_temperature_file, record_temperature_data
-from .....instruments import INSTRUMENTS, InstrumentLocker
-from . import encoding
-from typing import Any
 import os
 from io import TextIOWrapper
-import polars as pl
+from typing import Any
+
+from ..... import Files
+from .....classes.process import AbstractGraphingProcess
+from .....classes.runners import ProcessRunner
+from .....instruments import INSTRUMENTS, InstrumentLocker
+from .....utility.dataframe import add_to_dataframe
+from .....utility.temperature import create_temperature_file, record_temperature_data
+from . import encoding
 
 
 class SetTemperatureProcess(AbstractGraphingProcess):
@@ -66,7 +68,7 @@ class SetTemperatureProcess(AbstractGraphingProcess):
     def create_files(self):
         """Create data files and write headers."""
         self.temperature_file = create_temperature_file(
-            os.path.join(self.directory(), encoding.Filenames.TEMPERATURES)
+            os.path.join(self.directory(), Files.Process.Filenames.TEMPERATURES)
         )
 
     def change_setpoint(self) -> bool:
@@ -92,9 +94,5 @@ class SetTemperatureProcess(AbstractGraphingProcess):
         """Get the graph title."""
         return f"Set Temperature ({self.setpoint} °C)"
 
-    def metadata(self) -> pl.DataFrame:  # overridden
-        metadata = pl.concat(
-            (pl.DataFrame({"Selected Setpoint": self.setpoint}), super().metadata()),
-            how="horizontal",
-        )
-        return metadata
+    def metadata(self):  # overridden
+        return add_to_dataframe(super().metadata(), {"Selected Setpoint": self.setpoint})

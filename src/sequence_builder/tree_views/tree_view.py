@@ -1,14 +1,16 @@
-from PyQt6.QtWidgets import QAbstractItemView, QTreeView
-from PyQt6.QtCore import QModelIndex, QPersistentModelIndex, QItemSelectionModel
-from ..tree_model import TreeModel
 from typing import Self
+
+from PyQt6.QtCore import QItemSelectionModel, QModelIndex, QPersistentModelIndex
+from PyQt6.QtWidgets import QAbstractItemView, QTreeView, QWidget
+
+from ..tree_model import TreeModel
 
 
 class TreeView(QTreeView):
     """Custom TreeView with support for copy, cut, paste, and delete (and drag and drop)."""
 
-    def __init__(self, model: TreeModel):
-        super().__init__()
+    def __init__(self, model: TreeModel, parent: QWidget | None = None):
+        super().__init__(parent)
 
         # initialize
         self.setDragEnabled(True)
@@ -16,6 +18,12 @@ class TreeView(QTreeView):
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.setExpandsOnDoubleClick(False)
         self.setModel(model)
+        self.connect_signals()
+
+    def connect_signals(self) -> Self:
+        self.expanded.connect(self.model().expand_event)
+        self.collapsed.connect(self.model().collapse_event)
+        return self
 
     def model(self) -> TreeModel:
         """Get this view's associated model."""

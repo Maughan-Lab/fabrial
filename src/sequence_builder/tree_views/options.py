@@ -1,12 +1,13 @@
-from PyQt6.QtCore import Qt, QModelIndex
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QSizePolicy
-from .tree_view import TreeView
-from ..tree_model import TreeModel
+from PyQt6.QtCore import QModelIndex, Qt
+from PyQt6.QtWidgets import QSizePolicy, QVBoxLayout, QWidget
+
+from ... import Files
+from ...classes.actions import Shortcut
 from ...custom_widgets.button import FixedButton
 from ...custom_widgets.container import Container
-from ...classes.actions import Shortcut
 from ...utility.layouts import add_to_layout
-from ... import Files
+from ..tree_model import TreeModel
+from .tree_view import TreeView
 
 
 class OptionsTreeView(TreeView):
@@ -16,9 +17,8 @@ class OptionsTreeView(TreeView):
         model = TreeModel.from_directory(
             "Options", Files.SequenceBuilder.OPTIONS_INITIALIZER
         ).sort_all()
-        super().__init__(model)
+        super().__init__(model, parent)
         self.create_shortcuts()
-        self.connect_signals()
         self.doubleClicked.connect(self.handle_double_click)
 
     def create_shortcuts(self):
@@ -26,16 +26,12 @@ class OptionsTreeView(TreeView):
             self, "Ctrl+C", self.copy_event, context=Qt.ShortcutContext.WidgetWithChildrenShortcut
         )
 
-    def connect_signals(self):
-        self.expanded.connect(lambda index: self.model().item(index).widget().expand_event())
-        self.collapsed.connect(lambda index: self.model().item(index).widget().collapse_event())
-
     def handle_double_click(self, index: QModelIndex):
         self.model().item(index).widget().show_disabled()
 
 
 class OptionsTreeWidget(Container):
-    """OptionsTreeView with buttons for expanding and un-expanding all items."""
+    """OptionsTreeView with a button for expanding and un-expanding all items."""
 
     def __init__(self) -> None:
         super().__init__(QVBoxLayout())
@@ -56,7 +52,6 @@ class OptionsTreeWidget(Container):
 
     def handle_button_press(self, checked: bool):
         if checked:  # expand when pressed
-            self.view.expand
             self.view.expandAll()
         else:  # un-expand when unpressed
             self.view.collapseAll()

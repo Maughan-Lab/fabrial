@@ -1,18 +1,20 @@
-from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QHBoxLayout, QStackedLayout
-from PyQt6.QtCore import Qt, pyqtSignal, QThreadPool
-from ..custom_widgets.label import Label
+from typing import Type
+
+from PyQt6.QtCore import Qt, QThreadPool, pyqtSignal
+from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QStackedLayout, QVBoxLayout
+
+from ..classes.plotting import TemperaturePoint
 from ..custom_widgets.combo_box import ComboBox
-from ..custom_widgets.groupbox import GroupBox
-from ..custom_widgets.separator import HSeparator
 from ..custom_widgets.dialog import OkDialog
+from ..custom_widgets.groupbox import GroupBox
+from ..custom_widgets.label import Label
+from ..custom_widgets.separator import HSeparator
 from ..custom_widgets.tableview import TableView
+from ..enums.status import OldSequenceStatus, StabilityStatus
 from ..instruments import INSTRUMENTS
 from ..utility.layouts import add_sublayout, add_to_layout
-from ..enums.status import StabilityStatus, OldSequenceStatus
-from ..classes.plotting import TemperaturePoint
-from .tablemodel import SequenceTableModel
 from .sequence import SequenceThread
-from typing import Type
+from .tablemodel import SequenceTableModel
 
 
 class SequenceWidget(GroupBox):

@@ -1,13 +1,15 @@
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QFormLayout, QCheckBox
-from .....utility.layouts import add_sublayout, add_to_layout, add_to_form_layout, clear_layout
-from .....custom_widgets.spin_box import SpinBox, DoubleSpinBox
+from typing import Any, Self
+
+from PyQt6.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QVBoxLayout
+
 from .....custom_widgets.button import Button
 from .....custom_widgets.label import Label
-from typing import Any, Self
-from . import encoding
-from ...base_widget import AbstractBaseWidget
-from .process import EISProcess
+from .....custom_widgets.spin_box import DoubleSpinBox, SpinBox
 from .....gamry_integration.Gamry import GAMRY
+from .....utility.layouts import add_sublayout, add_to_form_layout, add_to_layout, clear_layout
+from ...base_widget import AbstractBaseWidget
+from . import encoding
+from .process import EISProcess
 
 
 class EISWidget(AbstractBaseWidget):

@@ -1,8 +1,9 @@
-from io import TextIOWrapper
-from .. import Files
-from .datetime import get_datetime
 import csv
 import time
+from io import TextIOWrapper
+
+from .. import Files
+from .datetime import get_datetime
 
 
 def create_temperature_file(filepath: str) -> TextIOWrapper:
@@ -24,7 +25,9 @@ def create_temperature_file(filepath: str) -> TextIOWrapper:
     return file
 
 
-def record_temperature_data(file: TextIOWrapper, start_time: float, temperature: float) -> float:
+def record_temperature_data(
+    file: TextIOWrapper, start_time: float, temperature: float | None
+) -> float:
     """
     Record the time since start, datetime, and temperature in the provided file.
 
@@ -36,5 +39,5 @@ def record_temperature_data(file: TextIOWrapper, start_time: float, temperature:
     """
     current_time = time.time()
     time_since_start = current_time - start_time
-    csv.writer(file).writerow([time_since_start, get_datetime(current_time), temperature])
+    csv.writer(file).writerow([time_since_start, get_datetime(current_time), str(temperature)])
     return time_since_start

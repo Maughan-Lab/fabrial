@@ -1,6 +1,6 @@
-from PyQt6.QtWidgets import QMainWindow, QWidget, QSizePolicy
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QCloseEvent
+from PyQt6.QtWidgets import QMainWindow, QSizePolicy, QWidget
 
 
 class SecondaryWindow(QMainWindow):

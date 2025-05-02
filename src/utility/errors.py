@@ -1,9 +1,10 @@
-from ..main_window import MainWindow
-from .. import Files
-from typing import Callable
+import sys
 import traceback
 from types import TracebackType
-import sys
+from typing import Callable
+
+from .. import Files
+from ..main_window import MainWindow
 
 
 def generate_exception_handler(
@@ -22,6 +23,8 @@ def generate_exception_handler(
         if issubclass(exception_type, KeyboardInterrupt):
             sys.__excepthook__(exception_type, exception, trace)
             sys.exit()
+        if issubclass(exception_type, SystemExit):
+            print("here")
         else:
             name = Files.APPLICATION_NAME
             error_message = (

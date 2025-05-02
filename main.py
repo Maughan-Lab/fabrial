@@ -1,11 +1,13 @@
-from PyQt6.QtWidgets import QApplication
-from PyQt6.QtGui import QIcon
-from src.main_window import MainWindow
-from src import Files
-from src.utility.errors import generate_exception_handler
-from src.gamry_integration.Gamry import GAMRY
-import sys
 import os
+import sys
+
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QApplication
+
+from src import Files
+from src.gamry_integration.Gamry import GAMRY
+from src.main_window import MainWindow
+from src.utility.errors import generate_exception_handler
 
 
 def update_id():

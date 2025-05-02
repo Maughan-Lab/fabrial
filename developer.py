@@ -1,16 +1,13 @@
-from PyQt6.QtWidgets import (
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
-)
-from src.main_window import MainWindow
-from src.instruments import Oven, ConnectionStatus
-from src.custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
-from src.custom_widgets.groupbox import GroupBox
-from src.utility.layouts import add_to_layout, add_sublayout  # ../utility
 import time
+
+from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QVBoxLayout
+
 from main import main
-from src.instruments import INSTRUMENTS
+from src.custom_widgets.groupbox import GroupBox
+from src.custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
+from src.instruments import INSTRUMENTS, ConnectionStatus, Oven
+from src.main_window import MainWindow
+from src.utility.layouts import add_sublayout, add_to_layout  # ../utility
 
 
 class DeveloperOven(Oven):
@@ -19,6 +16,8 @@ class DeveloperOven(Oven):
         self.unlocked = True
         self.developer_temperature = 0.0
         self.developer_setpoint = 0.0
+        self.set_connected(ConnectionStatus.CONNECTED)
+        self.set_unlocked(True)
 
     def set_connected(self, connection_status: ConnectionStatus):
         """Set the connection status and send signals."""

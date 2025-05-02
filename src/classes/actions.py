@@ -1,6 +1,7 @@
+from typing import Any, Callable
+
 from PyQt6.QtCore import QObject, Qt, pyqtBoundSignal
 from PyQt6.QtGui import QAction, QKeySequence, QShortcut
-from typing import Callable, Any
 
 
 class Action(QAction):

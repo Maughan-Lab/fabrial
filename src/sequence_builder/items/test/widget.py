@@ -1,10 +1,12 @@
-from ..base_widget import AbstractBaseWidget
-from .process import TestProcess
-from PyQt6.QtWidgets import QVBoxLayout
-from ....utility.layouts import add_to_layout
-from ....custom_widgets.label import Label
 from typing import Self
+
+from PyQt6.QtWidgets import QVBoxLayout
+
+from ....custom_widgets.label import Label
+from ....utility.layouts import add_to_layout
+from ..base_widget import AbstractBaseWidget
 from . import encoding as DATA
+from .process import TestProcess
 
 
 class TestWidget(AbstractBaseWidget):

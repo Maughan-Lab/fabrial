@@ -18,8 +18,15 @@ class SavedSettings:
 
     SAVED_SETTINGS_FOLDER = "saved_settings"
     OVEN_PORT = os.path.join(SAVED_SETTINGS_FOLDER, "oven_port.csv")
-    SEQUENCE = os.path.join(SAVED_SETTINGS_FOLDER, "sequence_autosave.json")
-    SEQUENCE_DIRECTORY = os.path.join(SAVED_SETTINGS_FOLDER, "sequence_directory.csv")
+
+    class Sequence:
+        """Saved settings for the sequence."""
+
+        FOLDER = os.path.join(SAVED_SETTINGS_FOLDER, "sequence")
+
+        AUTOSAVE = os.path.join(FOLDER, "sequence_autosave.json")
+        SEQUENCE_DIRECTORY = os.path.join(FOLDER, "sequence_directory.csv")
+        NON_EMPTY_DIRECTORY_WARNING = os.path.join(FOLDER, "non_empty_directory_warning.csv")
 
 
 class Oven:
@@ -84,8 +91,11 @@ class TreeItem:
     """Dictionary keys for TreeItems."""
 
     TYPE = "type"
+    EXPANDED = "expanded"
     WIDGET_DATA = "linked-widget-data"
     CHILDREN = "children"
+
+    DEFAULT_ICON_FILENAME = "script.png"
 
 
 class SequenceBuilder:
@@ -128,6 +138,9 @@ class SequenceBuilder:
             FILENAME = "data_recording.md"
             KEY = "DATA_RECORDING_TEXT"
 
+            DIRECTORY_KEY = "DIRECTORY_NAME"
+            METADATA_KEY = "METADATA_FILE"
+
 
 class Datetime:
     HEADER = "Day Month Year Hours:Minutes:Seconds AM/PM"
@@ -153,6 +166,11 @@ class Process:
 
     class Filenames:
         METADATA = "metadata.csv"
+        TEMPERATURES = "temperature.csv"
 
 
-FOLDERS_TO_CREATE = [SAVED_SETTINGS_FOLDER, SequenceBuilder.DEFAULT_DATA_FOLDER]
+FOLDERS_TO_CREATE = [
+    SavedSettings.SAVED_SETTINGS_FOLDER,
+    SavedSettings.Sequence.FOLDER,
+    SequenceBuilder.DEFAULT_DATA_FOLDER,
+]

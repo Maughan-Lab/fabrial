@@ -1,19 +1,14 @@
-from PyQt6.QtWidgets import (
-    QHBoxLayout,
-    QVBoxLayout,
-    QWidget,
-    QSizePolicy,
-    QStackedWidget,
-)
 from PyQt6.QtCore import Qt
-from ..utility.layouts import add_to_layout, add_sublayout
-from ..sequence_builder.tree_views.sequence_builder import SequenceTreeWidget
-from ..sequence_builder.tree_views.options import OptionsTreeWidget
+from PyQt6.QtWidgets import QHBoxLayout, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
+
 from ..custom_widgets.button import BiggerButton
-from ..custom_widgets.label import Label
 from ..custom_widgets.container import Container
+from ..custom_widgets.label import Label
 from ..custom_widgets.separator import HSeparator
 from ..enums.status import SequenceStatus
+from ..sequence_builder.tree_views.options import OptionsTreeWidget
+from ..sequence_builder.tree_views.sequence_builder import SequenceTreeWidget
+from ..utility.layouts import add_sublayout, add_to_layout
 from .sequence_display import SequenceDisplayTab
 
 
@@ -34,7 +29,7 @@ class SequenceBuilderTab(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        # treeviews
+        # tree views
         treeview_layout = add_sublayout(layout, QHBoxLayout)
         self.options_tree = OptionsTreeWidget()
         self.sequence_tree = SequenceTreeWidget()

@@ -1,8 +1,10 @@
 import time
-from math import log10
-import comtypes.client as client
-from .EventHandler import ReadZEventHandler
 from io import TextIOWrapper
+from math import log10
+
+import comtypes.client as client
+
+from .EventHandler import ReadZEventHandler
 
 GamryCOM = client.GetModule(r"C:\Program Files (x86)\Gamry Instruments\Framework\GamryCom.exe")
 

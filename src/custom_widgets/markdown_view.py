@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import QTextBrowser, QFrame
 from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QFrame, QTextBrowser
 
 
 class MarkdownView(QTextBrowser):

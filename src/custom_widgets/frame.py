@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QGroupBox, QSizePolicy, QLayout
+from PyQt6.QtWidgets import QGroupBox, QLayout, QSizePolicy
 
 
 class Frame(QGroupBox):

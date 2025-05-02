@@ -1,11 +1,12 @@
+from typing import Any
+
 from .....classes.process import AbstractForegroundProcess
-from ..set_temperature.process import SetTemperatureProcess
-from ..set_temperature.encoding import SETPOINT
 from .....classes.runners import ProcessRunner
 from .....instruments import Oven
-from typing import Any
+from .....utility.dataframe import add_to_dataframe
+from ..set_temperature.encoding import SETPOINT
+from ..set_temperature.process import SetTemperatureProcess
 from . import encoding
-import polars as pl
 
 
 class IncrementTemperatureProcess(SetTemperatureProcess):
@@ -50,21 +51,15 @@ class IncrementTemperatureProcess(SetTemperatureProcess):
         ignored.
         """
         setpoint = self.oven.get_setpoint()
-        if setpoint is None:
+        while setpoint is None:
             self.error_pause()
-            while setpoint is None:
-                setpoint = self.oven.get_setpoint()
-                if not self.wait(self.MEASUREMENT_INTERVAL, self.oven.is_connected):
-                    return (-1, False)
+            if not self.wait(self.MEASUREMENT_INTERVAL, self.oven.is_connected):
+                return (-1, False)
+            setpoint = self.oven.get_setpoint()
 
         return (setpoint, True)
 
-    def metadata(self) -> pl.DataFrame:  # overridden
-        metadata = pl.concat(
-            (
-                pl.DataFrame({"Selected Increment": self.increment}),
-                AbstractForegroundProcess.metadata(self),
-            ),
-            how="horizontal",
+    def metadata(self):  # overridden
+        return add_to_dataframe(
+            AbstractForegroundProcess.metadata(self), {"Selected Increment": self.increment}
         )
-        return metadata

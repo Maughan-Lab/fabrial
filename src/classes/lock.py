@@ -1,5 +1,6 @@
-from PyQt6.QtCore import QReadWriteLock, QWriteLocker, QReadLocker
 from typing import Any
+
+from PyQt6.QtCore import QReadLocker, QReadWriteLock, QWriteLocker
 
 
 class DataMutex[Data: Any](QReadWriteLock):  # generic class

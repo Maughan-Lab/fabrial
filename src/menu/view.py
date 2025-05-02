@@ -1,10 +1,12 @@
-from PyQt6.QtWidgets import QMenu, QMenuBar
+from typing import TYPE_CHECKING
+
 from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QMenu, QMenuBar
+
 from ..classes.actions import Action
 from ..tabs.oven_control import OvenControlTab
 from ..tabs.sequence_display import SequenceDisplayTab
 from ..tabs.tab_widget import TabWidget
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..main_window import MainWindow

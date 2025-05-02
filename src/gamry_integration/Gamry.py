@@ -1,5 +1,6 @@
-import comtypes.client as client  # type: ignore
 import types
+
+import comtypes.client as client  # type: ignore
 
 
 class GamryInterface:

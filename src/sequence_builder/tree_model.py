@@ -1,21 +1,23 @@
+import json
+from typing import Any, Iterable, Self
+
 from PyQt6.QtCore import (
-    Qt,
-    QModelIndex,
-    QPersistentModelIndex,
     QAbstractItemModel,
-    QObject,
-    QMimeData,
     QByteArray,
     QDataStream,
     QIODevice,
+    QMimeData,
+    QModelIndex,
+    QObject,
+    QPersistentModelIndex,
+    Qt,
     pyqtSignal,
 )
 from PyQt6.QtWidgets import QApplication
-from .tree_item import TreeItem
-from .clipboard import CLIPBOARD
+
 from ..utility.sequence_builder import item_dict_from_directory
-from typing import Iterable, Self, Any
-import json
+from .clipboard import CLIPBOARD
+from .tree_item import TreeItem
 
 JSON = "application/json"
 
@@ -314,3 +316,11 @@ class TreeModel(QAbstractItemModel):
         self.layoutChanged.emit()
 
         return True
+
+    def expand_event(self, index: QModelIndex):
+        """Handle an item being expanded in the view."""
+        self.item(index).expand_event()
+
+    def collapse_event(self, index: QModelIndex):
+        """Handle an item being collapsed in the view."""
+        self.item(index).collapse_event()

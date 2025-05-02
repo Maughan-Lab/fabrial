@@ -1,11 +1,12 @@
-from typing import Union, Any, TYPE_CHECKING
+from functools import cmp_to_key
+from typing import TYPE_CHECKING, Any, Union
+
+from .. import Files
 from .items.base_widget import AbstractWidget, CategoryWidget
 from .items.item_types import ItemType
-from .. import Files
-from functools import cmp_to_key
 
 if TYPE_CHECKING:
-    from ..classes.process import AbstractForegroundProcess, AbstractBackgroundProcess
+    from ..classes.process import AbstractBackgroundProcess, AbstractForegroundProcess
 
 
 class TreeItem:
@@ -165,6 +166,14 @@ class TreeItem:
     def data(self) -> dict[str, Any]:
         """Get this item's widget data."""
         return self.linked_widget.to_dict()
+
+    def expand_event(self):
+        """Runs when the item is expanded in the view."""
+        self.linked_widget.expand_event()
+
+    def collapse_event(self):
+        """Runs when the item is collapsed in the view."""
+        self.linked_widget.collapse_event()
 
     # ----------------------------------------------------------------------------------------------
     @classmethod

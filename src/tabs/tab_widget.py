@@ -1,12 +1,13 @@
 from PyQt6.QtWidgets import QTabWidget, QWidget
+
+from ..utility.images import make_icon
 from .oven_control import OvenControlTab
 from .sequence_builder import SequenceBuilderTab
 from .sequence_display import SequenceDisplayTab
-from ..utility.images import make_icon
 
 
 class TabWidget(QTabWidget):
-    def __init__(self, parent: QWidget | None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self.setDocumentMode(True)
         self.sequence_visuals_tab = SequenceDisplayTab()

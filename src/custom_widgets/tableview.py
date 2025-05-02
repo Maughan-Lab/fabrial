@@ -1,5 +1,6 @@
-from PyQt6.QtWidgets import QTableView, QHeaderView, QSizePolicy
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtWidgets import QHeaderView, QSizePolicy, QTableView
+
 from .tablemodel import TableModel
 
 # TODO: remove this

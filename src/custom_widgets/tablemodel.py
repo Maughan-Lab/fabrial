@@ -1,5 +1,5 @@
-from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex
 import polars as pl
+from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt
 
 # TODO: remove this
 

@@ -1,17 +1,17 @@
-from .widget import Widget
-from .markdown_view import MarkdownView
 from typing import Self
-from PyQt6.QtWidgets import QVBoxLayout, QLayout, QTabWidget, QWidget
+
 from PyQt6.QtCore import Qt
-from .. import Files
+from PyQt6.QtWidgets import QLayout, QTabWidget, QVBoxLayout, QWidget
+
 from ..utility.jinja import parse_template
-import os
+from .markdown_view import MarkdownView
+from .widget import Widget
 
 
 class ParameterDescriptionWidget(Widget):
     """Widget with two tabs: one for parameters and one for description text."""
 
-    def __init__(self, parameter_layout: QLayout):
+    def __init__(self, parameter_layout: QLayout | None = None):
         """:param layout: The layout for the parameter tab widget."""
 
         layout = QVBoxLayout()
@@ -48,16 +48,15 @@ class ParameterDescriptionWidget(Widget):
         return self
 
     def set_description_from_file(
-        self, category_folder: str, filename: str, template_dict: dict[str, str]
+        self, folder: str, filename: str, template_dict: dict[str, str]
     ) -> Self:
         """
         Set the text (interpreted as Markdown) displayed in the description tab by parsing a
         Jinja-templated file.
 
-        :param category_folder: The name of the category folder containing the template file.
+        :param folder: The folder that contains the text file.
         :param filename: The name of the file *inside the folder* (i.e. not the full path).
-        :param template_dict: A dictionary to pass to Template.render().
+        :param template_dict: A dictionary to pass to jinja2.Template.render().
         """
-        folder = os.path.join(Files.SequenceBuilder.DESCRIPTIONS, category_folder)
         markdown_text = parse_template(folder, filename, template_dict)
         return self.set_description(markdown_text)

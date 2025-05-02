@@ -1,13 +1,16 @@
-from typing import Self, Any
-from PyQt6.QtWidgets import QLayout
+from abc import ABC, ABCMeta, abstractmethod
+from typing import Any, Self
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
-from ...custom_widgets.parameter_description import ParameterDescriptionWidget
-from ...utility.images import make_icon
-from ...classes.process import AbstractForegroundProcess, AbstractBackgroundProcess
+from PyQt6.QtWidgets import QLayout
+
+from ... import Files
 from ...classes.descriptions import DescriptionInfo
+from ...classes.process import AbstractBackgroundProcess, AbstractForegroundProcess
+from ...custom_widgets.parameter_description import ParameterDescriptionWidget
 from ...utility.descriptions import get_description
-from abc import ABC, ABCMeta, abstractmethod
+from ...utility.images import make_icon
 
 
 class AbstractWidget(ABC):
@@ -106,10 +109,10 @@ class AbstractBaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=A
 
     def __init__(
         self,
-        layout: QLayout,
+        layout: QLayout | None = None,
         display_name: str = "",
         process_type: type[AbstractForegroundProcess | AbstractBackgroundProcess] | None = None,
-        icon_filename: str = "script.png",
+        icon_filename: str = Files.TreeItem.DEFAULT_ICON_FILENAME,
         description_info: DescriptionInfo = DescriptionInfo(),
         supports_subitems: bool = False,
     ):

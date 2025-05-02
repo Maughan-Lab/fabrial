@@ -1,6 +1,7 @@
-from PyQt6.QtWidgets import QPushButton, QSizePolicy
+from typing import Any, Callable
+
 from PyQt6.QtCore import QSize
-from typing import Callable, Any
+from PyQt6.QtWidgets import QPushButton, QSizePolicy
 
 
 class Button(QPushButton):

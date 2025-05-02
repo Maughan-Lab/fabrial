@@ -1,14 +1,16 @@
-from PyQt6.QtCore import QRunnable, pyqtSignal, pyqtSlot, QObject
-from .tablemodel import TableModel, Column
+import os
 import time
 from os import path
-import os
-from ..instruments import INSTRUMENTS
-from ..enums.status import StabilityStatus, OldSequenceStatus
-from ..classes.plotting import TemperaturePoint
-from ..classes.lock import DataMutex
-from ..utility.graph import graph_from_folder
+
+from PyQt6.QtCore import QObject, QRunnable, pyqtSignal, pyqtSlot
+
 from .. import Files
+from ..classes.lock import DataMutex
+from ..classes.plotting import TemperaturePoint
+from ..enums.status import OldSequenceStatus, StabilityStatus
+from ..instruments import INSTRUMENTS
+from ..utility.graph import graph_from_folder
+from .tablemodel import Column, TableModel
 
 
 class SequenceThread(QRunnable):

@@ -1,8 +1,10 @@
-from PyQt6.QtWidgets import QLabel, QFormLayout
+from typing import Self
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
+from PyQt6.QtWidgets import QFormLayout, QLabel
+
 from .container import Container
-from typing import Self
 
 
 class Label(QLabel):
@@ -21,6 +23,7 @@ class Label(QLabel):
         """Reset the label's color and set the text to **reset_text**."""
         self.set_color("")
         self.setText(reset_text)
+        return self
 
 
 class IconLabel(Container):

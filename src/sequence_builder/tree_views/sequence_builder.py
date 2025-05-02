@@ -1,22 +1,24 @@
-from PyQt6.QtCore import Qt, QModelIndex, QItemSelection, pyqtSignal, QThread
-from PyQt6.QtGui import QKeyEvent, QDropEvent
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QFileDialog, QSizePolicy
-from .tree_view import TreeView
+import os
+from typing import Self
+
+from PyQt6.QtCore import QItemSelection, QModelIndex, Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QDropEvent, QKeyEvent
+from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QSizePolicy, QVBoxLayout
+
+from ... import Files
+from ...classes.actions import Shortcut
+from ...classes.runners import SequenceRunner
+from ...classes.signals import CommandSignals, GraphSignals
+from ...custom_widgets.button import BiggerButton, FixedButton
+from ...custom_widgets.container import Container
+from ...custom_widgets.dialog import OkDialog, YesCancelDontShowDialog
+from ...custom_widgets.label import IconLabel
+from ...enums.status import SequenceStatus
+from ...utility.images import make_icon, make_pixmap
+from ...utility.layouts import add_sublayout, add_to_layout
 from ..tree_item import TreeItem
 from ..tree_model import TreeModel
-from ...custom_widgets.button import FixedButton, BiggerButton
-from ...custom_widgets.container import Container
-from ...custom_widgets.label import IconLabel
-from ...custom_widgets.dialog import OkDialog, YesNoDialog
-from ...classes.actions import Shortcut
-from ...classes.signals import GraphSignals, CommandSignals
-from ...enums.status import SequenceStatus
-from ...utility.layouts import add_to_layout, add_sublayout
-from ...utility.images import make_pixmap
-from typing import Self
-from ...classes.runners import SequenceRunner
-from ... import Files
-import os
+from .tree_view import TreeView
 
 
 class SequenceTreeView(TreeView):
@@ -25,7 +27,7 @@ class SequenceTreeView(TreeView):
     def __init__(self):
         # initialize the model
         model = TreeModel("Sequence Builder")
-        model.init_from_file(Files.SavedSettings.SEQUENCE)
+        model.init_from_file(Files.SavedSettings.Sequence.AUTOSAVE)
         model.set_supported_drag_actions(Qt.DropAction.MoveAction | Qt.DropAction.CopyAction)
         model.set_supported_drop_actions(Qt.DropAction.MoveAction | Qt.DropAction.CopyAction)
         # initialize the super class
@@ -41,7 +43,7 @@ class SequenceTreeView(TreeView):
 
     def connect_signals(self):
         # expand the view when drops occur so it's easier to see what changed
-        self.model().dropOccurred.connect(lambda index: self.expand(index))
+        self.model().dropOccurred.connect(self.expand)
 
     def create_shortcuts(self):
         Shortcut(
@@ -116,8 +118,10 @@ class SequenceTreeWidget(Container):
 
         button_sublayout = QHBoxLayout()
         self.save_button = FixedButton("Save", self.save_settings)
+        self.save_button.setIcon(make_icon("script-export.png"))
         button_sublayout.addWidget(self.save_button)
         self.load_button = FixedButton("Load", self.load_settings)
+        self.load_button.setIcon(make_icon("script-import.png"))
         button_sublayout.addWidget(self.load_button)
 
         button_layout.addWidget(self.delete_button, alignment=Qt.AlignmentFlag.AlignLeft)
@@ -172,7 +176,7 @@ class SequenceTreeWidget(Container):
     def read_previous_directory(self) -> str:
         """Try to load the previously used directory."""
         try:
-            with open(Files.SavedSettings.SEQUENCE_DIRECTORY, "r") as f:
+            with open(Files.SavedSettings.Sequence.SEQUENCE_DIRECTORY, "r") as f:
                 directory = f.read()
                 return directory
         except Exception:
@@ -184,9 +188,9 @@ class SequenceTreeWidget(Container):
 
     def save_on_close(self):
         """Call this when closing the application to save settings."""
-        self.view.model().save_to_file(Files.SavedSettings.SEQUENCE)
+        self.view.model().save_to_file(Files.SavedSettings.Sequence.AUTOSAVE)
         directory = self.directory_label.label().text()
-        with open(Files.SavedSettings.SEQUENCE_DIRECTORY, "w") as f:
+        with open(Files.SavedSettings.Sequence.SEQUENCE_DIRECTORY, "w") as f:
             f.write(directory)
 
     def save_settings(self):
@@ -207,26 +211,35 @@ class SequenceTreeWidget(Container):
         )
         if filename != "":
             self.view.model().init_from_file(filename)
-            self.view.expandAll()
 
     def data_directory(self) -> str:
         """Get the current data directory."""
         return self.directory_label.label().text()
 
+    # ----------------------------------------------------------------------------------------------
+    # running the sequence
     def is_running(self) -> bool:
         """Whether the sequence is currently running."""
         return len(self.threads) > 0
 
     def run_sequence(self) -> Self:
         """Run the sequence."""
-        directory = self.directory_label.label().text()
-        # TODO: uncomment these
-        # if len(os.listdir(directory)) > 0:  # the directory isn't empty
-        #     if not YesNoDialog("Note", "Data directory is not empty, proceed?").run():
-        #         return self
+        root_item = self.view.model().root()
+        if not root_item.child_count() > 0:  # return early if there are no items to run
+            return self
+
+        directory = self.data_directory()
+        if len(os.listdir(directory)) > 0:  # the directory isn't empty
+            # ask the user if they are okay with writing to a non-empty directory
+            if not YesCancelDontShowDialog(
+                "Note",
+                "Data directory is not empty, proceed?",
+                Files.SavedSettings.Sequence.NON_EMPTY_DIRECTORY_WARNING,
+            ).run():
+                return self
 
         thread = QThread(self)
-        runner = SequenceRunner(directory, self.view.model().root())
+        runner = SequenceRunner(directory, root_item)
         runner.moveToThread(thread)
         self.connect_sequence_signals(runner, thread)
         self.graphSignalsChanged.emit(runner.graphing_signals())
@@ -237,7 +250,9 @@ class SequenceTreeWidget(Container):
 
     def connect_sequence_signals(self, runner: SequenceRunner, thread: QThread) -> Self:
         # up towards the parent
-        runner.errorOccurred.connect(lambda message: OkDialog("Error", message).exec())
+        runner.errorOccurred.connect(
+            lambda message: OkDialog(f"Error in {runner.current_item().name()}", message).exec()
+        )
         runner.currentItemChanged.connect(self.handle_item_change)
         runner.statusChanged.connect(self.sequenceStatusChanged)
         # down towards the child
@@ -262,6 +277,7 @@ class SequenceTreeWidget(Container):
     def sequence_start_event(self, runner: SequenceRunner):
         """This runs when the sequence starts."""
         self.adjust_view_state(True)
+        self.view.expandAll()
         self.view.clearSelection()
 
         self.threads.append(runner)

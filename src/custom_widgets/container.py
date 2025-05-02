@@ -1,4 +1,5 @@
-from PyQt6.QtWidgets import QSizePolicy, QLayout
+from PyQt6.QtWidgets import QLayout, QSizePolicy
+
 from .widget import Widget
 
 

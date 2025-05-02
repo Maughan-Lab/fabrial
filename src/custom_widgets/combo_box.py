@@ -1,6 +1,7 @@
-from PyQt6.QtWidgets import QComboBox
-from PyQt6.QtCore import pyqtSignal
 from typing import Iterable
+
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QComboBox
 
 MAX_VISIBLE_ITEMS = 20
 

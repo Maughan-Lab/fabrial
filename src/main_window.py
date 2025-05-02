@@ -1,13 +1,11 @@
-from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QCloseEvent
-from .tabs.tab_widget import TabWidget
-from .custom_widgets.dialog import YesCancelDialog
-from .secondary_window import SecondaryWindow
-from .menu.menu_bar import MenuBar
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
 
-from .custom_widgets.dialog import YesNoDialog
-import sys
+from .custom_widgets.dialog import YesCancelDialog, YesNoDialog
+from .menu.menu_bar import MenuBar
+from .secondary_window import SecondaryWindow
+from .tabs.tab_widget import TabWidget
 
 
 class MainWindow(QMainWindow):
@@ -25,6 +23,7 @@ class MainWindow(QMainWindow):
         self.sequence_tab = self.tabs.sequence_builder_tab
         self.sequence_visuals_tab = self.tabs.sequence_visuals_tab
         self.sequence_builder = self.sequence_tab.sequence_tree
+        self.connection_widget = self.oven_control_tab.instrument_connection_widget
         # create menu bar
         self.menu_bar = MenuBar(self)
         self.setMenuBar(self.menu_bar)
@@ -78,7 +77,7 @@ class MainWindow(QMainWindow):
         """Prevent the window from closing if a sequence or stability check are running."""
         if event is not None:
             if self.allowed_to_close():
-                self.sequence_builder.save_on_close()
+                self.save_on_close()
                 event.accept()
             else:
                 event.ignore()
@@ -97,6 +96,11 @@ class MainWindow(QMainWindow):
             else:
                 return False
         return True
+
+    def save_on_close(self):
+        """Save all data that gets saved on closing. Call this when closing the application."""
+        self.sequence_builder.save_on_close()
+        self.connection_widget.save_on_close()
 
     # ----------------------------------------------------------------------------------------------
     # errors

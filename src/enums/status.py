@@ -1,4 +1,4 @@
-from enum import Enum, Flag, auto, unique, IntEnum
+from enum import Enum, Flag, IntEnum, auto, unique
 
 
 class StabilityStatus(Enum):

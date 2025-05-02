@@ -1,10 +1,11 @@
 from PyQt6.QtWidgets import QFormLayout, QVBoxLayout
-from ..enums.status import StabilityStatus
-from ..utility.layouts import add_sublayout
-from ..custom_widgets.label import Label
+
 from ..custom_widgets.groupbox import GroupBox
-from ..instruments import INSTRUMENTS
+from ..custom_widgets.label import Label
 from ..custom_widgets.progressbar import StabilityProgressBar
+from ..enums.status import StabilityStatus
+from ..instruments import INSTRUMENTS
+from ..utility.layouts import add_sublayout
 
 
 class StabilityCheckWidget(GroupBox):

@@ -1,10 +1,11 @@
-from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 from PyQt6.QtCore import Qt
-from ..utility.layouts import add_to_layout, add_sublayout
-from ..setpoint.widgets import SetpointWidget
-from ..passive_monitoring.widgets import PassiveMonitoringWidget
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
+
 from ..instrument_connection.widgets import InstrumentConnectionWidget
+from ..passive_monitoring.widgets import PassiveMonitoringWidget
+from ..setpoint.widgets import SetpointWidget
 from ..stability_check.widgets import StabilityCheckWidget
+from ..utility.layouts import add_sublayout, add_to_layout
 
 
 class OvenControlTab(QWidget):

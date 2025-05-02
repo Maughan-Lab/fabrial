@@ -1,0 +1,1 @@
+This runs in the background until the sequence ends. Records the oven's temperature on a user-specified interval. You should only use one of these per sequence, and it should be at the beginning of the sequence.

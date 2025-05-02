@@ -1,12 +1,14 @@
-from ...base_widget import AbstractBaseWidget
-from .....custom_widgets.spin_box import TemperatureSpinBox
-from .....instruments import INSTRUMENTS
-from .process import SetTemperatureProcess
-from . import encoding
-from PyQt6.QtWidgets import QFormLayout
 from typing import Any, Self
+
+from PyQt6.QtWidgets import QFormLayout
+
 from ..... import Files
 from .....classes.descriptions import DescriptionInfo
+from .....custom_widgets.spin_box import TemperatureSpinBox
+from .....instruments import INSTRUMENTS
+from ...base_widget import AbstractBaseWidget
+from . import encoding
+from .process import SetTemperatureProcess
 
 
 class SetTemperatureWidget(AbstractBaseWidget):
@@ -24,16 +26,13 @@ class SetTemperatureWidget(AbstractBaseWidget):
             DescriptionInfo(
                 "temperature",
                 "set_temperature",
+                SetTemperatureProcess.directory_name(),
                 DescriptionInfo.Substitutions(
                     overview_dict={
                         "MEASUREMENT_INTERVAL": str(SetTemperatureProcess.MEASUREMENT_INTERVAL)
                     },
                     parameters_dict={"SETPOINT": encoding.SETPOINT},
-                    data_recording_dict={
-                        "DIRECTORY_NAME": SetTemperatureProcess.directory_name(),
-                        "TEMPERATURE_FILE": encoding.Filenames.TEMPERATURES,
-                        "METADATA_FILE": Files.Process.Filenames.METADATA,
-                    },
+                    data_recording_dict={"TEMPERATURE_FILE": Files.Process.Filenames.TEMPERATURES},
                 ),
             ),
         )

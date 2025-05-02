@@ -9,6 +9,6 @@ class TestProcess(AbstractForegroundProcess):
         print(f"Cry count: {self.data()[DATA.CRY_COUNT]}")
         print("Test process eneded.")
 
-    # @staticmethod
-    # def directory_name():
-    #     return AbstractForegroundProcess.directory_name()
+    @staticmethod
+    def directory_name():
+        return "Test"

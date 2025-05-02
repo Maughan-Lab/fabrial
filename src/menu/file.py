@@ -1,7 +1,9 @@
-from PyQt6.QtWidgets import QMenu, QMenuBar, QApplication
+from typing import TYPE_CHECKING
+
+from PyQt6.QtWidgets import QApplication, QMenu, QMenuBar
+
 from ..classes.actions import Action
 from ..custom_widgets.dialog import OkCancelDialog
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..main_window import MainWindow

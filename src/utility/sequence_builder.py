@@ -1,6 +1,7 @@
+import json
 import os
 from typing import Any
-import json
+
 from .. import Files
 
 CATEGORY_FILENAME = "category.json"

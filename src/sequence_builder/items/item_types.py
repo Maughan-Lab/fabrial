@@ -3,18 +3,20 @@ from typing import Self
 
 from .base_widget import AbstractWidget, CategoryWidget
 
-# flow control
-from .flow_control.category_widget import FlowControlCategoryWidget
-from .flow_control.loop.widget import LoopWidget
-
-# EIS
+# electrochemistry
 from .electrochemistry.category_widget import ElectrochemistryCategoryWidget
 from .electrochemistry.EIS.widget import EISWidget
 
-# oven control
+# flow control
+from .flow_control.category_widget import FlowControlCategoryWidget
+from .flow_control.hold.widget import HoldWidget
+from .flow_control.loop.widget import LoopWidget
+
+# temperature
+from .temperature.background_temperature.widget import BackgroundTemperatureWidget
 from .temperature.category_widget import TemperatureCategoryWidget
-from .temperature.set_temperature.widget import SetTemperatureWidget
 from .temperature.increment_temperature.widget import IncrementTemperatureWidget
+from .temperature.set_temperature.widget import SetTemperatureWidget
 
 # test
 from .test.widget import TestWidget
@@ -34,10 +36,12 @@ class ItemType(Enum):
     # flow control
     FLOW_CONTROL_CATEGORY = FlowControlCategoryWidget
     LOOP = LoopWidget
-    # oven control
+    HOLD = HoldWidget
+    # temperature
     TEMPERATURE_CATEGORY = TemperatureCategoryWidget
     SET_TEMPERATURE = SetTemperatureWidget
     INCREMENT_TEMPERATURE = IncrementTemperatureWidget
+    BACKGROUND_TEMPERATURE = BackgroundTemperatureWidget
 
     @classmethod
     def from_name(cls: type[Self], name: str) -> Self:

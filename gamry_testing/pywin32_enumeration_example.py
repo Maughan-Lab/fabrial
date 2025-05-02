@@ -1,5 +1,7 @@
 from __future__ import print_function
+
 import time
+
 import win32com.client as client
 
 devicelist = client.Dispatch('GamryCOM.GamryDeviceList')

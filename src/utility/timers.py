@@ -1,5 +1,6 @@
-from PyQt6.QtCore import QTimer, QObject
-from typing import Callable, Any, Self
+from typing import Any, Callable, Self
+
+from PyQt6.QtCore import QObject, QTimer
 
 
 class Timer(QTimer):

@@ -1,5 +1,7 @@
 import os
+
 from PyQt6.QtGui import QIcon, QPixmap
+
 from .. import Files
 
 

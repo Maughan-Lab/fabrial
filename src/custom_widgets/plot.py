@@ -1,11 +1,13 @@
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QFileDialog
-from ..utility.layouts import add_to_layout, add_sublayout
+from typing import Literal
+
 import pyqtgraph as pg  # type: ignore
 import pyqtgraph.exporters as exporters  # type: ignore
-from ..custom_widgets.button import Button
-from ..custom_widgets.widget import SignalWidget, Widget
-from typing import Literal
+from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QVBoxLayout
+
 from ..classes.plotting import LineData
+from ..custom_widgets.button import Button
+from ..custom_widgets.widget import Widget
+from ..utility.layouts import add_sublayout, add_to_layout
 
 
 class PlotItem(pg.PlotItem):
@@ -54,6 +56,7 @@ class PlotItem(pg.PlotItem):
         for axis_name in ["left", "right", "top", "bottom"]:
             self.label(axis_name, None)
         self.set_title(None)
+        self.setLogMode(False, False)
 
     def plot(
         self,
@@ -148,44 +151,3 @@ class PlotWidget(Widget):
     def autoscale(self):
         """Autoscale the graph."""
         self.plot_item().getViewBox().enableAutoRange(pg.ViewBox.XYAxes)
-
-
-class OldPlotWidget(SignalWidget):
-    """Plot widget for displaying data. This is the widget."""
-
-    def __init__(self, plot_container: PlotView | None = None):
-        """
-        Create a new PlotWidget. Optionally provide a **PlotContainer** to initialize this widget
-        with.
-        """
-        super().__init__()
-        self.plot_item: PlotItem
-        self.plot_container: PlotView
-
-        if plot_container is not None:
-            self.plot_container = plot_container
-            self.plot_item = plot_container.getPlotItem()
-        else:
-            self.plot_container = PlotView()
-            self.plot_item = self.plot_container.getPlotItem()
-
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-
-        layout.addWidget(self.plot_container)
-
-        autoscale_button = Button("Autoscale", self.autoscale)
-        save_button = Button("Save", self.save_as_image)
-        button_layout = add_sublayout(layout, QHBoxLayout)
-        add_to_layout(button_layout, autoscale_button, save_button)
-
-    def autoscale(self):
-        """Autoscale the graph."""
-        self.plot_item.getViewBox().enableAutoRange(pg.ViewBox.XYAxes)
-
-    def save_as_image(self):
-        filename, _ = QFileDialog.getSaveFileName(
-            None, "Save Graph", "", "Portable Network Graphics (*.png)"
-        )
-        if filename != "":
-            self.plot_container.export_to_image(filename)

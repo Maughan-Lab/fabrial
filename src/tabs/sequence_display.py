@@ -1,10 +1,11 @@
-from PyQt6.QtWidgets import QVBoxLayout
 from PyQt6.QtCore import pyqtSignal
-from ..custom_widgets.widget import Widget
-from ..custom_widgets.plot import PlotWidget
-from ..classes.signals import GraphSignals
-from ..classes.plotting import LineSettings
+from PyQt6.QtWidgets import QVBoxLayout
+
 from ..classes.actions import Shortcut
+from ..classes.plotting import LineSettings
+from ..classes.signals import GraphSignals
+from ..custom_widgets.plot import PlotWidget
+from ..custom_widgets.widget import Widget
 from ..secondary_window import SecondaryWindow
 
 
@@ -34,13 +35,16 @@ class SequenceDisplayTab(Widget):
         Shortcut(self.plot, "Ctrl+s", self.plot.save_as_image)
 
     def connect_graph_signals(self, signals: GraphSignals):
+        """Connect to the provided graph signals."""
         plot_item = self.plot.plot_item()
         signals.initPlot.connect(self.init_plot)
         signals.clear.connect(plot_item.reset)
         signals.addPoint.connect(plot_item.add_point)
         signals.saveFig.connect(self.plot.plot_view().export_to_image)
+        signals.setLogScale.connect(plot_item.setLogMode)
 
     def init_plot(self, settings: LineSettings):
+        """Initialize the plot."""
         plot_item = self.plot.plot_item()
         plot_item.set_title(settings.title)
         plot_item.label("bottom", settings.x_label)

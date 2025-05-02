@@ -1,11 +1,12 @@
-from ...base_widget import AbstractBaseWidget
-from .process import LoopProcess
-from . import encoding
-from PyQt6.QtWidgets import QFormLayout
-from .....custom_widgets.spin_box import SpinBox
 from typing import Any
+
+from PyQt6.QtWidgets import QFormLayout
+
 from .....classes.descriptions import DescriptionInfo
-from ..... import Files
+from .....custom_widgets.spin_box import SpinBox
+from ...base_widget import AbstractBaseWidget
+from . import encoding
+from .process import LoopProcess
 
 
 class LoopWidget(AbstractBaseWidget):
@@ -13,7 +14,6 @@ class LoopWidget(AbstractBaseWidget):
 
     def __init__(self):
         layout = QFormLayout()
-        # TODO: description
         super().__init__(
             layout,
             self.DISPLAY_NAME_PREFIX,
@@ -22,12 +22,9 @@ class LoopWidget(AbstractBaseWidget):
             DescriptionInfo(
                 "flow_control",
                 "loop",
+                LoopProcess.directory_name(),
                 DescriptionInfo.Substitutions(
-                    parameters_dict={"NUM_LOOPS": encoding.NUMBER_OF_LOOPS},
-                    data_recording_dict={
-                        "DIRECTORY_NAME": LoopProcess.directory_name(),
-                        "METADATA_FILE": Files.Process.Filenames.METADATA,
-                    },
+                    parameters_dict={"NUM_LOOPS": encoding.NUMBER_OF_LOOPS}
                 ),
             ),
             True,

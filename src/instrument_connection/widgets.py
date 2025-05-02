@@ -1,13 +1,15 @@
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QFormLayout
-from ..custom_widgets.label import Label
+from os import path
+
+from PyQt6.QtWidgets import QFormLayout, QHBoxLayout, QVBoxLayout
+
+from .. import Files
 from ..custom_widgets.combo_box import ComboBox
 from ..custom_widgets.groupbox import GroupBox
-from ..instruments import INSTRUMENTS
+from ..custom_widgets.label import Label
 from ..enums.status import ConnectionStatus
+from ..instruments import INSTRUMENTS
 from ..utility.layouts import add_sublayout, add_to_layout
 from .ports import get_ports_list
-from os import path
-from .. import Files
 
 
 class InstrumentConnectionWidget(GroupBox):
@@ -48,7 +50,6 @@ class InstrumentConnectionWidget(GroupBox):
         """Give widgets logic."""
         # changing the oven combobox updates the oven port instantly
         self.oven_combobox.activated.connect(self.update_port)
-        self.oven_combobox.activated.connect(self.save_ports)
         self.oven_combobox.pressed.connect(self.update_comboboxes)
         self.oven.connectionChanged.connect(self.handle_connection_change)
 
@@ -78,8 +79,8 @@ class InstrumentConnectionWidget(GroupBox):
         """Update the oven's port (this is a slot)."""
         self.oven.set_port(self.oven_combobox.currentText())
 
-    def save_ports(self, index: int):
-        """Writes the current port selections to a file."""
+    def save_on_close(self):
+        """Call this when closing the application to save the oven port."""
         port = self.oven_combobox.currentText()
         with open(Files.InstrumentConnection.PORTS, "w") as f:
             f.write(port)

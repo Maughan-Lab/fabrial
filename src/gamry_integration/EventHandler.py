@@ -1,7 +1,8 @@
+import ctypes
 import time
 from io import TextIOWrapper
 from math import log10
-import ctypes
+
 from comtypes import client
 
 GamryCOM = client.GetModule(r"C:\Program Files (x86)\Gamry Instruments\Framework\GamryCom.exe")

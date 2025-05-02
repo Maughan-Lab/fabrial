@@ -1,15 +1,17 @@
+import json
+from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-import json
-from PyQt6.QtCore import pyqtSignal, QObject, QMutex, QMutexLocker
+from typing import TYPE_CHECKING, Union
+
 import minimalmodbus as modbus  # type: ignore
-from .classes.lock import DataMutex
-from typing import Union, TYPE_CHECKING
-from .utility.timers import Timer
-from .enums.status import ConnectionStatus
-from .classes.metaclasses import ABCQObjectMeta
-from abc import abstractmethod
+from PyQt6.QtCore import QMutex, QMutexLocker, QObject, pyqtSignal
+
 from . import Files
+from .classes.lock import DataMutex
+from .classes.metaclasses import ABCQObjectMeta
+from .enums.status import ConnectionStatus
+from .utility.timers import Timer
 
 if TYPE_CHECKING:
     from developer import DeveloperOven

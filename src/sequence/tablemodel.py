@@ -1,10 +1,12 @@
+from enum import Enum
+
+import polars as pl
+from polars import col
 from PyQt6.QtCore import Qt, pyqtSignal
+
+from .. import Files
 from ..custom_widgets.dialog import OkDialog
 from ..custom_widgets.tablemodel import TableModel
-from polars import col
-import polars as pl
-from enum import Enum
-from .. import Files
 from ..instruments import INSTRUMENTS
 
 

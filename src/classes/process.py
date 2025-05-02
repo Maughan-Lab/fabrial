@@ -1,18 +1,18 @@
-from ..enums.status import SequenceStatus
-from ..enums.status import StatusStateMachine
-from ..utility.events import PROCESS_EVENTS
-from ..utility.datetime import get_datetime
-from ..instruments import INSTRUMENTS
+import time
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Any, Callable, Self
+
+import polars as pl
+from PyQt6.QtCore import QObject, pyqtSignal
+
+from .. import Files
 from ..classes.plotting import LineSettings
 from ..classes.signals import GraphSignals
-from .. import Files
+from ..enums.status import SequenceStatus, StatusStateMachine
+from ..instruments import INSTRUMENTS
+from ..utility.datetime import get_datetime
+from ..utility.events import PROCESS_EVENTS
 from .metaclasses import ABCQObjectMeta
-from PyQt6.QtCore import QObject, pyqtSignal
-from typing import Any, Self, TYPE_CHECKING
-import time
-from typing import Callable
-import polars as pl
-from abc import abstractmethod
 
 if TYPE_CHECKING:
     from .runners import ProcessRunner
@@ -100,15 +100,20 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
     def metadata(self) -> pl.DataFrame:
         """
         Create a DataFrame containing metadata for the process. By default, this DataFrame contains
-        the start time and oven setpoint. You can override this method to add additional metadata.
+        the start datetime, end datetime, duration in seconds, and oven setpoint. You can override
+        this method to add additional metadata.
         """
         HEADERS = Files.Process.Headers.Metadata
         start_time = self.start_time()
+        end_time = time.time()
+        duration = end_time - start_time
         setpoint = INSTRUMENTS.oven.get_setpoint()
         metadata = pl.DataFrame(
             {
-                HEADERS.SETPOINT: setpoint,
                 HEADERS.START_DATETIME: get_datetime(start_time),
+                HEADERS.END_DATETIME: get_datetime(end_time),
+                HEADERS.DURATION: duration,
+                HEADERS.SETPOINT: setpoint,
             }
         )
         return metadata
@@ -133,7 +138,7 @@ class AbstractForegroundProcess(AbstractProcess):
 
         :param delay_ms: How long to hold for.
         :param unerror_fn: If the sequence is paused in an error state, this function can cause it
-        to unpause and exit the error state. This function takes no arguments and should return
+        to unpause and exit the error state. This function takes no arguments and should return\
         **True** to unpause, **False** otherwise.
 
         :returns: Whether the process should continue (i.e. it was not cancelled).
@@ -190,22 +195,6 @@ class AbstractForegroundProcess(AbstractProcess):
         if changed:
             self.statusChanged.emit(status)
         return changed
-
-    def metadata(self) -> pl.DataFrame:
-        """Adds in the end datetime and duration."""
-        HEADERS = Files.Process.Headers.Metadata
-        end_time = time.time()
-        duration = end_time - self.start_time()
-        metadata = pl.concat(
-            (
-                super().metadata(),
-                pl.DataFrame(
-                    {HEADERS.END_DATETIME: get_datetime(end_time), HEADERS.DURATION: duration}
-                ),
-            ),
-            how="horizontal",
-        )
-        return metadata
 
 
 class AbstractGraphingProcess(AbstractForegroundProcess):
@@ -284,17 +273,16 @@ class AbstractBackgroundProcess(AbstractProcess):
         """
         delay = delay_ms / 1000
         end_time = time.time() + delay
-        # wait_interval = delay_ms / 100  # this is arbitrary and seemed like a good value
         while time.time() < end_time:
             if self.is_canceled():
                 return False
-            # process events for 10 ms
-            PROCESS_EVENTS()
+            PROCESS_EVENTS()  # process events for 10 ms
         return True
 
     def update_status(self, status: SequenceStatus) -> bool:
         # there are no signals to emit here
         return self.process_status.set(status)
 
-    def metadata(self):
-        return super().metadata()
+    def cancel(self):
+        super().cancel()
+        self.finished.emit()

@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import QWidget, QSizePolicy, QLayout
 from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QLayout, QSizePolicy, QWidget
 
 
 class SignalWidget(QWidget):
@@ -27,7 +27,8 @@ class FixedWidget(QWidget):
 class Widget(QWidget):
     """QWidget that automatically sets the layout."""
 
-    def __init__(self, layout: QLayout):
+    def __init__(self, layout: QLayout | None = None):
         """:param layout: The layout to initialize with."""
         super().__init__()
-        self.setLayout(layout)
+        if layout is not None:
+            self.setLayout(layout)

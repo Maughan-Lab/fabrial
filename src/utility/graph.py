@@ -1,9 +1,11 @@
-import polars as pl
 from os import path
-from ..graph.widgets import GraphWidget
-from ..enums.status import StabilityStatus
+
+import polars as pl
+
 from .. import Files
 from ..custom_widgets.plot import PlotItem, PlotWidget
+from ..enums.status import StabilityStatus
+from ..graph.widgets import GraphWidget
 
 
 def graph_from_folder(data_folder: str) -> PlotWidget:

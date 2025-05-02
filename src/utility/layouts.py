@@ -1,5 +1,6 @@
-from PyQt6.QtWidgets import QWidget, QBoxLayout, QStackedLayout, QFormLayout, QLayout, QLayoutItem
 from typing import Callable, TypeVar
+
+from PyQt6.QtWidgets import QBoxLayout, QFormLayout, QLayout, QLayoutItem, QStackedLayout, QWidget
 
 Layout = TypeVar("Layout", bound=QLayout)
 

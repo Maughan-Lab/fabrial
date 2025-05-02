@@ -1,6 +1,7 @@
-from PyQt6.QtCore import QObject, pyqtSignal
 from typing import Self
-from ..enums.status import SequenceStatus
+
+from PyQt6.QtCore import QObject, pyqtSignal
+
 from ..classes.plotting import LineSettings
 
 
@@ -18,6 +19,11 @@ class GraphSignals(QObject):
     """Add a point to the plot. Emit with `x`, `y`, where `x` and `y` are **float**s."""
     saveFig = pyqtSignal(str)
     """Save the figure. Emit with the filename as a **str**."""
+    setLogScale = pyqtSignal(object, object)
+    """
+    Set whether the graph uses a logarithmic scale. Emit with the `x_is_log` and `y_is_log`, where
+    both are **bool** or **None**. Sending a **None** will leave the log scale state unchanged.
+    """
 
     def connect_to_other(self, other: Self):
         """All of **other**'s signals will fire this object's corresponding signal."""
@@ -25,6 +31,7 @@ class GraphSignals(QObject):
         other.clear.connect(self.clear)
         other.addPoint.connect(self.addPoint)
         other.saveFig.connect(self.saveFig)
+        other.setLogScale.connect(self.setLogScale)
 
 
 class CommandSignals(QObject):

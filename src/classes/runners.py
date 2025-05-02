@@ -1,18 +1,20 @@
-from PyQt6.QtCore import pyqtSignal, QObject, QThread
-from typing import Self, Union, TYPE_CHECKING
-from ..enums.status import SequenceStatus
-from .metaclasses import ABCQObjectMeta
-from abc import abstractmethod
-from ..utility.events import PROCESS_EVENTS
-from .signals import GraphSignals
-from .process import (
-    AbstractProcess,
-    AbstractBackgroundProcess,
-    AbstractGraphingProcess,
-    AbstractForegroundProcess,
-)
 import os
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Self, Union
+
+from PyQt6.QtCore import QObject, QThread, pyqtSignal
+
 from .. import Files
+from ..enums.status import SequenceStatus
+from ..utility.events import PROCESS_EVENTS
+from .metaclasses import ABCQObjectMeta
+from .process import (
+    AbstractBackgroundProcess,
+    AbstractForegroundProcess,
+    AbstractGraphingProcess,
+    AbstractProcess,
+)
+from .signals import GraphSignals
 
 if TYPE_CHECKING:
     from ..sequence_builder.tree_item import TreeItem
@@ -70,10 +72,12 @@ class SequenceRunner(AbstractRunner):
         self.process_runner.statusChanged.connect(self.statusChanged)
         self.process_runner.errorOccurred.connect(self.errorOccurred)
 
+    def current_item(self):
+        """Get the current item."""
+        return self.process_runner.current_item()
+
     def pre_run(self) -> bool:
         """Run this before `run()`. Returns whether the sequence should continue."""
-        if not self.root_item.child_count() > 0:  # return early if there are no items to run
-            return False
         try:  # make the data directory
             os.makedirs(self.data_directory, exist_ok=True)
         except Exception:
@@ -84,12 +88,12 @@ class SequenceRunner(AbstractRunner):
 
     def run(self):
         """Run the sequence."""
+        final_status = SequenceStatus.COMPLETED
         try:
             proceed = self.pre_run()
             if not proceed:
                 return  # don't run
 
-            final_status = SequenceStatus.COMPLETED
             for item in self.root_item.subitems():
                 proceed = self.run_task(item)
                 if not proceed:
@@ -153,7 +157,7 @@ class ProcessRunner(AbstractRunner):
         """
         super().__init__(parent)
         self.data_directory = data_directory
-        self.process: AbstractForegroundProcess
+        self.process: AbstractForegroundProcess | None = None
         self.item: Union["TreeItem", None] = None
 
         self.background_processes: list[AbstractBackgroundProcess] = []
@@ -213,10 +217,11 @@ class ProcessRunner(AbstractRunner):
     def write_metadata(self, process: AbstractProcess):
         """Create a metadata file and write to it. This calls the process' `metadata()` method."""
         process.metadata().write_csv(
-            os.path.join(process.directory(), Files.Process.Filenames.METADATA), null_value="Null"
+            os.path.join(process.directory(), Files.Process.Filenames.METADATA),
+            null_value=str(None),
         )
 
-    def current_process(self) -> AbstractForegroundProcess:
+    def current_process(self) -> AbstractForegroundProcess | None:
         """Get the current process."""
         return self.process
 
@@ -254,9 +259,10 @@ class ProcessRunner(AbstractRunner):
         """Start a BackgroundProcess."""
         self.background_processes.append(process)
 
-        thread = QThread()
+        thread = QThread(self)
         process.moveToThread(thread)
         thread.started.connect(process.run)
+        process.finished.connect(lambda: self.write_metadata(process))
         process.finished.connect(thread.quit)
         thread.finished.connect(lambda: self.background_processes.remove(process))
 
@@ -279,14 +285,18 @@ class ProcessRunner(AbstractRunner):
     # ----------------------------------------------------------------------------------------------
     # commands
     def pause(self):
-        self.process.pause()
+        if self.process is not None:
+            self.process.pause()
 
     def unpause(self):
-        self.process.unpause()
+        if self.process is not None:
+            self.process.unpause()
 
     def cancel(self):
-        self.canceled = True
-        self.process.cancel()
+        if self.process is not None:
+            self.canceled = True
+            self.process.cancel()
 
     def skip(self):
-        self.process.skip()
+        if self.process is not None:
+            self.process.skip()

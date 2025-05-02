@@ -1,4 +1,5 @@
 from PyQt6.QtWidgets import QProgressBar, QWidget
+
 from ..instruments import Oven
 
 

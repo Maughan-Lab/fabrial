@@ -1,12 +1,7 @@
 # Implement Widgets
-- Enable constant temperature recording
-- Hold (no temperature data collection)
-- Hold (with temperature data collection) (subclass of above)
 - Electrochemical Impedance Spectroscopy
     - Similarly to how you have an `Oven` class for the physical oven, you should make a `Potentiostat` class that gets created each time an **EIS** action is run, for each potentiostat. This means you can abstract things like running EIS.
     - This is partially complete. You can create a Potentiostat through the Gamry interface.
-- Loop
-- TODO more items
 ## Instructions
 Update the instructions for implementing new items
 
@@ -16,6 +11,11 @@ Update the instructions for implementing new items
 - This should be a button or menu option the user can click to open up a widget. The widget should let them change the value of the temperature and setpoint registers. It should also save the new values to a file so the change carries over.
 - The changes do not take effect until the next time Quincy is launched.
 - The widget also needs a description tab to explain what the registers mean.
+
+# Editable settings
+- In addition to the oven settings, let the user change:
+    - Whether to show a dialog when the data directory for the sequence is not empty.
+    - Whether Gamry is enabled.
 
 # Enable/Disable Gamry
 - Let the user enable/disable Gamry support in Quincy.
