@@ -1,1 +1,1 @@
-The visuals of the subitems are shown as they run.
+The visuals of any subitems are shown as they run.

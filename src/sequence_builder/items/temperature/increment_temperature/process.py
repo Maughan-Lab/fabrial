@@ -12,9 +12,9 @@ from . import encoding
 class IncrementTemperatureProcess(SetTemperatureProcess):
     """Increment the oven's temperature and record data while waiting for it to stabilize."""
 
-    def __init__(self, runner: ProcessRunner, data: dict[str, Any]):  # overridden
+    def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
         data.update({SETPOINT: 0})
-        super().__init__(runner, data)
+        super().__init__(runner, data, name)
 
         self.increment = data[encoding.INCREMENT]
 

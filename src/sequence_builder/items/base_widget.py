@@ -128,7 +128,6 @@ class AbstractBaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=A
         :param icon_filename: The name of the icon file in the application's internal icon folder.
         :param description_info: Information for setting the text of the description tab.
         :param supports_subitems: Whether the associated item can have subitems.
-        :param draggable: Whether the associated item can be dragged.
         """
         ParameterDescriptionWidget.__init__(self, layout)
         AbstractWidget.__init__(self, display_name, process_type, supports_subitems, True)

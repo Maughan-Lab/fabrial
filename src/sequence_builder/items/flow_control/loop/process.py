@@ -7,8 +7,8 @@ from . import encoding
 
 
 class LoopProcess(AbstractForegroundProcess):
-    def __init__(self, runner: ProcessRunner, data: dict[str, Any]):
-        super().__init__(runner, data)
+    def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
+        super().__init__(runner, data, name)
         self.number_of_loops = data[encoding.NUMBER_OF_LOOPS]
         self.loops_completed = 0
 
@@ -27,7 +27,8 @@ class LoopProcess(AbstractForegroundProcess):
                 for item in loop_item.subitems():
                     process_type = item.process_type()
                     if process_type is not None:
-                        process = process_type(runner, item.widget().to_dict())
+                        widget = item.widget()
+                        process = process_type(runner, widget.to_dict(), widget.display_name())
                         if not self.process_runner.run_process(process, item):
                             break
                 else:  # https://www.geeksforgeeks.org/python-for-else/ (fucking crazy right??)

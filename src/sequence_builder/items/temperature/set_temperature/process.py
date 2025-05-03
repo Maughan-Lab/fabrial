@@ -27,8 +27,8 @@ class SetTemperatureProcess(AbstractGraphingProcess):
     TOLERANCE = 1.0  # degrees C
     """How far off a temperature can be from the setpoint before it is considered unstable."""
 
-    def __init__(self, runner: ProcessRunner, data: dict[str, Any]):
-        super().__init__(runner, data)
+    def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
+        super().__init__(runner, data, name)
         self.oven = INSTRUMENTS.oven
         self.temperature_file: TextIOWrapper
         self.setpoint = data[encoding.SETPOINT]

@@ -11,7 +11,7 @@ from ...classes.actions import Shortcut
 from ...classes.runners import SequenceRunner
 from ...classes.signals import CommandSignals, GraphSignals
 from ...custom_widgets.augmented.button import BiggerButton, FixedButton
-from ...custom_widgets.augmented.dialog import OkDialog, YesCancelDontShowDialog
+from ...custom_widgets.augmented.dialog import Dialog, OkDialog, YesCancelDontShowDialog
 from ...custom_widgets.augmented.label import IconLabel
 from ...custom_widgets.container import Container
 from ...enums.status import SequenceStatus
@@ -283,7 +283,12 @@ class SequenceTreeWidget(Container):
         """Connect signals before starting the sequence."""
         # up towards the parent
         runner.errorOccurred.connect(
-            lambda message: OkDialog(f"Error in {runner.current_item().name()}", message).exec()
+            lambda message, name: OkDialog(f"Error in {name}", message).exec()
+        )
+        runner.newMessageCreated.connect(
+            lambda message, name, buttons, sender: runner.receive_response(
+                Dialog(f"Message from {name}", message, buttons).exec(), sender
+            )
         )
         runner.currentItemChanged.connect(self.handle_item_change)
         runner.statusChanged.connect(self.sequenceStatusChanged)

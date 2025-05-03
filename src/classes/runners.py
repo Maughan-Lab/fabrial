@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import os
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Self, Union
+from typing import TYPE_CHECKING, Self
 
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
+from PyQt6.QtWidgets import QMessageBox
 
 from .. import Files
 from ..enums.status import SequenceStatus
@@ -23,7 +26,8 @@ if TYPE_CHECKING:
 class AbstractRunner(QObject, metaclass=ABCQObjectMeta):
     """Abstract class for process/sequence runners."""
 
-    errorOccurred = pyqtSignal(str)
+    errorOccurred = pyqtSignal(str, str)
+    newMessageCreated = pyqtSignal(str, str, QMessageBox.StandardButton, AbstractProcess)
     statusChanged = pyqtSignal(SequenceStatus)
     currentItemChanged = pyqtSignal(object, object)
 
@@ -50,13 +54,20 @@ class AbstractRunner(QObject, metaclass=ABCQObjectMeta):
         """Skip the current outermost process."""
         pass
 
+    @abstractmethod
+    def receive_response(
+        self, selected_button: QMessageBox.StandardButton | int, recipient: AbstractProcess
+    ):
+        """Receive a response to a previously sent message."""
+        pass
+
 
 class SequenceRunner(AbstractRunner):
     """Class for running sequences created by the SequenceBuilder."""
 
     finished = pyqtSignal()
 
-    def __init__(self, data_directory: str, root_item: "TreeItem"):
+    def __init__(self, data_directory: str, root_item: TreeItem):
         """
         :param data_directory: The name of the base directory to write all data to.
         :root_item: The root item of the sequence builder.
@@ -71,6 +82,7 @@ class SequenceRunner(AbstractRunner):
         self.process_runner.currentItemChanged.connect(self.currentItemChanged)
         self.process_runner.statusChanged.connect(self.statusChanged)
         self.process_runner.errorOccurred.connect(self.errorOccurred)
+        self.process_runner.newMessageCreated.connect(self.newMessageCreated)
 
     def current_item(self):
         """Get the current item."""
@@ -109,7 +121,7 @@ class SequenceRunner(AbstractRunner):
         self.statusChanged.emit(final_status)
         self.finished.emit()
 
-    def run_task(self, item: "TreeItem") -> bool:
+    def run_task(self, item: TreeItem) -> bool:
         """
         Run an individual item (helper function of **run()**).
 
@@ -119,7 +131,8 @@ class SequenceRunner(AbstractRunner):
         process_type = item.process_type()  # setup
         if process_type is not None:
             # run
-            process = process_type(self.process_runner, item.widget().to_dict())
+            widget = item.widget()
+            process = process_type(self.process_runner, widget.to_dict(), widget.display_name())
             return self.process_runner.run_process(process, item)
         return True  # if we didn't run a process (for some reason (???)) we should continue
 
@@ -142,6 +155,11 @@ class SequenceRunner(AbstractRunner):
     def skip(self):
         self.process_runner.skip()
 
+    def receive_response(
+        self, selected_button: QMessageBox.StandardButton | int, recipient: AbstractProcess
+    ):
+        self.process_runner.receive_response(selected_button, recipient)
+
     def graphing_signals(self) -> GraphSignals:
         """Get the runner's graphing signals."""
         return self.process_runner.graphing_signals()
@@ -158,7 +176,7 @@ class ProcessRunner(AbstractRunner):
         super().__init__(parent)
         self.data_directory = data_directory
         self.process: AbstractForegroundProcess | None = None
-        self.item: Union["TreeItem", None] = None
+        self.item: TreeItem | None = None
 
         self.background_processes: list[AbstractBackgroundProcess] = []
 
@@ -179,7 +197,7 @@ class ProcessRunner(AbstractRunner):
         process.init_start_time()
 
     def run_process(
-        self, process: AbstractForegroundProcess | AbstractBackgroundProcess, item: "TreeItem"
+        self, process: AbstractForegroundProcess | AbstractBackgroundProcess, item: TreeItem
     ) -> bool:
         """
         Run a process.
@@ -194,13 +212,13 @@ class ProcessRunner(AbstractRunner):
         self.process_number += 1
 
         process.errorOccurred.connect(self.errorOccurred)
+        process.newMessageCreated.connect(self.newMessageCreated)
         if isinstance(process, AbstractBackgroundProcess):
             self.pre_run(process)
             self.start_background_process(process)
         else:
             self.process = process
             process.statusChanged.connect(self.statusChanged)
-            process.currentItemChanged.connect(self.currentItemChanged)
             if isinstance(process, AbstractGraphingProcess):
                 self.graph_signals.connect_to_other(process.graph_signals)
             self.pre_run(process)
@@ -225,7 +243,7 @@ class ProcessRunner(AbstractRunner):
         """Get the current process."""
         return self.process
 
-    def current_item(self) -> Union["TreeItem", None]:
+    def current_item(self) -> TreeItem | None:
         """Get the current item."""
         return self.item
 
@@ -300,3 +318,8 @@ class ProcessRunner(AbstractRunner):
     def skip(self):
         if self.process is not None:
             self.process.skip()
+
+    def receive_response(
+        self, selected_button: QMessageBox.StandardButton | int, recipient: AbstractProcess
+    ):
+        recipient.receive_response(selected_button)

@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import time
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Callable, Self
 
 import polars as pl
 from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtWidgets import QMessageBox
 
 from .. import Files
 from ..classes.plotting import LineSettings
@@ -21,13 +24,27 @@ if TYPE_CHECKING:
 class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
     """Abstract class for all processes."""
 
-    errorOccurred = pyqtSignal(str)
-    """Send the error message as a **str**."""
+    newMessageCreated = pyqtSignal(str, str, QMessageBox.StandardButton, QObject)
+    """
+    Emit this to send a message to the user. Send:
+    - The message as a **str**.
+    - The process' name as a **str**.
+    - The buttons to show on the dialog as a **QMessageBox.StandardButton**.
+    - The process sending the message as an **AbstractProcess** (or subclass).
+    """
+    errorOccurred = pyqtSignal(str, str, object)
+    """
+    Emit this when an error occurs and the user cannot do anything about it. Send
+    - The message as a **str**.
+    - The process' name as a **str**.
+    - The process sending the message as an **AbstractProcess** (or subclass).
+    """
 
-    def __init__(self, runner: "ProcessRunner", data: dict[str, Any]):
+    def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
         super().__init__()
         self.data_as_dict = data
         self.process_runner = runner
+        self.display_name = name
         self.process_start_time = 0.0
         self.process_status = StatusStateMachine(SequenceStatus.INACTIVE)
         self.data_directory = ""
@@ -72,9 +89,13 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
         """Get the start time of this process in seconds."""
         return self.process_start_time
 
-    def runner(self) -> "ProcessRunner":
+    def runner(self) -> ProcessRunner:
         """Get the **ProcessRunner** running this process."""
         return self.process_runner
+
+    def name(self) -> str:
+        """Get the name associated with this process."""
+        return self.display_name
 
     def status(self) -> SequenceStatus:
         """Get the process status."""
@@ -118,9 +139,22 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
         )
         return metadata
 
-    def communicate_error(self, message: str):
-        """Communicate to the process runner that an error occurred."""
-        self.errorOccurred.emit(message)
+    def send_message(self, message: str, buttons: QMessageBox.StandardButton):
+        """
+        Send a message to the user. The display name of the process' item is used in the title.
+
+        :param message: The message text.
+        :param buttons: The buttons to display on the dialog.
+        """
+        self.newMessageCreated.emit(message, self.display_name, buttons, self)
+
+    def communicate_error(self, error_message: str):
+        """Communicate an error to the user. The user only has the **Ok** option."""
+        self.errorOccurred.emit(error_message, self.display_name, self)
+
+    def receive_response(self, selected_button: QMessageBox.StandardButton | int):
+        """Receive the response to a previously sent message."""
+        pass
 
 
 class AbstractForegroundProcess(AbstractProcess):
@@ -128,8 +162,6 @@ class AbstractForegroundProcess(AbstractProcess):
 
     statusChanged = pyqtSignal(SequenceStatus)
     """Send the status as a **SequenceStatus**."""
-    currentItemChanged = pyqtSignal(object, object)
-    """Send the current and previous items as **TreeItem | None**."""
 
     def wait(self, delay_ms: int, unerror_fn: Callable[[], bool] = lambda: False) -> bool:
         """
@@ -200,8 +232,8 @@ class AbstractForegroundProcess(AbstractProcess):
 class AbstractGraphingProcess(AbstractForegroundProcess):
     """**AbstractForegroundProcess** with graphing capabilities."""
 
-    def __init__(self, runner: "ProcessRunner", data: dict[str, Any]):
-        super().__init__(runner, data)
+    def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
+        super().__init__(runner, data, name)
         self.graph_signals = GraphSignals(self)
 
     def graphing_signals(self) -> GraphSignals:

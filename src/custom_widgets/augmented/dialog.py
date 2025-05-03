@@ -9,8 +9,15 @@ class Dialog(QMessageBox):
         title: str,
         message: str,
         buttons: QMessageBox.StandardButton,
-        default_button: QMessageBox.StandardButton,
+        default_button: QMessageBox.StandardButton = QMessageBox.StandardButton.Ok,
     ):
+        """
+        :param title: The window title.
+        :param message: The message text.
+        :param buttons: The buttons used on the dialog.
+        :param default_button: The initially selected button. Defaults to **StandardButton.Ok** if
+        the dialog has that button, otherwise no button is selected.
+        """
         super().__init__()
 
         self.setWindowTitle(title)
