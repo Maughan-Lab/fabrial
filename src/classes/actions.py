@@ -52,6 +52,7 @@ class Shortcut(QShortcut):
         :param parent: The QObject to tie this shortcut to.
         :param key: A keyboard shortcut in the form of "Ctrl+A".
         :param *actions: The function(s) this shortcut executes.
+        :context: The shortcut context. Default **WindowShortcut**.
         """
         super().__init__(QKeySequence(key), parent, context=context)
         for action in actions:

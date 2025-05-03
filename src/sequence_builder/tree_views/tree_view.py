@@ -1,8 +1,10 @@
-from typing import Self
+import json
+from typing import Any, Self
 
-from PyQt6.QtCore import QItemSelectionModel, QModelIndex, QPersistentModelIndex
+from PyQt6.QtCore import QModelIndex, QPersistentModelIndex
 from PyQt6.QtWidgets import QAbstractItemView, QTreeView, QWidget
 
+from ... import Files
 from ..tree_model import TreeModel
 
 
@@ -12,7 +14,6 @@ class TreeView(QTreeView):
     def __init__(self, model: TreeModel, parent: QWidget | None = None):
         super().__init__(parent)
 
-        # initialize
         self.setDragEnabled(True)
         self.setDropIndicatorShown(True)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
@@ -20,7 +21,83 @@ class TreeView(QTreeView):
         self.setModel(model)
         self.connect_signals()
 
+    def init_from_dict(self, data_dict: dict[str, Any]) -> Self:
+        """Initialize the view from a JSON-like dictionary."""
+        self.model().init_from_dict(data_dict[Files.TreeView.ITEM_DATA])
+        self.init_view_state(data_dict[Files.TreeView.VIEW_DATA])
+        return self
+
+    def init_from_file(self, filepath: str) -> Self:
+        """Initialize the view from a properly formatted JSON file."""
+        with open(filepath, "r") as f:
+            data_dict = json.load(f)
+        return self.init_from_dict(data_dict)
+
+    def init_from_directory(self, directory_path: str) -> Self:
+        """Initialize the view from a properly formatted directory."""
+        self.model().init_from_directory(directory_path)
+        return self
+
+    def init_view_state(self, view_state_dict: dict[str, Any]):
+        """Recursively set the view state based on **view_state_dict**."""
+        model = self.model()
+
+        def recursively_init_state(index: QModelIndex, view_state_dict: dict[str, Any]):
+            if view_state_dict[Files.TreeView.EXPANDED]:
+                self.expand(index)
+            children_data: list[dict[str, Any]] = view_state_dict[Files.TreeItem.CHILDREN]
+            for i, child_expansion_dict in enumerate(children_data):
+                child_index = model.index(i, 0, index)
+                recursively_init_state(child_index, child_expansion_dict)
+
+        recursively_init_state(self.rootIndex(), view_state_dict)
+
+    def init_view_state_from_file(self, filepath: str):
+        """Initialize the view state from a file."""
+        with open(filepath, "r") as f:
+            view_state_dict = json.load(f)
+        self.init_view_state(view_state_dict)
+
+    @classmethod
+    def from_file(cls: type[Self], name: str, filepath: str) -> Self:
+        """
+        :param name: The name displayed on top of the widget.
+        :param filepath: The filepath to build the **TreeView** from.
+        """
+        model = TreeModel(name)
+        tree_view = cls(model).init_from_file(filepath)
+        return tree_view
+
+    def get_view_state(self) -> dict[str, Any]:
+        """Get the view state as a JSON-style dictionary."""
+        model = self.model()
+
+        def get_state(index: QModelIndex) -> dict[str, Any]:
+            view_state_dict: dict[str, Any] = {Files.TreeView.EXPANDED: self.isExpanded(index)}
+            children_states = []
+            for i in range(model.rowCount(index)):
+                child_index = model.index(i, 0, index)
+                children_states.append(get_state(child_index))
+            view_state_dict[Files.TreeItem.CHILDREN] = children_states
+            return view_state_dict
+
+        return get_state(self.rootIndex())
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert this view's data to a JSON dictionary."""
+        view_data = {
+            Files.TreeView.ITEM_DATA: self.model().to_dict(),
+            Files.TreeView.VIEW_DATA: self.get_view_state(),
+        }
+        return view_data
+
+    def to_file(self, filepath: str):
+        """Save this view's data to a file."""
+        with open(filepath, "w") as f:
+            json.dump(self.to_dict(), f)
+
     def connect_signals(self) -> Self:
+        """Connect signals."""
         self.expanded.connect(self.model().expand_event)
         self.collapsed.connect(self.model().collapse_event)
         return self
@@ -66,7 +143,5 @@ class TreeView(QTreeView):
                     self.clearSelection()
                     return self
 
-        self.selectionModel().select(  # type: ignore
-            new_selection_index, QItemSelectionModel.SelectionFlag.ClearAndSelect
-        )
+        self.setCurrentIndex(new_selection_index)
         return self

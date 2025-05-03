@@ -31,7 +31,10 @@ class BiggerButton(Button):  # this name feels so dumb xD
     """Button with user-selected size scaling."""
 
     def __init__(
-        self, text: str, *push_fn: Callable[[], None | Any], size_scalars: tuple[float, float]
+        self,
+        text: str,
+        *push_fn: Callable[[], None | Any],
+        size_scalars: tuple[float, float] = (1, 1)
     ):
         super().__init__(text, *push_fn)
         self.horizontal_scalar, self.vertical_scalar = size_scalars

@@ -51,8 +51,8 @@ coll = COLLECT(
 
 # copy the dependencies into dist/Quincy
 # filenames are relative to the base directory
-FILES_TO_COPY = ["oven_settings.json"]
-FOLDERS_TO_COPY = ["icons", "initialization", "item_descriptions"]
+FILES_TO_COPY = [""]
+FOLDERS_TO_COPY = ["icons", "item_initialization", "item_descriptions", "application_settings"]
 for file in FILES_TO_COPY:
     shutil.copyfile(os.path.join("..", file), os.path.join("dist", name, file))
 for folder in FOLDERS_TO_COPY:

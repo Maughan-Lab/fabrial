@@ -4,9 +4,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMenu, QMenuBar
 
 from ..classes.actions import Action
-from ..tabs.oven_control import OvenControlTab
 from ..tabs.sequence_display import SequenceDisplayTab
-from ..tabs.tab_widget import TabWidget
 
 if TYPE_CHECKING:
     from ..main_window import MainWindow
@@ -54,8 +52,3 @@ class ViewMenu(QMenu):
         self.pop_graph.blockSignals(True)
         self.pop_graph.setChecked(popped)
         self.pop_graph.blockSignals(False)
-
-    def handle_tab_change(self, tab_widget: TabWidget):
-        return
-        oven_control_tab: OvenControlTab = self.pop_graph.parent()  # type: ignore
-        self.pop_graph.setEnabled(tab_widget.currentWidget() is oven_control_tab)

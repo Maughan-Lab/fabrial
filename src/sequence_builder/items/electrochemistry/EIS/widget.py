@@ -2,9 +2,9 @@ from typing import Any, Self
 
 from PyQt6.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QVBoxLayout
 
-from .....custom_widgets.button import Button
-from .....custom_widgets.label import Label
-from .....custom_widgets.spin_box import DoubleSpinBox, SpinBox
+from .....custom_widgets.augmented.button import Button
+from .....custom_widgets.augmented.label import Label
+from .....custom_widgets.augmented.spin_box import DoubleSpinBox, SpinBox
 from .....gamry_integration.Gamry import GAMRY
 from .....utility.layouts import add_sublayout, add_to_form_layout, add_to_layout, clear_layout
 from ...base_widget import AbstractBaseWidget
@@ -86,6 +86,10 @@ class EISWidget(AbstractBaseWidget):
             if checkbox.isChecked():
                 selected_pstats.append(identifier)
         return selected_pstats
+
+    @staticmethod
+    def allowed_to_create() -> bool:
+        return GAMRY.is_valid()
 
     @classmethod
     def from_dict(cls: type[Self], data_as_dict: dict[str, Any]) -> Self:

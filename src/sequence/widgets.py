@@ -4,10 +4,10 @@ from PyQt6.QtCore import Qt, QThreadPool, pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QStackedLayout, QVBoxLayout
 
 from ..classes.plotting import TemperaturePoint
-from ..custom_widgets.combo_box import ComboBox
-from ..custom_widgets.dialog import OkDialog
-from ..custom_widgets.groupbox import GroupBox
-from ..custom_widgets.label import Label
+from ..custom_widgets.augmented.combo_box import ComboBox
+from ..custom_widgets.augmented.dialog import OkDialog
+from ..custom_widgets.augmented.groupbox import GroupBox
+from ..custom_widgets.augmented.label import Label
 from ..custom_widgets.separator import HSeparator
 from ..custom_widgets.tableview import TableView
 from ..enums.status import OldSequenceStatus, StabilityStatus

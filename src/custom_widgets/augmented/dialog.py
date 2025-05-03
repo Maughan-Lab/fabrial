@@ -97,7 +97,7 @@ class DontShowAgainDialog(Dialog):
         self.filepath = filepath
         try:
             with open(self.filepath, "r") as f:
-                if f.read().strip() == str(True):
+                if f.read().strip() == str(False):
                     self.check_box.setChecked(True)
         except Exception:
             pass
@@ -112,7 +112,7 @@ class DontShowAgainDialog(Dialog):
     def save_state(self):
         """Save the state of the "Don't show again" checkbox to a file."""
         with open(self.filepath, "w") as f:
-            f.write(str(self.check_box.isChecked()))
+            f.write(str(not self.check_box.isChecked()))
 
     def run(self) -> bool:
         """

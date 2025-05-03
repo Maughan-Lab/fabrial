@@ -1,9 +1,9 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHBoxLayout, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
-from ..custom_widgets.button import BiggerButton
+from ..custom_widgets.augmented.button import BiggerButton
+from ..custom_widgets.augmented.label import Label
 from ..custom_widgets.container import Container
-from ..custom_widgets.label import Label
 from ..custom_widgets.separator import HSeparator
 from ..enums.status import SequenceStatus
 from ..sequence_builder.tree_views.options import OptionsTreeWidget
@@ -14,6 +14,8 @@ from .sequence_display import SequenceDisplayTab
 
 class SequenceBuilderTab(QWidget):
     """Sequence tab."""
+
+    ICON_FILE = "script-block.png"
 
     def __init__(self, visual_widget_container: SequenceDisplayTab):
         # data members
@@ -91,3 +93,8 @@ class SequenceBuilderTab(QWidget):
         self.button_container.setCurrentWidget(current_button)
         self.status_label.setText(status.status_text())
         self.status_label.setStyleSheet("color: " + status.color())
+
+    def save_on_close(self):
+        """Call this when closing the application to save settings."""
+        self.options_tree.save_on_close()
+        self.sequence_tree.save_on_close()

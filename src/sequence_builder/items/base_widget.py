@@ -74,6 +74,11 @@ class AbstractWidget(ABC):
         """Get the widget's icon."""
         pass
 
+    @staticmethod
+    def allowed_to_create() -> bool:
+        """Whether this widget (and by extension its associated item) is allowed to be created."""
+        return True
+
     def process_type(self) -> type[AbstractForegroundProcess | AbstractBackgroundProcess] | None:
         """Get the process type."""
         return None

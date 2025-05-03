@@ -21,8 +21,8 @@ def item_dict_from_directory(directory: str) -> dict[str, Any]:
     The **widget data** entry is optional if the widget has no data, and the **children** entry will
     be ignored (since the category's children will be determined from the file structure).
 
-    The only file name that matters is **category.json**; every other item is defined by the contents of
-    the file, not the name.
+    The only file name that matters is **category.json**; every other item is defined by the
+    contents of the file, not the name.
 
     Finally, items in the output dictionary appear in an arbitrary order, so must be sorted manually
     if order matters.

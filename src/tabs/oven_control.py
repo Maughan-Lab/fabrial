@@ -11,6 +11,8 @@ from ..utility.layouts import add_sublayout, add_to_layout
 class OvenControlTab(QWidget):
     """First tab in the application, used for directly controlling the oven."""
 
+    ICON_FILE = "thermometer.png"
+
     def __init__(self) -> None:
         # data members
         self.setpoint_widget: SetpointWidget

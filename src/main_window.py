@@ -2,7 +2,8 @@ from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
 
-from .custom_widgets.dialog import YesCancelDialog, YesNoDialog
+from .custom_widgets.augmented.dialog import YesCancelDialog, YesNoDialog
+from .custom_widgets.settings.window import ApplicationSettingsWindow
 from .menu.menu_bar import MenuBar
 from .secondary_window import SecondaryWindow
 from .tabs.tab_widget import TabWidget
@@ -14,7 +15,7 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Quincy")
-
+        self.settings_window = ApplicationSettingsWindow()
         # create tabs
         self.tabs = TabWidget(self)
         self.setCentralWidget(self.tabs)
@@ -22,7 +23,6 @@ class MainWindow(QMainWindow):
         self.oven_control_tab = self.tabs.oven_control_tab
         self.sequence_tab = self.tabs.sequence_builder_tab
         self.sequence_visuals_tab = self.tabs.sequence_visuals_tab
-        self.sequence_builder = self.sequence_tab.sequence_tree
         self.connection_widget = self.oven_control_tab.instrument_connection_widget
         # create menu bar
         self.menu_bar = MenuBar(self)
@@ -34,10 +34,6 @@ class MainWindow(QMainWindow):
 
     def connect_signals(self):
         """Connect widget signals."""
-        # ensure the menubar responds to the popped graph being closed
-        self.tabs.currentChanged.connect(
-            lambda *args: self.menu_bar.view.handle_tab_change(self.tabs)
-        )
         self.showError.connect(self.show_error)
 
     # ----------------------------------------------------------------------------------------------
@@ -99,7 +95,7 @@ class MainWindow(QMainWindow):
 
     def save_on_close(self):
         """Save all data that gets saved on closing. Call this when closing the application."""
-        self.sequence_builder.save_on_close()
+        self.sequence_tab.save_on_close()
         self.connection_widget.save_on_close()
 
     # ----------------------------------------------------------------------------------------------
@@ -108,3 +104,9 @@ class MainWindow(QMainWindow):
         """Show a (likely) fatal error and ask to close."""
         if YesNoDialog("Application Error", message).run():
             QApplication.exit()
+
+    # ----------------------------------------------------------------------------------------------
+    # settings
+    def show_settings(self):
+        """Show the application settings. These settings are saved when the window closes."""
+        self.settings_window.show()

@@ -4,8 +4,8 @@ from PyQt6.QtWidgets import QVBoxLayout
 from ..classes.actions import Shortcut
 from ..classes.plotting import LineSettings
 from ..classes.signals import GraphSignals
+from ..custom_widgets.augmented.widget import Widget
 from ..custom_widgets.plot import PlotWidget
-from ..custom_widgets.widget import Widget
 from ..secondary_window import SecondaryWindow
 
 

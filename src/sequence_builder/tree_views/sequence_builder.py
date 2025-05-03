@@ -1,38 +1,48 @@
 import os
+from dataclasses import dataclass
 from typing import Self
 
-from PyQt6.QtCore import QItemSelection, QModelIndex, Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QDropEvent, QKeyEvent
+from PyQt6.QtCore import QItemSelection, QModelIndex, QPoint, Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QDragMoveEvent, QDropEvent, QKeyEvent
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QSizePolicy, QVBoxLayout
 
 from ... import Files
 from ...classes.actions import Shortcut
 from ...classes.runners import SequenceRunner
 from ...classes.signals import CommandSignals, GraphSignals
-from ...custom_widgets.button import BiggerButton, FixedButton
+from ...custom_widgets.augmented.button import BiggerButton, FixedButton
+from ...custom_widgets.augmented.dialog import OkDialog, YesCancelDontShowDialog
+from ...custom_widgets.augmented.label import IconLabel
 from ...custom_widgets.container import Container
-from ...custom_widgets.dialog import OkDialog, YesCancelDontShowDialog
-from ...custom_widgets.label import IconLabel
 from ...enums.status import SequenceStatus
 from ...utility.images import make_icon, make_pixmap
 from ...utility.layouts import add_sublayout, add_to_layout
+from ...utility.timers import Timer
 from ..tree_item import TreeItem
 from ..tree_model import TreeModel
 from .tree_view import TreeView
+
+
+@dataclass
+class DragTracker:
+    timer: Timer
+    position: QPoint
 
 
 class SequenceTreeView(TreeView):
     """Custom TreeView for displaying sequence settings."""
 
     def __init__(self):
-        # initialize the model
+        # initialize the super class
         model = TreeModel("Sequence Builder")
-        model.init_from_file(Files.SavedSettings.Sequence.AUTOSAVE)
+        super().__init__(model)
+        # configure the model and view
+        try:
+            self.init_from_file(Files.SavedSettings.Sequence.SEQUENCE_AUTOSAVE)
+        except Exception:  # if we fail just don't load anything
+            pass
         model.set_supported_drag_actions(Qt.DropAction.MoveAction | Qt.DropAction.CopyAction)
         model.set_supported_drop_actions(Qt.DropAction.MoveAction | Qt.DropAction.CopyAction)
-        # initialize the super class
-        super().__init__(model)
-        self.expandAll()
         # configure
         self.setAcceptDrops(True)
         self.setDefaultDropAction(Qt.DropAction.MoveAction)
@@ -41,9 +51,20 @@ class SequenceTreeView(TreeView):
         self.connect_signals()
         self.create_shortcuts()
 
+        # used to expand expandable items when hovering over them
+        point = QPoint()
+        timer = Timer(self, 500, lambda: self.expand(self.indexAt(point)))
+        timer.setSingleShot(True)
+        self.drag_tracker = DragTracker(timer, point)
+
     def connect_signals(self):
-        # expand the view when drops occur so it's easier to see what changed
-        self.model().dropOccurred.connect(self.expand)
+        """Connect signals."""
+        self.model().itemAdded.connect(self.handle_new_item)
+
+    def handle_new_item(self, index: QModelIndex):
+        """Handle an item being added to the model."""
+        self.expand(index)
+        self.expand(index.parent())
 
     def create_shortcuts(self):
         Shortcut(
@@ -58,11 +79,12 @@ class SequenceTreeView(TreeView):
 
     def handle_double_click(self, index: QModelIndex):
         """On a double click event."""
-        self.model().item(index).show_widget()  # show the selected item's widget
+        model = self.model()
+        if model.is_enabled():
+            model.item(index).show_widget()
 
     # ----------------------------------------------------------------------------------------------
-    # overridden methods
-    def keyPressEvent(self, event: QKeyEvent | None):
+    def keyPressEvent(self, event: QKeyEvent | None):  # overridden
         if event is not None:
             index = self.currentIndex()
             model = self.model()
@@ -73,12 +95,21 @@ class SequenceTreeView(TreeView):
                     model.item(index).show_widget()
         super().keyPressEvent(event)
 
-    def dropEvent(self, event: QDropEvent | None):
+    def dropEvent(self, event: QDropEvent | None):  # overridden
         if event is not None:
             if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
                 event.setDropAction(Qt.DropAction.CopyAction)
 
             super().dropEvent(event)  # process the event
+
+    def dragMoveEvent(self, event: QDragMoveEvent | None):  # overridden
+        if event is not None:
+            tracked_position = self.drag_tracker.position
+            event_position = event.position().toPoint()
+            tracked_position.setX(event_position.x())
+            tracked_position.setY(event_position.y())
+            self.drag_tracker.timer.start()
+        super().dragMoveEvent(event)
 
 
 class SequenceTreeWidget(Container):
@@ -139,7 +170,7 @@ class SequenceTreeWidget(Container):
             QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum
         )
         self.directory_label = IconLabel(
-            make_pixmap("folder-open-document.png"), self.read_previous_directory()
+            make_pixmap("folder--arrow.png"), self.read_previous_directory()
         )
         self.directory_label.label().setWordWrap(True)
         directory_layout.addWidget(self.directory_button)
@@ -188,7 +219,7 @@ class SequenceTreeWidget(Container):
 
     def save_on_close(self):
         """Call this when closing the application to save settings."""
-        self.view.model().save_to_file(Files.SavedSettings.Sequence.AUTOSAVE)
+        self.view.to_file(Files.SavedSettings.Sequence.SEQUENCE_AUTOSAVE)
         directory = self.directory_label.label().text()
         with open(Files.SavedSettings.Sequence.SEQUENCE_DIRECTORY, "w") as f:
             f.write(directory)
@@ -202,7 +233,7 @@ class SequenceTreeWidget(Container):
             "JSON files (*.json)",
         )
         if filename != "":
-            self.view.model().save_to_file(filename)
+            self.view.to_file(filename)
 
     def load_settings(self):
         """Load a sequence from a file."""
@@ -210,7 +241,7 @@ class SequenceTreeWidget(Container):
             self, "Select sequence file", filter="JSON files (*.json)"
         )
         if filename != "":
-            self.view.model().init_from_file(filename)
+            self.view.init_from_file(filename)
 
     def data_directory(self) -> str:
         """Get the current data directory."""
@@ -249,6 +280,7 @@ class SequenceTreeWidget(Container):
         return self
 
     def connect_sequence_signals(self, runner: SequenceRunner, thread: QThread) -> Self:
+        """Connect signals before starting the sequence."""
         # up towards the parent
         runner.errorOccurred.connect(
             lambda message: OkDialog(f"Error in {runner.current_item().name()}", message).exec()
@@ -268,6 +300,7 @@ class SequenceTreeWidget(Container):
         return self
 
     def handle_item_change(self, current: TreeItem | None, previous: TreeItem | None):
+        """Handle the current sequence item changing."""
         if previous is not None:
             previous.set_running(False)
         if current is not None:
@@ -276,19 +309,23 @@ class SequenceTreeWidget(Container):
 
     def sequence_start_event(self, runner: SequenceRunner):
         """This runs when the sequence starts."""
-        self.adjust_view_state(True)
+        self.set_running(True)
         self.view.expandAll()
-        self.view.clearSelection()
 
         self.threads.append(runner)
 
     def sequence_end_event(self, runner: SequenceRunner):
         """This runs when the sequence ends."""
-        self.adjust_view_state(False)
-
+        self.set_running(False)
         self.threads.remove(runner)
 
-    def adjust_view_state(self, running: bool):
-        """Adjust the view's visual state for the sequence."""
-        self.view.setDisabled(running)
+    def set_running(self, running: bool):
+        """Adjust the view and directory button based on whether a sequence is running."""
+        not_running = not running
+        if running:
+            self.view.clearSelection()
+        self.view.model().set_enabled(not_running)
+        self.view.setDragEnabled(not_running)
+        self.view.setAcceptDrops(not_running)
+        self.view.update()
         self.directory_button.setDisabled(running)

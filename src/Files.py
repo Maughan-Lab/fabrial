@@ -2,8 +2,10 @@
 
 import os
 
-SAVED_SETTINGS_FOLDER = "saved_settings"
 APPLICATION_NAME = "Quincy"
+SAVED_SETTINGS_FOLDER = "saved_settings"
+APPLICATION_SETTINGS_FOLDER = "application_settings"
+DEFAULT_GAMRY_LOCATION = "C:/Program Files (x86)/Gamry Instruments/Framework/GamryCom.exe"
 
 
 class Icons:
@@ -16,7 +18,6 @@ class Icons:
 class SavedSettings:
     """File/folder names for saved settings."""
 
-    SAVED_SETTINGS_FOLDER = "saved_settings"
     OVEN_PORT = os.path.join(SAVED_SETTINGS_FOLDER, "oven_port.csv")
 
     class Sequence:
@@ -24,85 +25,66 @@ class SavedSettings:
 
         FOLDER = os.path.join(SAVED_SETTINGS_FOLDER, "sequence")
 
-        AUTOSAVE = os.path.join(FOLDER, "sequence_autosave.json")
+        SEQUENCE_AUTOSAVE = os.path.join(FOLDER, "sequence_autosave.json")
+        OPTIONS_STATE_AUTOSAVE = os.path.join(FOLDER, "options_state_autosave.json")
         SEQUENCE_DIRECTORY = os.path.join(FOLDER, "sequence_directory.csv")
         NON_EMPTY_DIRECTORY_WARNING = os.path.join(FOLDER, "non_empty_directory_warning.csv")
 
 
-class Oven:
-    """File/folder names and dictionary keys for the oven."""
+class ApplicationSettings:
+    """File/folder names for application-level settings."""
 
-    SETTINGS_FILE = "./oven_settings.json"
+    class Oven:
+        """File names and dictionary keys for oven settings."""
 
-    TEMPERATURE_REGISTER = "temperature-register"
-    SETPOINT_REGISTER = "setpoint_register"
-    MAX_TEMPERATURE = "max-temperature"
-    MIN_TEMPERATURE = "min-temperature"
-    NUM_DECIMALS = "number-of-decimals"
-    STABILITY_TOLERANCE = "stability-tolerance"
-    MINIMUM_STABILITY_MEASUREMENTS = "minimum-measurements-for-stability"
-    MEASUREMENT_INTERVAL = "measurement-interval"
-    STABILITY_MEASUREMENT_INTERVAL = "stability-measurement-interval"
+        FOLDER = os.path.join(APPLICATION_SETTINGS_FOLDER, "oven")
+        SETTINGS_FILE = os.path.join(FOLDER, "oven_settings.json")
+        DESCRIPTION_FILENAME = "description.md"
 
+        TEMPERATURE_REGISTER = "Temperature Register"
+        SETPOINT_REGISTER = "Setpoint Register"
+        MAX_TEMPERATURE = "Maximum Temperature"
+        MIN_TEMPERATURE = "Minimum Temperature"
+        NUM_DECIMALS = "Number of Decimals"
+        STABILITY_TOLERANCE = "Stability Tolerance"
+        MEASUREMENT_INTERVAL = "Measurement Interval (ms)"
+        MINIMUM_STABILITY_MEASUREMENTS = "Minimum Measurements for Stability"
+        STABILITY_MEASUREMENT_INTERVAL = "Stability Check Interval (ms)"
 
-# TODO: murder this
-class Sequence:
-    """File/folder names for the sequence."""
+    class Gamry:
+        """File names and dictionary keys for Gamry settings."""
 
-    # saved settings
-    SAVED_SETTINGS = os.path.join(SAVED_SETTINGS_FOLDER, "sequence_settings.csv")
-    # folder where data files are stored
-    DATA_FOLDER = "Data Files"
-    # data files
-    PRE_STABLE = "Pre-Stabilization Temperature Data.csv"
-    BUFFER = "Buffer Temperature Data.csv"
-    STABLE = "Post-Stabilization Temperature Data.csv"
-    CYCLE_TIMES = "Cycle Times.csv"
-    STABILIZATON_TIMES = "Stabilization Times.csv"
-    GRAPH = "Sequence Graph.png"
+        FOLDER = os.path.join(APPLICATION_SETTINGS_FOLDER, "gamry")
+        SETTINGS_FILE = os.path.join(FOLDER, "gamry_settings.json")
+        DESCRIPTION_FILENAME = "description.md"
 
-    # yes this should be nested
-    class Headers:
-        """Headers for sequence files."""
-
-        DATE_FORMAT = "Day Month Year Hours:Minutes:Seconds AM/PM"
-        TIME = "Time (seconds)"
-        TEMPERATURE = "Oven Temperature (degrees C)"
-
-    DATETIME_FORMAT_SPECIFIER = (
-        Headers.DATE_FORMAT.replace("Day", "%d")
-        .replace("Month", "%B")
-        .replace("Year", "%Y")
-        .replace("Hours", "%I")
-        .replace("Minutes", "%M")
-        .replace("Seconds", "%S")
-        .replace("AM/PM", "%p")
-    )  # keep the DATE_FORMAT and its specifier for the `time` module in sync
-
-
-# TODO: murder this
-class InstrumentConnection:
-    """File/folder names for instrument connection."""
-
-    PORTS = os.path.join(SAVED_SETTINGS_FOLDER, "ports.csv")
+        ENABLED = "Enabled"
+        LOCATION = "GamryCOM Location"
 
 
 class TreeItem:
-    """Dictionary keys for TreeItems."""
+    """Dictionary keys for **TreeItem**s."""
 
     TYPE = "type"
-    EXPANDED = "expanded"
     WIDGET_DATA = "linked-widget-data"
     CHILDREN = "children"
 
     DEFAULT_ICON_FILENAME = "script.png"
 
 
+class TreeView:
+    """Dictionary keys for **TreeView**s."""
+
+    ITEM_DATA = "item-data"
+    VIEW_DATA = "view-data"
+    EXPANDED = "expanded"
+
+
 class SequenceBuilder:
     """File/folder names and dictionary keys for the sequence builder."""
 
     # file/folder names
-    OPTIONS_INITIALIZER = "initialization"
+    OPTIONS_INITIALIZER = "item_initialization"
     DEFAULT_DATA_FOLDER = "./Data Files"
 
     DIRECTORY_KEY = "data-directory"
@@ -170,7 +152,7 @@ class Process:
 
 
 FOLDERS_TO_CREATE = [
-    SavedSettings.SAVED_SETTINGS_FOLDER,
+    SAVED_SETTINGS_FOLDER,
     SavedSettings.Sequence.FOLDER,
     SequenceBuilder.DEFAULT_DATA_FOLDER,
 ]

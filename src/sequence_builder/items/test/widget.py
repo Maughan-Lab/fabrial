@@ -2,7 +2,7 @@ from typing import Self
 
 from PyQt6.QtWidgets import QVBoxLayout
 
-from ....custom_widgets.label import Label
+from ....custom_widgets.augmented.label import Label
 from ....utility.layouts import add_to_layout
 from ..base_widget import AbstractBaseWidget
 from . import encoding as DATA

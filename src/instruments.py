@@ -90,16 +90,6 @@ class Instrument(QObject, metaclass=ABCQObjectMeta):
         """Get the connection status of this instrument as a **bool**."""
         return bool(self.connection_status)
 
-    @abstractmethod
-    def load_settings(self):
-        """Load the instrument's settings from a file."""
-        pass
-
-    @abstractmethod
-    def save_settings(self):
-        """Save the instrument's settings to a file."""
-        pass
-
 
 class InstrumentLocker[InstrumentType: Instrument]:  # generic
     """Locks and unlocks an instrument using the context manager."""
@@ -178,32 +168,19 @@ class Oven(Instrument):
         self.connection_timer = Timer(self, 1000, self.connect)  # arbitrary interval
 
     def load_settings(self):
-        with open(Files.Oven.SETTINGS_FILE, "r") as f:
+        """Load the oven settings from the oven settings file."""
+        with open(Files.ApplicationSettings.Oven.SETTINGS_FILE, "r") as f:
             settings = json.load(f)
-        self.max_temperature = settings[Files.Oven.MAX_TEMPERATURE]
-        self.min_temperature = settings[Files.Oven.MIN_TEMPERATURE]
-        self.setpoint_register = settings[Files.Oven.SETPOINT_REGISTER]
-        self.temperature_register = settings[Files.Oven.TEMPERATURE_REGISTER]
-        self.number_of_decimals = settings[Files.Oven.NUM_DECIMALS]
-        self.stability_tolerance = settings[Files.Oven.STABILITY_TOLERANCE]
-        self.minimum_stability_measurements = settings[Files.Oven.MINIMUM_STABILITY_MEASUREMENTS]
-        self.measurement_interval = settings[Files.Oven.MEASUREMENT_INTERVAL]
-        self.stability_measurement_interval = settings[Files.Oven.STABILITY_MEASUREMENT_INTERVAL]
-
-    def save_settings(self):
-        settings = {
-            Files.Oven.MAX_TEMPERATURE: self.max_temperature,
-            Files.Oven.MIN_TEMPERATURE: self.min_temperature,
-            Files.Oven.SETPOINT_REGISTER: self.setpoint_register,
-            Files.Oven.TEMPERATURE_REGISTER: self.temperature_register,
-            Files.Oven.NUM_DECIMALS: self.number_of_decimals,
-            Files.Oven.STABILITY_TOLERANCE: self.stability_tolerance,
-            Files.Oven.MINIMUM_STABILITY_MEASUREMENTS: self.minimum_stability_measurements,
-            Files.Oven.MEASUREMENT_INTERVAL: self.measurement_interval,
-            Files.Oven.STABILITY_MEASUREMENT_INTERVAL: self.stability_measurement_interval,
-        }
-        with open(Files.Oven.SETTINGS_FILE, "w") as f:
-            json.dump(settings, f)
+        SettingNames = Files.ApplicationSettings.Oven
+        self.max_temperature = settings[SettingNames.MAX_TEMPERATURE]
+        self.min_temperature = settings[SettingNames.MIN_TEMPERATURE]
+        self.setpoint_register = settings[SettingNames.SETPOINT_REGISTER]
+        self.temperature_register = settings[SettingNames.TEMPERATURE_REGISTER]
+        self.number_of_decimals = settings[SettingNames.NUM_DECIMALS]
+        self.stability_tolerance = settings[SettingNames.STABILITY_TOLERANCE]
+        self.minimum_stability_measurements = settings[SettingNames.MINIMUM_STABILITY_MEASUREMENTS]
+        self.measurement_interval = settings[SettingNames.MEASUREMENT_INTERVAL]
+        self.stability_measurement_interval = settings[SettingNames.STABILITY_MEASUREMENT_INTERVAL]
 
     def handle_connection_change(self, connected: bool):
         if connected:

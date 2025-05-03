@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QProgressBar, QWidget
 
-from ..instruments import Oven
+from ...instruments import Oven
 
 
 class ProgressBar(QProgressBar):

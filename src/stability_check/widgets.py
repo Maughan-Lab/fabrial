@@ -1,8 +1,8 @@
 from PyQt6.QtWidgets import QFormLayout, QVBoxLayout
 
-from ..custom_widgets.groupbox import GroupBox
-from ..custom_widgets.label import Label
-from ..custom_widgets.progressbar import StabilityProgressBar
+from ..custom_widgets.augmented.groupbox import GroupBox
+from ..custom_widgets.augmented.label import Label
+from ..custom_widgets.augmented.progressbar import StabilityProgressBar
 from ..enums.status import StabilityStatus
 from ..instruments import INSTRUMENTS
 from ..utility.layouts import add_sublayout

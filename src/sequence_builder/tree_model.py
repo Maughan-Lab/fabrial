@@ -25,7 +25,10 @@ JSON = "application/json"
 class TreeModel(QAbstractItemModel):
     """Concrete ItemModel for representing trees."""
 
-    dropOccurred = pyqtSignal(QModelIndex)
+    itemAdded = pyqtSignal(QModelIndex)
+    """
+    This is emitted every time an item is added to the model. Sends the **QModelIndex** of the item.
+    """
 
     def __init__(self, name: str = "", parent: QObject | None = None):
         """
@@ -39,6 +42,7 @@ class TreeModel(QAbstractItemModel):
         # don't access these directly
         self.supported_drop_actions = Qt.DropAction.CopyAction
         self.supported_drag_actions = self.supported_drop_actions
+        self.base_flag = Qt.ItemFlag.ItemIsEnabled
 
     def init_from_dict(self, root_item_as_dict: dict[str, Any]) -> Self:
         """Initialize the model's data from a dictionary."""
@@ -46,54 +50,20 @@ class TreeModel(QAbstractItemModel):
         self.layoutChanged.emit()
         return self
 
-    def init_from_file(self, filename: str) -> Self:
-        """Initialize the model's data from a file."""
-        try:
-            with open(filename, "r") as f:
-                data: dict[str, Any] = json.load(f)
-            self.init_from_dict(data)
-        finally:
-            return self
+    def init_from_directory(self, directory_path: str) -> Self:
+        """Initialize the model's data from a properly formatted directory and sort the items."""
+        return self.init_from_dict(item_dict_from_directory(directory_path)).sort_all()
 
-    def init_from_directory(self, directory: str) -> Self:
-        """Initialize the model's data from a directory."""
-        return self.init_from_dict(item_dict_from_directory(directory))
-
-    def save_to_file(self, filename: str) -> Self:
-        """Save the model's data to a file."""
-        data = self.root().to_dict()
-        with open(filename, "w") as f:
-            json.dump(data, f)
-        return self
-
-    @classmethod
-    def from_file(cls: type[Self], name: str, filename: str) -> Self:
-        """
-        Create a model from a .json file.
-
-        :param name: The name displayed at the top of the widget.
-        :param filename: The name of the initialization file. Must be a .json file with the proper
-        format.
-        """
-        return cls(name).init_from_file(filename)
-
-    @classmethod
-    def from_directory(cls: type[Self], name: str, directory: str) -> Self:
-        """
-        Create a model from a properly formatted directory.
-
-        :param name: The name displayed at the top of the widget.
-        :param directory: The path to the base-level directory (i.e. the directory containing the
-        root item).
-        """
-        return cls(name).init_from_directory(directory)
+    def to_dict(self) -> dict[str, Any]:
+        """Convert this model's item data to a JSON-like dictionary."""
+        return self.root_item.to_dict()
 
     def sort_all(self) -> Self:
         """
         Sort all of this model's items by display name. Items containing other items are listed
         first.
         """
-        self.root_item.recursively_sort_children()
+        self.root_item.sort_all()
         return self
 
     def item(self, index: QModelIndex) -> TreeItem:
@@ -104,6 +74,7 @@ class TreeModel(QAbstractItemModel):
             # this uses C++ witchcraft to get the item at the index
             # look up the docs for QModelIndex
             # I think it is related to the index() function
+            # it's something with pointers, idk
             item: TreeItem = index.internalPointer()
             if item is not None:
                 return item
@@ -115,12 +86,18 @@ class TreeModel(QAbstractItemModel):
 
     def insert_rows(self, row: int, parent_index: QModelIndex, items: list[TreeItem]) -> bool:
         """Insert items into the model. Returns True on success, False on failure."""
-        parent_item = self.item(parent_index)
-        self.beginInsertRows(parent_index, row, row + len(items) - 1)
-        success = parent_item.insert_children(row, items)
-        self.endInsertRows()
+        if self.is_enabled():
+            parent_item = self.item(parent_index)
+            self.beginInsertRows(parent_index, row, row + len(items) - 1)
+            success = parent_item.insert_children(row, items)
+            self.endInsertRows()
 
-        return success
+            for i, item in enumerate(items):
+                # notify that items were added
+                self.itemAdded.emit(self.createIndex(row + i, 0, item))
+
+            return success
+        return False
 
     def set_supported_drag_actions(self, actions: Qt.DropAction):
         """Change the supported drag options (default CopyAction)."""
@@ -172,6 +149,14 @@ class TreeModel(QAbstractItemModel):
                 success = self.removeRow(index.row(), index.parent())
         return success
 
+    def is_enabled(self) -> bool:
+        "Whether the model's items are enabled."
+        return self.base_flag != Qt.ItemFlag.NoItemFlags
+
+    def set_enabled(self, enabled: bool):
+        """Set whether the model's items are enabled."""
+        self.base_flag = Qt.ItemFlag.ItemIsEnabled if enabled else Qt.ItemFlag.NoItemFlags
+
     # ----------------------------------------------------------------------------------------------
     # overridden methods
     def parent(self, index: QModelIndex) -> QModelIndex:  # type: ignore
@@ -202,7 +187,6 @@ class TreeModel(QAbstractItemModel):
                 # items that are running are shown in bold
                 if item.is_running():
                     font = QApplication.font()
-                    font = QApplication.font()
                     font.setBold(True)
                     return font
             case Qt.ItemDataRole.DecorationRole:
@@ -210,7 +194,7 @@ class TreeModel(QAbstractItemModel):
         return None
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlag:
-        flags = Qt.ItemFlag.ItemIsEnabled
+        flags = self.base_flag
         item = self.item(index)
         if item.supports_subitems():
             flags |= Qt.ItemFlag.ItemIsDropEnabled
@@ -238,12 +222,14 @@ class TreeModel(QAbstractItemModel):
         return QModelIndex()
 
     def removeRows(self, row: int, count: int, parent_index: QModelIndex = QModelIndex()) -> bool:
-        parent_item = self.item(parent_index)
+        if self.is_enabled():
+            parent_item = self.item(parent_index)
 
-        self.beginRemoveRows(parent_index, row, row + count - 1)  # type: ignore
-        success = parent_item.remove_children(row, count)
-        self.endRemoveRows()
-        return success
+            self.beginRemoveRows(parent_index, row, row + count - 1)  # type: ignore
+            success = parent_item.remove_children(row, count)
+            self.endRemoveRows()
+            return success
+        return False
 
     def supportedDropActions(self) -> Qt.DropAction:
         return self.supported_drop_actions
@@ -309,9 +295,6 @@ class TreeModel(QAbstractItemModel):
             items.append(item)
 
         self.insert_rows(begin_row, parent_index, items)
-
-        for i, item in enumerate(items):
-            self.dropOccurred.emit(self.createIndex(begin_row + i, 0, item))
 
         self.layoutChanged.emit()
 

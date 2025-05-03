@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QLayout, QSizePolicy
 
-from .widget import Widget
+from .augmented.widget import Widget
 
 
 class Container(Widget):

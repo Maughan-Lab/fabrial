@@ -1,9 +1,9 @@
 from PyQt6.QtWidgets import QPushButton, QVBoxLayout
 
-from ..custom_widgets.dialog import OkDialog
-from ..custom_widgets.groupbox import GroupBox
-from ..custom_widgets.label import Label
-from ..custom_widgets.spin_box import TemperatureSpinBox
+from ..custom_widgets.augmented.dialog import OkDialog
+from ..custom_widgets.augmented.groupbox import GroupBox
+from ..custom_widgets.augmented.label import Label
+from ..custom_widgets.augmented.spin_box import TemperatureSpinBox
 from ..instruments import INSTRUMENTS
 from ..utility.layouts import add_to_layout
 

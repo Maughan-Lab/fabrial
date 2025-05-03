@@ -1,9 +1,11 @@
+import json
+
 from PyQt6.QtCore import QModelIndex, Qt
 from PyQt6.QtWidgets import QSizePolicy, QVBoxLayout, QWidget
 
 from ... import Files
 from ...classes.actions import Shortcut
-from ...custom_widgets.button import FixedButton
+from ...custom_widgets.augmented.button import FixedButton
 from ...custom_widgets.container import Container
 from ...utility.layouts import add_to_layout
 from ..tree_model import TreeModel
@@ -14,10 +16,16 @@ class OptionsTreeView(TreeView):
     """Custom QTreeView containing the options for the sequence."""
 
     def __init__(self, parent: QWidget | None = None):
-        model = TreeModel.from_directory(
-            "Options", Files.SequenceBuilder.OPTIONS_INITIALIZER
-        ).sort_all()
-        super().__init__(model, parent)
+        model = TreeModel("Options")
+        super().__init__(model)
+        self.init_from_directory(Files.SequenceBuilder.OPTIONS_INITIALIZER)
+
+        try:
+            # try to restore the previous view state
+            self.init_view_state_from_file(Files.SavedSettings.Sequence.OPTIONS_STATE_AUTOSAVE)
+        except Exception:  # do nothing on failure
+            pass
+
         self.create_shortcuts()
         self.doubleClicked.connect(self.handle_double_click)
 
@@ -46,8 +54,8 @@ class OptionsTreeWidget(Container):
         self.view = OptionsTreeView(self)
         self.expand_button = FixedButton("Toggle Expansion")
         self.expand_button.setCheckable(True)
+        self.expand_button.toggle()  # assume that the view starts mostly expanded
         self.expand_button.toggled.connect(self.handle_button_press)
-        self.expand_button.toggle()  # start with everything expanded
         add_to_layout(layout, self.expand_button, self.view)
 
     def handle_button_press(self, checked: bool):
@@ -55,3 +63,9 @@ class OptionsTreeWidget(Container):
             self.view.expandAll()
         else:  # un-expand when unpressed
             self.view.collapseAll()
+
+    def save_on_close(self):
+        """Call this when closing the application to save settings."""
+        view_state_dict = self.view.get_view_state()
+        with open(Files.SavedSettings.Sequence.OPTIONS_STATE_AUTOSAVE, "w") as f:
+            json.dump(view_state_dict, f)

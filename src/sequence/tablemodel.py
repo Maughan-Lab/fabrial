@@ -5,7 +5,7 @@ from polars import col
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from .. import Files
-from ..custom_widgets.dialog import OkDialog
+from ..custom_widgets.augmented.dialog import OkDialog
 from ..custom_widgets.tablemodel import TableModel
 from ..instruments import INSTRUMENTS
 

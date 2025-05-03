@@ -5,8 +5,8 @@ import pyqtgraph.exporters as exporters  # type: ignore
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QVBoxLayout
 
 from ..classes.plotting import LineData
-from ..custom_widgets.button import Button
-from ..custom_widgets.widget import Widget
+from .augmented.button import Button
+from .augmented.widget import Widget
 from ..utility.layouts import add_sublayout, add_to_layout
 
 

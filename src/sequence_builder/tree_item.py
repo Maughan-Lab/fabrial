@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from functools import cmp_to_key
 from typing import TYPE_CHECKING, Any, Union
 
@@ -15,15 +17,15 @@ class TreeItem:
     def __init__(
         self,
         linked_widget: AbstractWidget,
-        parent: Union["TreeItem", None] = None,
+        parent: TreeItem | None = None,
     ):
         self.parent_item = parent
         self.linked_widget = linked_widget
-        self.children: list["TreeItem"] = []
+        self.children: list[TreeItem] = []
         self.running = False
 
     @classmethod
-    def create_root_item(cls: type["TreeItem"]):
+    def create_root_item(cls: type[TreeItem]):
         return cls(CategoryWidget())
 
     def set_running(self, running: bool):
@@ -42,14 +44,14 @@ class TreeItem:
         """Get the this item's linked widget."""
         return self.linked_widget
 
-    def child(self, index: int) -> Union["TreeItem", None]:
+    def child(self, index: int) -> TreeItem | None:
         """Get the child item at **index**."""
         try:
             return self.children[index]
         except Exception:
             return None
 
-    def parent(self) -> Union["TreeItem", None]:
+    def parent(self) -> TreeItem | None:
         """Get the parent of this item."""
         return self.parent_item
 
@@ -61,7 +63,7 @@ class TreeItem:
         """Whether this item contains subitems."""
         return not self.child_count() == 0
 
-    def subitems(self) -> list["TreeItem"]:
+    def subitems(self) -> list[TreeItem]:
         """Get this item's subitems."""
         return self.children
 
@@ -78,12 +80,12 @@ class TreeItem:
         """Get the display text for this item."""
         return self.linked_widget.display_name()
 
-    def append_children(self, items: list["TreeItem"]):
+    def append_children(self, items: list[TreeItem]):
         """Append all **items** to this item's list of children."""
         for item in items:
             self.children.append(item)
 
-    def insert_children(self, starting_row_index: int, items: list["TreeItem"]) -> bool:
+    def insert_children(self, starting_row_index: int, items: list[TreeItem]) -> bool:
         """
         Insert **count** children starting at **starting_row_index**, with the newest children on
         top. Returns True if successful, False otherwise.
@@ -107,47 +109,45 @@ class TreeItem:
             return False
         return True
 
-    @staticmethod
-    def compare(left_item: "TreeItem", right_item: "TreeItem") -> int:
-        """
-        Compare two TreeItems. TreeItems with children take precedence. If both or neither have
-        children, they are compared alphabetically by display name.
-        """
-        LEFT = -1
-        RIGHT = 1
-        EQUAL = 0
-        if left_item.has_children():
-            if not right_item.has_children():
-                return LEFT
-            else:
-                if left_item.name() < right_item.name():
-                    return LEFT
-                else:  # if the names are the same order doesn't matter
-                    return RIGHT
-        else:
-            if right_item.has_children():
-                return RIGHT
-            else:
-                if right_item.name() < left_item.name():
-                    return RIGHT
-                else:  # if the names are the same order doesn't matter
-                    return LEFT
-        return EQUAL  # this shouldn't run but just in case
-
-    def sort_children(self):
-        """
-        Sort this item's children by display name. Items containing other items are listed first.
-        """
-        self.children.sort(key=cmp_to_key(self.compare))
-
-    def recursively_sort_children(self):
+    def sort_all(self):
         """
         Sort ALL of this item's children (i.e. children, grandchildren, etc.) by display name. Items
         containing other items are listed first.
         """
-        self.sort_children()
+
+        def compare(left_item: TreeItem, right_item: TreeItem) -> int:
+            """
+            Compare two TreeItems. TreeItems with children take precedence. If both or neither have
+            children, they are compared alphabetically by display name.
+            """
+            LEFT = -1
+            RIGHT = 1
+            EQUAL = 0
+            if left_item.has_children():
+                if not right_item.has_children():
+                    return LEFT
+                else:
+                    if left_item.name() < right_item.name():
+                        return LEFT
+                    else:  # if the names are the same order doesn't matter
+                        return RIGHT
+            else:
+                if right_item.has_children():
+                    return RIGHT
+                else:
+                    if right_item.name() < left_item.name():
+                        return RIGHT
+                    else:  # if the names are the same order doesn't matter
+                        return LEFT
+            return EQUAL  # this shouldn't run but just in case
+
+        def sort_children(item: TreeItem):
+            item.children.sort(key=cmp_to_key(compare))
+
+        # this is the actual code
+        sort_children(self)
         for child in self.children:
-            child.recursively_sort_children()
+            sort_children(child)
 
     def supports_subitems(self) -> bool:
         """Return whether the item supports subitems."""
@@ -178,8 +178,8 @@ class TreeItem:
     # ----------------------------------------------------------------------------------------------
     @classmethod
     def from_dict(
-        cls: type["TreeItem"], parent: Union["TreeItem", None], item_as_dict: dict[str, Any]
-    ) -> "TreeItem":
+        cls: type[TreeItem], parent: TreeItem | None, item_as_dict: dict[str, Any]
+    ) -> TreeItem:
         """
         Create a TreeItem from a JSON-style dictionary. This method is recursive.
 
@@ -194,8 +194,10 @@ class TreeItem:
 
         # add children
         for child_item_as_dict in item_as_dict[Files.TreeItem.CHILDREN]:
-            child_item = cls.from_dict(item, child_item_as_dict)
-            item.append_children([child_item])
+            child_widget_type = ItemType.from_name(child_item_as_dict[Files.TreeItem.TYPE]).value
+            if child_widget_type.allowed_to_create():
+                child_item = cls.from_dict(item, child_item_as_dict)
+                item.append_children([child_item])
 
         return item
 

@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QFormLayout
 
 from ..... import Files
 from .....classes.descriptions import DescriptionInfo
-from .....custom_widgets.spin_box import DoubleSpinBox
+from .....custom_widgets.augmented.spin_box import DoubleSpinBox
 from ...base_widget import AbstractBaseWidget
 from . import encoding
 from .process import IncrementTemperatureProcess

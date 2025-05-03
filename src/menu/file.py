@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from PyQt6.QtWidgets import QApplication, QMenu, QMenuBar
 
 from ..classes.actions import Action
-from ..custom_widgets.dialog import OkCancelDialog
+from ..custom_widgets.augmented.dialog import OkCancelDialog
 
 if TYPE_CHECKING:
     from ..main_window import MainWindow

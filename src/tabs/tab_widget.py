@@ -14,8 +14,21 @@ class TabWidget(QTabWidget):
         self.sequence_builder_tab = SequenceBuilderTab(self.sequence_visuals_tab)
         self.oven_control_tab = OvenControlTab()
 
-        self.addTab(self.sequence_builder_tab, make_icon("script-block.png"), "Sequence Builder")
+        self.addTab(
+            self.sequence_builder_tab,
+            make_icon(self.sequence_builder_tab.ICON_FILE),
+            "Sequence Builder",
+        )
         self.addTab(self.sequence_visuals_tab, make_icon("chart.png"), "Sequence Visuals")
-        self.addTab(self.oven_control_tab, make_icon("thermometer.png"), "Oven Control")
+        self.addTab(
+            self.oven_control_tab, make_icon(self.oven_control_tab.ICON_FILE), "Oven Control"
+        )
 
         self.currentChanged.connect(lambda index: self.widget(index).setFocus())  # type: ignore
+        self.sequence_visuals_tab.poppedGraphChanged.connect(
+            lambda popped: (
+                self.sequence_visuals_tab.setFocus()
+                if not popped and self.currentWidget() is self.sequence_visuals_tab
+                else None
+            )
+        )

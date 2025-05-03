@@ -1,8 +1,8 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QGridLayout
 
-from ..custom_widgets.groupbox import GroupBox
-from ..custom_widgets.label import Label
+from ..custom_widgets.augmented.groupbox import GroupBox
+from ..custom_widgets.augmented.label import Label
 from ..instruments import INSTRUMENTS
 
 

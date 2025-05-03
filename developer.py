@@ -3,8 +3,8 @@ import time
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QVBoxLayout
 
 from main import main
-from src.custom_widgets.groupbox import GroupBox
-from src.custom_widgets.spin_box import TemperatureSpinBox  # ../custom_widgets
+from src.custom_widgets.augmented.groupbox import GroupBox
+from src.custom_widgets.augmented.spin_box import TemperatureSpinBox  # ../custom_widgets
 from src.instruments import INSTRUMENTS, ConnectionStatus, Oven
 from src.main_window import MainWindow
 from src.utility.layouts import add_sublayout, add_to_layout  # ../utility
