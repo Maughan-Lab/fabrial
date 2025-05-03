@@ -20,11 +20,10 @@ class OptionsTreeView(TreeView):
         super().__init__(model)
         self.init_from_directory(Files.SequenceBuilder.OPTIONS_INITIALIZER)
 
-        try:
-            # try to restore the previous view state
+        try:  # try to restore the previous view state
             self.init_view_state_from_file(Files.SavedSettings.Sequence.OPTIONS_STATE_AUTOSAVE)
-        except Exception:  # do nothing on failure
-            pass
+        except Exception:  # if we can't load the expansion state, just expand everything
+            self.expandAll()
 
         self.create_shortcuts()
         self.doubleClicked.connect(self.handle_double_click)
