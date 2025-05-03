@@ -1,4 +1,4 @@
-from PyQt6.QtGui import QCloseEvent, QShowEvent
+from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QTabWidget
 
 from ... import Files
@@ -23,11 +23,6 @@ class ApplicationSettingsWindow(QTabWidget):
         self.addTab(self.sequence_tab, make_icon(SequenceBuilderTab.ICON_FILE), "Sequence")
         self.addTab(self.oven_tab, make_icon(OvenControlTab.ICON_FILE), "Oven")
         self.addTab(self.gamry_tab, make_icon("lightning.png"), "Gamry")
-
-    def showEvent(self, event: QShowEvent | None):  # overridden
-        if event is not None:
-            self.oven_tab.reinitialize()
-        super().showEvent(event)
 
     def closeEvent(self, event: QCloseEvent | None):  # overridden
         if event is not None:
