@@ -45,6 +45,9 @@ class SequenceDisplayTab(QTabWidget):
 
     def init_plot(self, index: int, settings: LineSettings):
         """Initialize the plot."""
+
+        # TODO: you also need to send an identifier for the name of the graph
+
         if self.count() < index:
             raise IndexError(
                 "Attempted to create plot at an invalid index. "

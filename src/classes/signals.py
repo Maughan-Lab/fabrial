@@ -11,6 +11,7 @@ class GraphSignals(QObject):
     parent.
     """
 
+    # TODO: this needs to also have an identifier string for the name of the tab
     initPlot = pyqtSignal(int, LineSettings)
     """
     Initialize a plot. Emit with the plot index as an **int** and a **LineSettings** object for the
