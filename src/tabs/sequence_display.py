@@ -1,10 +1,10 @@
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QTabWidget, QVBoxLayout
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QTabWidget
 
 from ..classes.actions import Shortcut
 from ..classes.plotting import LineSettings
 from ..classes.signals import GraphSignals
-from ..custom_widgets.augmented.widget import Widget
+from ..custom_widgets.augmented.button import Button
 from ..custom_widgets.plot import PlotWidget
 from ..secondary_window import SecondaryWindow
 
@@ -15,24 +15,14 @@ class SequenceDisplayTab(QTabWidget):
     time.
     """
 
-    poppedGraphChanged = pyqtSignal(bool)
-    """
-    Fires when the graph is popped/unpopped. Sends a **bool** indicating whether the graph is
-    popped.
-    """
-
     def __init__(self) -> None:
         super().__init__()
         self.plots: list[PlotWidget] = []
+        self.popped_graphs: list[SecondaryWindow] = []
 
-        # create popped graph
-        self.popped_graph = SecondaryWindow("Quincy - Sequence Graph", None, None)
-        self.popped_graph.closed.connect(lambda: self.poppedGraphChanged.emit(False))
-        # TODO: fix these
-        # close the window on "Ctrl+g"
-        # Shortcut(self.popped_graph, "Ctrl+g", self.popped_graph.close)
-        # save the graph on "Ctrl+s"
-        # Shortcut(self.plot, "Ctrl+s", self.plot.save_as_image)
+        self.setCornerWidget(Button("Pop Graph", self.pop_graph), Qt.Corner.TopRightCorner)
+        self.setMovable(True)
+        Shortcut(self, "Ctrl+G", self.pop_graph)
 
     def connect_graph_signals(self, signals: GraphSignals):
         """Connect to the provided graph signals."""
@@ -43,11 +33,8 @@ class SequenceDisplayTab(QTabWidget):
         signals.saveFig.connect(self.save_figure)
         signals.setLogScale.connect(self.set_log_scale)
 
-    def init_plot(self, index: int, settings: LineSettings):
+    def init_plot(self, index: int, name: str, settings: LineSettings):
         """Initialize the plot."""
-
-        # TODO: you also need to send an identifier for the name of the graph
-
         if self.count() < index:
             raise IndexError(
                 "Attempted to create plot at an invalid index. "
@@ -55,7 +42,8 @@ class SequenceDisplayTab(QTabWidget):
             )
         elif index == self.count():  # we're making a new plot
             plot = PlotWidget()
-            self.addTab(plot, str(index))
+            Shortcut(plot, "Ctrl+S", plot.save_as_image)
+            self.addTab(plot, name)
             self.plots.append(plot)
         else:  # we're modifying an existing plot
             plot = self.plots[index]
@@ -82,7 +70,11 @@ class SequenceDisplayTab(QTabWidget):
             self.removeTab(0)
             if tab is not None:
                 tab.deleteLater()
+        for popped_graph in self.popped_graphs:
+            popped_graph.close_silent()
+            popped_graph.deleteLater()
         self.plots.clear()
+        self.popped_graphs.clear()
 
     def clear_plot(self, index: int):
         """Clear a plot."""
@@ -102,12 +94,15 @@ class SequenceDisplayTab(QTabWidget):
 
     def pop_graph(self):
         """Pop the graph into a secondary window."""
-        self.poppedGraphChanged.emit(True)
-        self.popped_graph.setCentralWidget(self.plot)
-        self.popped_graph.closed.connect(lambda: self.layout().addWidget(self.plot))
-        self.popped_graph.show()
+        plot = self.currentWidget()
+        if plot is not None:
+            tab_title = self.tabText(self.currentIndex())
+            popped_window = SecondaryWindow(tab_title, plot)
+            Shortcut(popped_window, "Ctrl+G", popped_window.close)
+            self.popped_graphs.append(popped_window)
 
-    def unpop_graph(self):
-        """Unpop the graph."""
-        self.popped_graph.close()
-        self.poppedGraphChanged.emit(False)
+            popped_window.closed.connect(lambda: self.popped_graphs.remove(popped_window))
+            popped_window.closed.connect(lambda: self.addTab(plot, tab_title))
+
+            popped_window.show()
+            popped_window.resize(popped_window.sizeHint())

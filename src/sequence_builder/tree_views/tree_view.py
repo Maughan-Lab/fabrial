@@ -4,7 +4,8 @@ from typing import Any, Self
 from PyQt6.QtCore import QModelIndex, QPersistentModelIndex
 from PyQt6.QtWidgets import QAbstractItemView, QTreeView, QWidget
 
-from ... import Files
+from ...Files import TreeItem as TreeItemKeys
+from ...Files import TreeView as Keys
 from ..tree_model import TreeModel
 
 
@@ -23,8 +24,8 @@ class TreeView(QTreeView):
 
     def init_from_dict(self, data_dict: dict[str, Any]) -> Self:
         """Initialize the view from a JSON-like dictionary."""
-        self.model().init_from_dict(data_dict[Files.TreeView.ITEM_DATA])
-        self.init_view_state(data_dict[Files.TreeView.VIEW_DATA])
+        self.model().init_from_dict(data_dict[Keys.ITEM_DATA])
+        self.init_view_state(data_dict[Keys.VIEW_DATA])
         return self
 
     def init_from_file(self, filepath: str) -> Self:
@@ -43,9 +44,9 @@ class TreeView(QTreeView):
         model = self.model()
 
         def recursively_init_state(index: QModelIndex, view_state_dict: dict[str, Any]):
-            if view_state_dict[Files.TreeView.EXPANDED]:
+            if view_state_dict[Keys.EXPANDED]:
                 self.expand(index)
-            children_data: list[dict[str, Any]] = view_state_dict[Files.TreeItem.CHILDREN]
+            children_data: list[dict[str, Any]] = view_state_dict[TreeItemKeys.CHILDREN]
             for i, child_expansion_dict in enumerate(children_data):
                 child_index = model.index(i, 0, index)
                 recursively_init_state(child_index, child_expansion_dict)
@@ -73,12 +74,12 @@ class TreeView(QTreeView):
         model = self.model()
 
         def get_state(index: QModelIndex) -> dict[str, Any]:
-            view_state_dict: dict[str, Any] = {Files.TreeView.EXPANDED: self.isExpanded(index)}
+            view_state_dict: dict[str, Any] = {Keys.EXPANDED: self.isExpanded(index)}
             children_states = []
             for i in range(model.rowCount(index)):
                 child_index = model.index(i, 0, index)
                 children_states.append(get_state(child_index))
-            view_state_dict[Files.TreeItem.CHILDREN] = children_states
+            view_state_dict[TreeItemKeys.CHILDREN] = children_states
             return view_state_dict
 
         return get_state(self.rootIndex())
@@ -86,8 +87,8 @@ class TreeView(QTreeView):
     def to_dict(self) -> dict[str, Any]:
         """Convert this view's data to a JSON dictionary."""
         view_data = {
-            Files.TreeView.ITEM_DATA: self.model().to_dict(),
-            Files.TreeView.VIEW_DATA: self.get_view_state(),
+            Keys.ITEM_DATA: self.model().to_dict(),
+            Keys.VIEW_DATA: self.get_view_state(),
         }
         return view_data
 
@@ -100,6 +101,7 @@ class TreeView(QTreeView):
         """Connect signals."""
         self.expanded.connect(self.model().expand_event)
         self.collapsed.connect(self.model().collapse_event)
+        self.doubleClicked.connect(self.show_item_widget)
         return self
 
     def model(self) -> TreeModel:
@@ -145,3 +147,9 @@ class TreeView(QTreeView):
 
         self.setCurrentIndex(new_selection_index)
         return self
+
+    def show_item_widget(self, index: QModelIndex):
+        """Show an item's widget."""
+        model = self.model()
+        item = model.item(index)
+        item.show_widget(model.is_enabled())

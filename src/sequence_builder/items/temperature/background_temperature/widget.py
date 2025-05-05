@@ -2,9 +2,9 @@ from typing import Any, Self
 
 from PyQt6.QtWidgets import QFormLayout
 
-from ..... import Files
 from .....classes.descriptions import DescriptionInfo
 from .....custom_widgets.augmented.spin_box import SpinBox
+from .....Files.Process import Filenames
 from ...base_widget import AbstractBaseWidget
 from . import encoding
 from .process import BackgroundTemperatureProcess
@@ -32,17 +32,11 @@ class BackgroundTemperatureWidget(AbstractBaseWidget):
                         "MEASUREMENT_INTERVAL": encoding.MEASUREMENT_INTERVAL,
                         "MINIMUM_INTERVAL": self.interval_spinbox.minimum(),
                     },
-                    data_recording_dict={"TEMPERATURE_FILE": Files.Process.Filenames.TEMPERATURES},
+                    data_recording_dict={"TEMPERATURE_FILE": Filenames.TEMPERATURES},
                 ),
             ),
         )
         layout.addRow(encoding.MEASUREMENT_INTERVAL, self.interval_spinbox)
-
-        self.interval_spinbox.textChanged.connect(
-            lambda value_as_str: self.setWindowTitle(
-                f"{self.DISPLAY_NAME_PREFIX} ({value_as_str} ms)"
-            )
-        )
 
     @classmethod
     def from_dict(cls, data_as_dict: dict[str, Any]) -> Self:

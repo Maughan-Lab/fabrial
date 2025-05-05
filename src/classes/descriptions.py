@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from .. import Files
+from ..Files.SequenceBuilder.Descriptions import DEFAULT_FOLDER_NAME
 
 
 @dataclass
@@ -28,7 +28,7 @@ class DescriptionInfo:
         data_recording_dict: dict[str, str] = field(default_factory=dict)
         """Substitutions for the data recording section."""
 
-    category_folder: str = Files.SequenceBuilder.Descriptions.DEFAULT_FOLDER
+    category_folder: str = DEFAULT_FOLDER_NAME
     item_folder: str = ""
     data_folder: str = ""
     substitutions: Substitutions = field(default_factory=Substitutions)

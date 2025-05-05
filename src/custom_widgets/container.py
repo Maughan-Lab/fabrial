@@ -4,7 +4,7 @@ from .augmented.widget import Widget
 
 
 class Container(Widget):
-    """QWidget that automatically sets the layout and has no contents margins."""
+    """Widget that automatically sets the layout and has no contents margins."""
 
     def __init__(
         self,

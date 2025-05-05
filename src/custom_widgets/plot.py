@@ -1,13 +1,14 @@
 from typing import Literal
 
 import pyqtgraph as pg  # type: ignore
-import pyqtgraph.exporters as exporters  # type: ignore
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QVBoxLayout
+from pyqtgraph.exporters import ImageExporter  # type: ignore
 
 from ..classes.plotting import LineData
+from ..custom_widgets.augmented.dialog import OkDialog
+from ..utility.layouts import add_sublayout, add_to_layout
 from .augmented.button import Button
 from .augmented.widget import Widget
-from ..utility.layouts import add_sublayout, add_to_layout
 
 
 class PlotItem(pg.PlotItem):
@@ -116,7 +117,8 @@ class PlotView(pg.PlotWidget):
         super().__init__(background=plot_item.background_color, plotItem=plot_item)
 
     def export_to_image(self, filename: str):
-        exporter = exporters.ImageExporter(self.getPlotItem())
+        """Export the image. This uses the image's current dimensions."""
+        exporter = ImageExporter(self.getPlotItem())
         exporter.export(filename)
 
 
@@ -146,7 +148,10 @@ class PlotWidget(Widget):
             None, "Save Graph", "", "Portable Network Graphics (*.png)"
         )
         if filename != "":
-            self.view.export_to_image(filename)
+            try:
+                self.view.export_to_image(filename)
+            except Exception:
+                OkDialog("Error", "Failed to save graph.")
 
     def autoscale(self):
         """Autoscale the graph."""

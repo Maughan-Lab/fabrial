@@ -33,9 +33,3 @@ class LineData:
         self.x_data.append(x_value)
         self.y_data.append(y_value)
         self.line.setData(self.x_data, self.y_data)
-
-    # TODO: probably delete this
-    def clear(self):
-        """Clear the line data."""
-        self.x_data.clear()
-        self.y_data.clear()

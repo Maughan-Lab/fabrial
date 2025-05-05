@@ -4,8 +4,8 @@ import sys
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
-from src import Files
-from src.gamry_integration.Gamry import GAMRY
+from src.Files import FOLDERS_TO_CREATE, Icons
+from src.gamry_integration.gamry import GAMRY
 from src.main_window import MainWindow
 from src.utility.errors import generate_exception_handler
 
@@ -26,7 +26,7 @@ def update_id():
 
 def make_application_folders():
     """Create folders for the application."""
-    for folder in Files.FOLDERS_TO_CREATE:
+    for folder in FOLDERS_TO_CREATE:
         os.makedirs(folder, exist_ok=True)
 
 
@@ -35,7 +35,7 @@ def main(main_window_type: type[MainWindow] = MainWindow):
     make_application_folders()
 
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(Files.Icons.MAIN_ICON))
+    app.setWindowIcon(QIcon(Icons.MAIN_ICON))
     # create the main window using `main_window_type`
     main_window = main_window_type()  # necessary for testing
     main_window.showMaximized()

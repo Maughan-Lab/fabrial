@@ -2,7 +2,7 @@ import json
 import os
 from typing import Any
 
-from .. import Files
+from ..Files import TreeItem as Keys
 
 CATEGORY_FILENAME = "category.json"
 ERROR_PREFIX = "Could not parse initialization directory:"
@@ -46,13 +46,13 @@ def item_dict_from_directory(directory: str) -> dict[str, Any]:
         elif os.path.isfile(real_filename):
             with open(real_filename, "r") as f:
                 item_data = json.load(f)
-            if Files.TreeItem.WIDGET_DATA not in item_data:  # widget data is optional
-                item_data[Files.TreeItem.WIDGET_DATA] = dict()
+            if Keys.WIDGET_DATA not in item_data:  # widget data is optional
+                item_data[Keys.WIDGET_DATA] = dict()
             if filename == CATEGORY_FILENAME:  # it is the category item
                 category_file_found = True
                 item_as_dict = item_data
             else:  # it is a child of the category item
-                item_data[Files.TreeItem.CHILDREN] = dict()  # ignore children entries
+                item_data[Keys.CHILDREN] = dict()  # ignore children entries
                 children.append(item_data)
 
     if not category_file_found:
@@ -60,6 +60,6 @@ def item_dict_from_directory(directory: str) -> dict[str, Any]:
         raise FileNotFoundError(f"{ERROR_PREFIX} {CATEGORY_FILENAME} file not found in {directory}")
 
     # put the subitems in the current item
-    item_as_dict[Files.TreeItem.CHILDREN] = children
+    item_as_dict[Keys.CHILDREN] = children
 
     return item_as_dict

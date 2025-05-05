@@ -7,10 +7,10 @@ from typing import TYPE_CHECKING, Union
 import minimalmodbus as modbus  # type: ignore
 from PyQt6.QtCore import QMutex, QMutexLocker, QObject, pyqtSignal
 
-from . import Files
 from .classes.lock import DataMutex
 from .classes.metaclasses import ABCQObjectMeta
 from .enums.status import ConnectionStatus
+from .Files import Settings
 from .utility.timers import Timer
 
 if TYPE_CHECKING:
@@ -169,9 +169,13 @@ class Oven(Instrument):
 
     def load_settings(self):
         """Load the oven settings from the oven settings file."""
-        with open(Files.ApplicationSettings.Oven.SETTINGS_FILE, "r") as f:
-            settings = json.load(f)
-        SettingNames = Files.ApplicationSettings.Oven
+        try:
+            with open(Settings.Oven.SAVED_SETTINGS_FILE, "r") as f:
+                settings = json.load(f)
+        except Exception:
+            with open(Settings.Oven.DEFAULT_SETTINGS_FILE, "r") as f:
+                settings = json.load(f)
+        SettingNames = Settings.Oven
         self.max_temperature = settings[SettingNames.MAX_TEMPERATURE]
         self.min_temperature = settings[SettingNames.MIN_TEMPERATURE]
         self.setpoint_register = settings[SettingNames.SETPOINT_REGISTER]

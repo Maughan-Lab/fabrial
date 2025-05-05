@@ -2,10 +2,11 @@ from typing import Any, Self
 
 from PyQt6.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QVBoxLayout
 
+from .....classes.descriptions import DescriptionInfo
 from .....custom_widgets.augmented.button import Button
 from .....custom_widgets.augmented.label import Label
 from .....custom_widgets.augmented.spin_box import DoubleSpinBox, SpinBox
-from .....gamry_integration.Gamry import GAMRY
+from .....gamry_integration.gamry import GAMRY
 from .....utility.layouts import add_sublayout, add_to_form_layout, add_to_layout, clear_layout
 from ...base_widget import AbstractBaseWidget
 from . import encoding
@@ -17,12 +18,28 @@ class EISWidget(AbstractBaseWidget):
 
     def __init__(self) -> None:
         """Create a new instance."""
-        # TODO: description
         super().__init__(
             QVBoxLayout(),
             "Electrochemical Impedance Spectroscopy",
             EISProcess,
             "battery-charge.png",
+            DescriptionInfo(
+                "electrochemistry",
+                "EIS",
+                EISProcess.directory_name(),
+                DescriptionInfo.Substitutions(
+                    parameters_dict={
+                        "POTENTIOSTATS": encoding.SELECTED_PSTATS,
+                        "DC_VOLTAGE": encoding.DC_VOLTAGE,
+                        "INITIAL_FREQUENCY": encoding.INITIAL_FREQUENCY,
+                        "FINAL_FREQUENCY": encoding.FINAL_FREQUENCY,
+                        "POINTS_PER_DECADE": encoding.POINTS_PER_DECADE,
+                        "AC_VOLTAGE": encoding.AC_VOLTAGE,
+                        "SAMPLE_AREA": encoding.AREA,
+                        "ESTIMATED_IMPEDANCE": encoding.ESTIMATED_IMPEDANCE,
+                    }
+                ),
+            ),
         )
         self.pstat_checkboxes: dict[str, QCheckBox] = {}
         self.create_widgets()
@@ -53,7 +70,7 @@ class EISWidget(AbstractBaseWidget):
 
         add_to_form_layout(
             parameter_layout,
-            (encoding.DC_voltage, self.DC_voltage_spinbox),
+            (encoding.DC_VOLTAGE, self.DC_voltage_spinbox),
             (encoding.INITIAL_FREQUENCY, self.initial_frequency_spinbox),
             (encoding.FINAL_FREQUENCY, self.final_frequency_spinbox),
             (encoding.POINTS_PER_DECADE, self.points_per_decade_spinbox),
@@ -94,7 +111,7 @@ class EISWidget(AbstractBaseWidget):
     @classmethod
     def from_dict(cls: type[Self], data_as_dict: dict[str, Any]) -> Self:
         widget = cls()
-        widget.DC_voltage_spinbox.setValue(data_as_dict[encoding.DC_voltage])
+        widget.DC_voltage_spinbox.setValue(data_as_dict[encoding.DC_VOLTAGE])
         widget.initial_frequency_spinbox.setValue(data_as_dict[encoding.INITIAL_FREQUENCY])
         widget.final_frequency_spinbox.setValue(data_as_dict[encoding.FINAL_FREQUENCY])
         widget.points_per_decade_spinbox.setValue(data_as_dict[encoding.POINTS_PER_DECADE])
@@ -107,7 +124,7 @@ class EISWidget(AbstractBaseWidget):
 
     def to_dict(self) -> dict:
         data = {
-            encoding.DC_voltage: self.DC_voltage_spinbox.value(),
+            encoding.DC_VOLTAGE: self.DC_voltage_spinbox.value(),
             encoding.INITIAL_FREQUENCY: self.initial_frequency_spinbox.value(),
             encoding.FINAL_FREQUENCY: self.final_frequency_spinbox.value(),
             encoding.POINTS_PER_DECADE: self.points_per_decade_spinbox.value(),

@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import cmp_to_key
 from typing import TYPE_CHECKING, Any, Union
 
-from .. import Files
+from ..Files import TreeItem as Keys
 from .items.base_widget import AbstractWidget, CategoryWidget
 from .items.item_types import ItemType
 
@@ -36,9 +36,13 @@ class TreeItem:
         """Whether this item's associated process is currently running."""
         return self.running
 
-    def show_widget(self):
-        """Show the linked widget in its own window."""
-        self.linked_widget.show()
+    def show_widget(self, enabled: bool):
+        """
+        Show the linked widget in its own window.
+
+        :param enabled: Whether the widget's parameters tab should be enabled.
+        """
+        self.linked_widget.show_widget(enabled)
 
     def widget(self) -> AbstractWidget:
         """Get the this item's linked widget."""
@@ -187,14 +191,14 @@ class TreeItem:
         :param item_as_dict: A dictionary representing the item's data in JSON format.
         """
 
-        widget_type = ItemType.from_name(item_as_dict[Files.TreeItem.TYPE]).value
-        widget = widget_type.from_dict(item_as_dict[Files.TreeItem.WIDGET_DATA])
+        widget_type = ItemType.from_name(item_as_dict[Keys.TYPE]).value
+        widget = widget_type.from_dict(item_as_dict[Keys.WIDGET_DATA])
         # cls is the type of the class (TreeItem in this case) and is passed implicitly
         item = cls(widget, parent)
 
         # add children
-        for child_item_as_dict in item_as_dict[Files.TreeItem.CHILDREN]:
-            child_widget_type = ItemType.from_name(child_item_as_dict[Files.TreeItem.TYPE]).value
+        for child_item_as_dict in item_as_dict[Keys.CHILDREN]:
+            child_widget_type = ItemType.from_name(child_item_as_dict[Keys.TYPE]).value
             if child_widget_type.allowed_to_create():
                 child_item = cls.from_dict(item, child_item_as_dict)
                 item.append_children([child_item])
@@ -206,9 +210,9 @@ class TreeItem:
         item_as_dict: dict[str, Any] = dict()  # empty dictionary
         # convert the item ItemInfoType to a string
 
-        item_as_dict[Files.TreeItem.TYPE] = ItemType.from_widget(self.linked_widget).name
+        item_as_dict[Keys.TYPE] = ItemType.from_widget(self.linked_widget).name
         # convert the widget data to a dictionary
-        item_as_dict[Files.TreeItem.WIDGET_DATA] = self.linked_widget.to_dict()
+        item_as_dict[Keys.WIDGET_DATA] = self.linked_widget.to_dict()
         # recursively create a list of dictionaries representing each child
-        item_as_dict[Files.TreeItem.CHILDREN] = [child.to_dict() for child in self.children]
+        item_as_dict[Keys.CHILDREN] = [child.to_dict() for child in self.children]
         return item_as_dict

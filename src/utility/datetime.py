@@ -1,6 +1,6 @@
 import time
 
-from .. import Files
+from ..Files.Datetime import FORMAT_SPECIFIER
 
 
 def get_datetime(time_since_epoch: float | None = None) -> str:
@@ -9,7 +9,7 @@ def get_datetime(time_since_epoch: float | None = None) -> str:
     Day Month Year Hours:Minutes:Seconds AM/PM format. If **time_since_epoch** is **None**, use the
     current time instead.
     """
-    return time.strftime(Files.Datetime.FORMAT_SPECIFIER, time.localtime(time_since_epoch))
+    return time.strftime(FORMAT_SPECIFIER, time.localtime(time_since_epoch))
 
 
 def get_file_friendly_datatime(time_since_epoch: float | None = None) -> str:

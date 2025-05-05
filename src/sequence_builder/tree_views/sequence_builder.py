@@ -6,7 +6,6 @@ from PyQt6.QtCore import QItemSelection, QModelIndex, QPoint, Qt, QThread, pyqtS
 from PyQt6.QtGui import QDragMoveEvent, QDropEvent, QKeyEvent
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QSizePolicy, QVBoxLayout
 
-from ... import Files
 from ...classes.actions import Shortcut
 from ...classes.runners import SequenceRunner
 from ...classes.signals import CommandSignals, GraphSignals
@@ -15,6 +14,7 @@ from ...custom_widgets.augmented.dialog import Dialog, OkDialog, YesCancelDontSh
 from ...custom_widgets.augmented.label import IconLabel
 from ...custom_widgets.container import Container
 from ...enums.status import SequenceStatus
+from ...Files.Settings import Sequence as Settings
 from ...utility.images import make_icon, make_pixmap
 from ...utility.layouts import add_sublayout, add_to_layout
 from ...utility.timers import Timer
@@ -38,7 +38,7 @@ class SequenceTreeView(TreeView):
         super().__init__(model)
         # configure the model and view
         try:
-            self.init_from_file(Files.SavedSettings.Sequence.SEQUENCE_AUTOSAVE)
+            self.init_from_file(Settings.SEQUENCE_AUTOSAVE_FILE)
         except Exception:  # if we fail just don't load anything
             pass
         model.set_supported_drag_actions(Qt.DropAction.MoveAction | Qt.DropAction.CopyAction)
@@ -46,9 +46,7 @@ class SequenceTreeView(TreeView):
         # configure
         self.setAcceptDrops(True)
         self.setDefaultDropAction(Qt.DropAction.MoveAction)
-        self.doubleClicked.connect(self.handle_double_click)
 
-        self.connect_signals()
         self.create_shortcuts()
 
         # used to expand expandable items when hovering over them
@@ -57,8 +55,8 @@ class SequenceTreeView(TreeView):
         timer.setSingleShot(True)
         self.drag_tracker = DragTracker(timer, point)
 
-    def connect_signals(self):
-        """Connect signals."""
+    def connect_signals(self):  # overridden
+        super().connect_signals()
         self.model().itemAdded.connect(self.handle_new_item)
 
     def handle_new_item(self, index: QModelIndex):
@@ -77,22 +75,15 @@ class SequenceTreeView(TreeView):
             self, "Ctrl+V", self.paste_event, context=Qt.ShortcutContext.WidgetWithChildrenShortcut
         )
 
-    def handle_double_click(self, index: QModelIndex):
-        """On a double click event."""
-        model = self.model()
-        if model.is_enabled():
-            model.item(index).show_widget()
-
     # ----------------------------------------------------------------------------------------------
     def keyPressEvent(self, event: QKeyEvent | None):  # overridden
         if event is not None:
             index = self.currentIndex()
-            model = self.model()
             match event.key():
                 case Qt.Key.Key_Delete:  # delete the current item
                     self.delete_event()
                 case Qt.Key.Key_Return | Qt.Key.Key_Enter:
-                    model.item(index).show_widget()
+                    self.show_item_widget(index)
         super().keyPressEvent(event)
 
     def dropEvent(self, event: QDropEvent | None):  # overridden
@@ -197,7 +188,7 @@ class SequenceTreeWidget(Container):
         directory = QFileDialog.getExistingDirectory(
             self,
             "Select sequence data location",
-            Files.SequenceBuilder.DEFAULT_DATA_FOLDER,
+            os.path.expanduser("~"),
             QFileDialog.Option.ShowDirsOnly,
         )
         self.directory_label.label().setText(directory)
@@ -207,7 +198,7 @@ class SequenceTreeWidget(Container):
     def read_previous_directory(self) -> str:
         """Try to load the previously used directory."""
         try:
-            with open(Files.SavedSettings.Sequence.SEQUENCE_DIRECTORY, "r") as f:
+            with open(Settings.SEQUENCE_DIRECTORY_FILE, "r") as f:
                 directory = f.read()
                 return directory
         except Exception:
@@ -219,9 +210,9 @@ class SequenceTreeWidget(Container):
 
     def save_on_close(self):
         """Call this when closing the application to save settings."""
-        self.view.to_file(Files.SavedSettings.Sequence.SEQUENCE_AUTOSAVE)
+        self.view.to_file(Settings.SEQUENCE_AUTOSAVE_FILE)
         directory = self.directory_label.label().text()
-        with open(Files.SavedSettings.Sequence.SEQUENCE_DIRECTORY, "w") as f:
+        with open(Settings.SEQUENCE_DIRECTORY_FILE, "w") as f:
             f.write(directory)
 
     def save_settings(self):
@@ -265,7 +256,7 @@ class SequenceTreeWidget(Container):
             if not YesCancelDontShowDialog(
                 "Note",
                 "Data directory is not empty, proceed?",
-                Files.SavedSettings.Sequence.NON_EMPTY_DIRECTORY_WARNING,
+                Settings.NON_EMPTY_DIRECTORY_WARNING_FILE,
             ).run():
                 return self
 

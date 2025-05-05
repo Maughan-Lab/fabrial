@@ -3,7 +3,7 @@ import traceback
 from types import TracebackType
 from typing import Callable
 
-from .. import Files
+from ..Files import APPLICATION_NAME
 from ..main_window import MainWindow
 
 
@@ -26,7 +26,7 @@ def generate_exception_handler(
         if issubclass(exception_type, SystemExit):
             print("here")
         else:
-            name = Files.APPLICATION_NAME
+            name = APPLICATION_NAME
             error_message = (
                 f"{name} encountered an application-level error. "
                 f"Unless the error is obviously unimportant, you should close {name}. "

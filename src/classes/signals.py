@@ -11,12 +11,14 @@ class GraphSignals(QObject):
     parent.
     """
 
-    # TODO: this needs to also have an identifier string for the name of the tab
-    initPlot = pyqtSignal(int, LineSettings)
+    initPlot = pyqtSignal(int, str, LineSettings)
     """
-    Initialize a plot. Emit with the plot index as an **int** and a **LineSettings** object for the
-    line settings. If creating multiple plots, you must call this with sequential plot indexes
-    (i.e. 0, 1, 2 and not 0, 2, 1).
+    Initialize a plot. Emit:
+    - The plot index as an **int**.
+        - If creating multiple plots, you must call this with increasing sequential plot indexes
+        (i.e. 0, 1, 2 and not 0, 2, 1).
+    - The name of the plot tab as a **str**.
+    - The line settings as a **LineSetting**.
     """
     reset = pyqtSignal()
     """
@@ -24,21 +26,27 @@ class GraphSignals(QObject):
     emitted until a new plot is initialized.
     """
     clear = pyqtSignal(int)
+    """Clear a plot. Emit with the index of the plot to clear as an **int**."""
+    addPoint = pyqtSignal(int, float, float)
     """
-    Clear a plot. Emit with the index of the plot to clear as an **int**.
-    """
-    addPoint = pyqtSignal(int, float, float)  # x, y
-    """
-    Add a point to a plot. Emit with the plot index as an **int** and `x`, `y`, where `x` and `y`
-    are **float**s.
+    Add a point to a plot. Emit:
+    - The plot index as an **int**.
+    - The x-coordinate as a **float**.
+    - The y-coordinate as a **float**.
     """
     saveFig = pyqtSignal(int, str)
-    """Save a figure. Emit with the plot index as an **int** and the filename as a **str**."""
+    """Save a figure. Emit:
+    - The plot index as an **int**.
+    - The filepath as a **str**.
+    """
     setLogScale = pyqtSignal(int, object, object)
     """
-    Set whether a plot uses a logarithmic scale. Emit with the plot index as an **int** and
-    `x_is_log` and `y_is_log`, where both are either **bool** or **None**. Sending a **None** will
-    leave the log scale state unchanged.
+    Set whether a plot uses a logarithmic scale. Emit:
+    - The plot index as an **int**.
+    - Whether the x-axis is logarithmic as a **bool** or **None**.
+    - Whether the y-axis is logarithmic as a **bool** or **None**.
+
+    If a logarithmic setting is **None**, the axis state is unchanged.
     """
 
     def connect_to_other(self, other: Self):

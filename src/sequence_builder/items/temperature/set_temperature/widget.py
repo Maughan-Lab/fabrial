@@ -2,9 +2,9 @@ from typing import Any, Self
 
 from PyQt6.QtWidgets import QFormLayout
 
-from ..... import Files
 from .....classes.descriptions import DescriptionInfo
 from .....custom_widgets.augmented.spin_box import TemperatureSpinBox
+from .....Files.Process import Filenames
 from .....instruments import INSTRUMENTS
 from ...base_widget import AbstractBaseWidget
 from . import encoding
@@ -32,7 +32,10 @@ class SetTemperatureWidget(AbstractBaseWidget):
                         "MEASUREMENT_INTERVAL": str(SetTemperatureProcess.MEASUREMENT_INTERVAL)
                     },
                     parameters_dict={"SETPOINT": encoding.SETPOINT},
-                    data_recording_dict={"TEMPERATURE_FILE": Files.Process.Filenames.TEMPERATURES},
+                    data_recording_dict={
+                        "TEMPERATURE_FILE": Filenames.TEMPERATURES,
+                        "GRAPH_FILE": SetTemperatureProcess.GRAPH_FILENAME,
+                    },
                 ),
             ),
         )

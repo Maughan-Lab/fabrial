@@ -6,17 +6,21 @@ from typing import Any, Self
 
 import comtypes.client as client  # type: ignore
 
-from .. import Files
+from ..Files import Settings
+from ..Files.Settings import Gamry as Keys
 
 
 class GamryInterface:
     """Convenience class for interacting with Gamry hardware."""
 
     def __init__(self) -> None:
-        Keys = Files.ApplicationSettings.Gamry
         try:
-            with open(Files.ApplicationSettings.Gamry.SETTINGS_FILE, "r") as f:
-                gamry_data = json.load(f)
+            try:
+                with open(Settings.Gamry.SAVED_SETTINGS_FILE, "r") as f:
+                    gamry_data = json.load(f)
+            except Exception:
+                with open(Settings.Gamry.DEFAULT_SETTINGS_FILE, "r") as f:
+                    gamry_data = json.load(f)
             self.valid: bool = gamry_data[Keys.ENABLED]
             if self.valid:
                 gamry_location: str = gamry_data[Keys.LOCATION]

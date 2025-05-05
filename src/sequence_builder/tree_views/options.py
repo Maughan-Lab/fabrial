@@ -1,12 +1,13 @@
 import json
 
 from PyQt6.QtCore import QModelIndex, Qt
-from PyQt6.QtWidgets import QSizePolicy, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QSizePolicy, QVBoxLayout
 
-from ... import Files
 from ...classes.actions import Shortcut
 from ...custom_widgets.augmented.button import FixedButton
 from ...custom_widgets.container import Container
+from ...Files.SequenceBuilder import OPTIONS_INITIALIZER_FOLDER
+from ...Files.Settings import Sequence as Settings
 from ...utility.layouts import add_to_layout
 from ..tree_model import TreeModel
 from .tree_view import TreeView
@@ -15,26 +16,25 @@ from .tree_view import TreeView
 class OptionsTreeView(TreeView):
     """Custom QTreeView containing the options for the sequence."""
 
-    def __init__(self, parent: QWidget | None = None):
+    def __init__(self):
         model = TreeModel("Options")
         super().__init__(model)
-        self.init_from_directory(Files.SequenceBuilder.OPTIONS_INITIALIZER)
+        self.init_from_directory(OPTIONS_INITIALIZER_FOLDER)
 
         try:  # try to restore the previous view state
-            self.init_view_state_from_file(Files.SavedSettings.Sequence.OPTIONS_STATE_AUTOSAVE)
+            self.init_view_state_from_file(Settings.OPTIONS_STATE_AUTOSAVE_FILE)
         except Exception:  # if we can't load the expansion state, just expand everything
             self.expandAll()
 
         self.create_shortcuts()
-        self.doubleClicked.connect(self.handle_double_click)
 
     def create_shortcuts(self):
         Shortcut(
             self, "Ctrl+C", self.copy_event, context=Qt.ShortcutContext.WidgetWithChildrenShortcut
         )
 
-    def handle_double_click(self, index: QModelIndex):
-        self.model().item(index).widget().show_disabled()
+    def show_item_widget(self, index: QModelIndex):  # overridden
+        self.model().item(index).show_widget(False)
 
 
 class OptionsTreeWidget(Container):
@@ -50,7 +50,7 @@ class OptionsTreeWidget(Container):
 
     def create_widgets(self):
         layout: QVBoxLayout = self.layout()  # type: ignore
-        self.view = OptionsTreeView(self)
+        self.view = OptionsTreeView()
         self.expand_button = FixedButton("Toggle Expansion")
         self.expand_button.setCheckable(True)
         self.expand_button.toggle()  # assume that the view starts mostly expanded
@@ -66,5 +66,5 @@ class OptionsTreeWidget(Container):
     def save_on_close(self):
         """Call this when closing the application to save settings."""
         view_state_dict = self.view.get_view_state()
-        with open(Files.SavedSettings.Sequence.OPTIONS_STATE_AUTOSAVE, "w") as f:
+        with open(Settings.OPTIONS_STATE_AUTOSAVE_FILE, "w") as f:
             json.dump(view_state_dict, f)

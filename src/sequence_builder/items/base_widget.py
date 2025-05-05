@@ -2,13 +2,13 @@ from abc import ABC, ABCMeta, abstractmethod
 from typing import Any, Self
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QCloseEvent, QIcon
 from PyQt6.QtWidgets import QLayout
 
-from ... import Files
 from ...classes.descriptions import DescriptionInfo
 from ...classes.process import AbstractBackgroundProcess, AbstractForegroundProcess
 from ...custom_widgets.parameter_description import ParameterDescriptionWidget
+from ...Files.TreeItem import DEFAULT_ICON_FILENAME
 from ...utility.descriptions import get_description
 from ...utility.images import make_icon
 
@@ -52,12 +52,12 @@ class AbstractWidget(ABC):
         """Convert all of this item's data into a JSON-like dictionary."""
         return dict()
 
-    def show(self):
-        """Show the widget."""
-        pass
+    def show_widget(self, enabled: bool):
+        """
+        Show the widget.
 
-    def show_disabled(self):
-        """Show the widget with the parameter tab disabled."""
+        :param enabled: Whether the parameter tab should be enabled.
+        """
         pass
 
     @abstractmethod
@@ -117,7 +117,7 @@ class AbstractBaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=A
         layout: QLayout | None = None,
         display_name: str = "",
         process_type: type[AbstractForegroundProcess | AbstractBackgroundProcess] | None = None,
-        icon_filename: str = Files.TreeItem.DEFAULT_ICON_FILENAME,
+        icon_filename: str = DEFAULT_ICON_FILENAME,
         description_info: DescriptionInfo = DescriptionInfo(),
         supports_subitems: bool = False,
     ):
@@ -136,8 +136,8 @@ class AbstractBaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=A
         self.setWindowIcon(make_icon(icon_filename))
         self.set_description(get_description(description_info))
 
-    def show_disabled(self):
-        self.parameter_widget().setDisabled(True)
+    def show_widget(self, enabled: bool):
+        self.parameter_widget().setEnabled(enabled)
         self.show()
 
     def display_name(self) -> str:
@@ -151,6 +151,12 @@ class AbstractBaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=A
 
     def process_type(self) -> type[AbstractForegroundProcess | AbstractBackgroundProcess] | None:
         return self.linked_process_type
+
+    def closeEvent(self, event: QCloseEvent | None):  # overridden
+        if event is not None:
+            # this makes sure show() has the parameter tab enabled
+            self.parameter_widget().setEnabled(True)
+        super().closeEvent(event)
 
 
 class CategoryWidget(AbstractWidget):

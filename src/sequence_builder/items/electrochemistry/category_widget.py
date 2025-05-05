@@ -1,4 +1,4 @@
-from ....gamry_integration.Gamry import GAMRY
+from ....gamry_integration.gamry import GAMRY
 from ..base_widget import CategoryWidget
 
 

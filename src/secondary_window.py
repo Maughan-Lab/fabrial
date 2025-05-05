@@ -23,8 +23,16 @@ class SecondaryWindow(QMainWindow):
         self.setWindowTitle(title)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.setCentralWidget(central_widget)
+        if central_widget is not None:
+            central_widget.setVisible(True)
 
     def closeEvent(self, event: QCloseEvent | None):  # overridden method
         if event is not None:
             self.closed.emit()
         super().closeEvent(event)
+
+    def close_silent(self):
+        """Close the window without emitting the `closed` signal."""
+        self.blockSignals(True)
+        self.close()
+        self.blockSignals(False)

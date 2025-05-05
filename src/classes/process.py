@@ -8,11 +8,11 @@ import polars as pl
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QMessageBox
 
-from .. import Files
 from ..classes.lock import DataMutex
 from ..classes.plotting import LineSettings
 from ..classes.signals import GraphSignals
 from ..enums.status import SequenceStatus, StatusStateMachine
+from ..Files.Process import Headers
 from ..instruments import INSTRUMENTS
 from ..utility.datetime import get_datetime
 from ..utility.events import PROCESS_EVENTS
@@ -126,7 +126,7 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
         the start datetime, end datetime, duration in seconds, and oven setpoint. You can override
         this method to add additional metadata.
         """
-        HEADERS = Files.Process.Headers.Metadata
+        HEADERS = Headers.Metadata
         start_time = self.start_time()
         end_time = time.time()
         duration = end_time - start_time
@@ -261,6 +261,7 @@ class AbstractGraphingProcess(AbstractForegroundProcess):
     def init_line_plot(
         self,
         plot_index: int,
+        name: str,
         title: str,
         x_label: str,
         y_label: str,
@@ -283,11 +284,12 @@ class AbstractGraphingProcess(AbstractForegroundProcess):
             symbol_color,
             symbol_size,
         )
-        self.graph_signals.initPlot.emit(plot_index, settings)
+        self.graph_signals.initPlot.emit(plot_index, name, settings)
 
     def init_scatter_plot(
         self,
         plot_index: int,
+        name: str,
         title: str,
         x_label: str,
         y_label: str,
@@ -308,7 +310,7 @@ class AbstractGraphingProcess(AbstractForegroundProcess):
             symbol_color,
             symbol_size,
         )
-        self.graph_signals.initPlot.emit(plot_index, settings)
+        self.graph_signals.initPlot.emit(plot_index, name, settings)
 
 
 class AbstractBackgroundProcess(AbstractProcess):

@@ -2,7 +2,7 @@ import csv
 import time
 from io import TextIOWrapper
 
-from .. import Files
+from ..Files.Process import Headers
 from .datetime import get_datetime
 
 
@@ -17,10 +17,9 @@ def create_temperature_file(filepath: str) -> TextIOWrapper:
     :param filepath: The path to the file to create. If the file already exists, it will be
     overwritten. The file is opened in write mode and is line buffered.
     """
-    HEADERS = Files.Process.Headers
     file = open(filepath, "w", 1, newline="")
     csv.writer(file).writerow(
-        [HEADERS.Time.TIME, HEADERS.Time.TIME_DATETIME, HEADERS.Oven.TEMPERATURE]
+        [Headers.Time.TIME, Headers.Time.TIME_DATETIME, Headers.Oven.TEMPERATURE]
     )
     return file
 

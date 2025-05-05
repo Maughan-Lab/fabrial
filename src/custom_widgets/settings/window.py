@@ -1,7 +1,7 @@
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QTabWidget
 
-from ... import Files
+from ...Files import APPLICATION_NAME
 from ...tabs.oven_control import OvenControlTab
 from ...tabs.sequence_builder import SequenceBuilderTab
 from ...utility.images import make_icon
@@ -15,7 +15,7 @@ class ApplicationSettingsWindow(QTabWidget):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle(f"{Files.APPLICATION_NAME} - Settings")
+        self.setWindowTitle(f"{APPLICATION_NAME} - Settings")
         self.sequence_tab = SequenceSettingsTab()
         self.oven_tab = OvenSettingsTab()
         self.gamry_tab = GamrySettingsTab()

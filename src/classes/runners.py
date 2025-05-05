@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, Self
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
 from PyQt6.QtWidgets import QMessageBox
 
-from .. import Files
 from ..enums.status import SequenceStatus
+from ..Files.Process import Filenames
 from ..utility.events import PROCESS_EVENTS
 from .metaclasses import ABCQObjectMeta
 from .process import (
@@ -235,7 +235,7 @@ class ProcessRunner(AbstractRunner):
     def write_metadata(self, process: AbstractProcess):
         """Create a metadata file and write to it. This calls the process' `metadata()` method."""
         process.metadata().write_csv(
-            os.path.join(process.directory(), Files.Process.Filenames.METADATA),
+            os.path.join(process.directory(), Filenames.METADATA),
             null_value=str(None),
         )
 

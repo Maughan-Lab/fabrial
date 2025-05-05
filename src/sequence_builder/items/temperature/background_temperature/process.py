@@ -1,9 +1,9 @@
 import os
 from typing import Any
 
-from ..... import Files
 from .....classes.process import AbstractBackgroundProcess
 from .....classes.runners import ProcessRunner
+from .....Files.Process import Filenames
 from .....instruments import INSTRUMENTS
 from .....utility.temperature import create_temperature_file, record_temperature_data
 from . import encoding
@@ -17,9 +17,7 @@ class BackgroundTemperatureProcess(AbstractBackgroundProcess):
         self.measurement_interval = data[encoding.MEASUREMENT_INTERVAL]
 
     def run(self):
-        file = create_temperature_file(
-            os.path.join(self.directory(), Files.Process.Filenames.TEMPERATURES)
-        )
+        file = create_temperature_file(os.path.join(self.directory(), Filenames.TEMPERATURES))
         oven = INSTRUMENTS.oven
         start_time = self.start_time()
 

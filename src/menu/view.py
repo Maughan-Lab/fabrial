@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMenu, QMenuBar
 
 from ..classes.actions import Action
@@ -17,7 +16,6 @@ class ViewMenu(QMenu):
         self.pop_graph: Action
 
         super().__init__("&View", parent)
-        self.create_actions(graph_tab)
 
         self.addAction(
             Action(main_window, "Fullscreen", main_window.toggle_fullscreen, shortcut="F11")
@@ -30,25 +28,3 @@ class ViewMenu(QMenu):
                 shortcut="Ctrl+Shift+D",
             )
         )
-
-        self.addSeparator()
-
-        self.addAction(self.pop_graph)
-
-    def create_actions(self, graph_tab: SequenceDisplayTab):
-        self.pop_graph = Action(
-            graph_tab,
-            "Pop Sequence Graph",
-            lambda is_checked: (graph_tab.pop_graph() if is_checked else graph_tab.unpop_graph()),
-            shortcut="Ctrl+g",
-            shortcut_context=Qt.ShortcutContext.WidgetWithChildrenShortcut,
-        )
-        graph_tab.addAction(self.pop_graph)
-        self.pop_graph.setCheckable(True)
-        graph_tab.poppedGraphChanged.connect(self.handle_pop_change)
-
-    def handle_pop_change(self, popped: bool):
-        """Uncheck the Pop Graph option without triggering signals."""
-        self.pop_graph.blockSignals(True)
-        self.pop_graph.setChecked(popped)
-        self.pop_graph.blockSignals(False)

@@ -1,0 +1,1 @@
+This folder contains information about all files and folders, and other miscellaneous information used by the application.

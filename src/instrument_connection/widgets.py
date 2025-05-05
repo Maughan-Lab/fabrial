@@ -1,10 +1,10 @@
 from PyQt6.QtWidgets import QFormLayout, QHBoxLayout, QVBoxLayout
 
-from .. import Files
 from ..custom_widgets.augmented.combo_box import ComboBox
 from ..custom_widgets.augmented.groupbox import GroupBox
 from ..custom_widgets.augmented.label import Label
 from ..enums.status import ConnectionStatus
+from ..Files.Settings import Oven as Settings
 from ..instruments import INSTRUMENTS
 from ..utility.layouts import add_sublayout, add_to_layout
 from .ports import get_ports_list
@@ -80,13 +80,13 @@ class InstrumentConnectionWidget(GroupBox):
     def save_on_close(self):
         """Call this when closing the application to save the oven port."""
         port = self.oven_combobox.currentText()
-        with open(Files.SavedSettings.OVEN_PORT, "w") as f:
+        with open(Settings.OVEN_PORT_FILE, "w") as f:
             f.write(port)
 
     def load_ports(self):
         """Loads saved port selections."""
         try:
-            with open(Files.SavedSettings.OVEN_PORT, "r") as f:
+            with open(Settings.OVEN_PORT_FILE, "r") as f:
                 port = f.read().strip()
             # if the combobox contains the previously stored port
             if self.oven_combobox.findText(port) != -1:

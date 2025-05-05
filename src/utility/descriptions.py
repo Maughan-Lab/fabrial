@@ -2,8 +2,17 @@ import os
 
 from jinja2 import TemplateNotFound
 
-from .. import Files
 from ..classes.descriptions import DescriptionInfo
+from ..Files.Process.Filenames import METADATA as METADATA_FILENAME
+from ..Files.SequenceBuilder.Descriptions import (
+    DEFAULT_FOLDER_NAME,
+    FOLDER,
+    TEMPLATE_FILENAME,
+    DataRecording,
+    Overview,
+    Parameters,
+    Visuals,
+)
 from .jinja import parse_template
 
 
@@ -14,36 +23,30 @@ def get_description(description_info: DescriptionInfo) -> str:
     description files do not exist, the application's default description is used for that category.
     """
     substitutions = description_info.substitutions
-    Descriptions = Files.SequenceBuilder.Descriptions
-    folder = os.path.join(
-        Descriptions.FOLDER, description_info.category_folder, description_info.item_folder
-    )
+    folder = os.path.join(FOLDER, description_info.category_folder, description_info.item_folder)
 
     # initially contains keys for the data recording section
     category_substitutions = {
-        Descriptions.DataRecording.DIRECTORY_KEY: description_info.data_folder,
-        Descriptions.DataRecording.METADATA_KEY: Files.Process.Filenames.METADATA,
+        DataRecording.DIRECTORY_KEY: description_info.data_folder,
+        DataRecording.METADATA_KEY: METADATA_FILENAME,
     }
     # put the substituted text for each category into a substitution dictionary for the template
     # file
-    for category, substitution_dict in (
-        (Descriptions.Overview, substitutions.overview_dict),
-        (Descriptions.Parameters, substitutions.parameters_dict),
-        (Descriptions.Visuals, substitutions.visuals_dict),
-        (Descriptions.DataRecording, substitutions.data_recording_dict),
+    for filename, key, substitution_dict in (
+        (Overview.FILENAME, Overview.KEY, substitutions.overview_dict),
+        (Parameters.FILENAME, Parameters.KEY, substitutions.parameters_dict),
+        (Visuals.FILENAME, Visuals.KEY, substitutions.visuals_dict),
+        (DataRecording.FILENAME, DataRecording.KEY, substitutions.data_recording_dict),
     ):
         # if parsing the template fails (usually because the file doesn't exist), use the default
         # file instead
         try:
-            category_substitution = parse_template(folder, category.FILENAME, substitution_dict)
+            category_substitution = parse_template(folder, filename, substitution_dict)
         except TemplateNotFound:
             category_substitution = parse_template(
-                os.path.join(Descriptions.FOLDER, Descriptions.DEFAULT_FOLDER),
-                category.FILENAME,
+                os.path.join(FOLDER, DEFAULT_FOLDER_NAME), filename
             )
-        category_substitutions[category.KEY] = category_substitution
+        category_substitutions[key] = category_substitution
 
-    description = parse_template(
-        Descriptions.FOLDER, Descriptions.TEMPLATE_FILENAME, category_substitutions
-    )
+    description = parse_template(FOLDER, TEMPLATE_FILENAME, category_substitutions)
     return description

@@ -20,9 +20,6 @@ class StabilityCheckWidget(GroupBox):
         self.progress_bar: StabilityProgressBar
         self.create_widgets()
         self.connect_signals()
-        # TODO: create widgets
-        # TODO: connect the oven to the widgets
-        # TODO: add this to the oven control tab
 
     def create_widgets(self):
         """Create subwidgets."""

@@ -2,11 +2,11 @@ import json
 
 from PyQt6.QtWidgets import QFormLayout
 
-from ... import Files
+from ...Files import APPLICATION_NAME, Settings
 from ..augmented.spin_box import DoubleSpinBox, SpinBox
 from .settings_description import SettingsDescriptionWidget
 
-SettingNames = Files.ApplicationSettings.Oven
+SettingNames = Settings.Oven
 
 
 class OvenSettingsTab(SettingsDescriptionWidget):
@@ -15,18 +15,21 @@ class OvenSettingsTab(SettingsDescriptionWidget):
     MINIMUM_MEASUREMENT_INTERVAL = 50
 
     def __init__(self) -> None:
-        with open(Files.ApplicationSettings.Oven.SETTINGS_FILE, "r") as f:
-            settings = json.load(f)
+        try:
+            with open(Settings.Oven.SAVED_SETTINGS_FILE, "r") as f:
+                settings = json.load(f)
+        except Exception:
+            with open(Settings.Oven.DEFAULT_SETTINGS_FILE, "r") as f:
+                settings = json.load(f)
         number_of_decimals = settings[SettingNames.NUM_DECIMALS]
 
         layout = QFormLayout()
         super().__init__(layout)
-        Filenames = Files.ApplicationSettings.Oven
         self.set_description_from_file(
-            Filenames.FOLDER,
-            Filenames.DESCRIPTION_FILENAME,
+            Settings.Oven.DESCRIPTION_FOLDER,
+            Settings.Oven.DESCRIPTION_FILENAME,
             {
-                "APPLICATION_NAME": Files.APPLICATION_NAME,
+                "APPLICATION_NAME": APPLICATION_NAME,
                 "MINIMUM_TEMPERATURE": SettingNames.MIN_TEMPERATURE,
                 "MAXIMUM_TEMPERATURE": SettingNames.MAX_TEMPERATURE,
                 "MEASUREMENT_INTERVAL": SettingNames.MEASUREMENT_INTERVAL,
@@ -100,5 +103,5 @@ class OvenSettingsTab(SettingsDescriptionWidget):
     def save_on_close(self):
         """Call this when closing the settings window to save settings."""
         settings_dict = {key: spinbox.value() for key, spinbox in self.spinbox_dict.items()}
-        with open(Files.ApplicationSettings.Oven.SETTINGS_FILE, "w") as f:
+        with open(Settings.Oven.SAVED_SETTINGS_FILE, "w") as f:
             json.dump(settings_dict, f)

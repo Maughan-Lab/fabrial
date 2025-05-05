@@ -1,3 +1,5 @@
+"""Uses a fake oven to simulate reading temperatures."""
+
 import time
 
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QVBoxLayout

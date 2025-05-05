@@ -25,10 +25,3 @@ class TabWidget(QTabWidget):
         )
 
         self.currentChanged.connect(lambda index: self.widget(index).setFocus())  # type: ignore
-        self.sequence_visuals_tab.poppedGraphChanged.connect(
-            lambda popped: (
-                self.sequence_visuals_tab.setFocus()
-                if not popped and self.currentWidget() is self.sequence_visuals_tab
-                else None
-            )
-        )

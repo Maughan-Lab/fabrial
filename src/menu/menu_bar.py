@@ -27,7 +27,6 @@ class MenuBar(QMenuBar):
         self.addMenu(self.view)
         self.addMenu(self.sequence)
 
-        # TODO: implement settings thing
         self.right_menu_bar = QMenuBar(self)
         self.setCornerWidget(self.right_menu_bar, Qt.Corner.TopRightCorner)
         self.right_menu_bar.addAction(Action(self, "Settings", main_window.show_settings))
