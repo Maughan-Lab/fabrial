@@ -229,7 +229,7 @@ class ProcessRunner(AbstractRunner):
     def post_run(self, process: AbstractProcess):
         """This runs when the current process completes."""
         self.write_metadata(process)
-        self.graph_signals.clear.emit()
+        self.graph_signals.reset.emit()
         process.deleteLater()
 
     def write_metadata(self, process: AbstractProcess):

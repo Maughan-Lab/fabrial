@@ -125,7 +125,6 @@ class ReadZEventHandler(object):
                 passes = passes + 1
                 self.dtaq.Measure(self.freq, self.ac)
 
-        # DREW: this is run when all ten attempts (status == 1) fail
         else:  # impedance value could not be determined. Catch all
             result = mbox("Measurement Error", "Bad Measurement at {} Hz".format(self.freq), 6)
             if result == 2:  # abort

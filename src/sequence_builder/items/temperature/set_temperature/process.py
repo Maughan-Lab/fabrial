@@ -30,7 +30,6 @@ class SetTemperatureProcess(AbstractGraphingProcess):
     def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
         super().__init__(runner, data, name)
         self.oven = INSTRUMENTS.oven
-        self.temperature_file: TextIOWrapper
         self.setpoint = data[encoding.SETPOINT]
 
     @staticmethod
@@ -38,36 +37,36 @@ class SetTemperatureProcess(AbstractGraphingProcess):
         return "Set Temperature"
 
     def pre_run(self):
-        """Pre-run tasks. Returns whether the process should continue."""
+        """Pre-run tasks."""
         self.init_scatter_plot(
+            0,
             self.title(),
             "Time (seconds)",
             "Temperature (°C)",
             "Oven Temperature",
         )
-        self.create_files()
 
     def run(self):  # overridden
         with InstrumentLocker(self.oven):
             self.pre_run()
             if self.change_setpoint():
-                while not self.oven.is_stable():
-                    temperature = self.oven.read_temp()
-                    if temperature is not None:  # we read successfully
-                        self.record_temperature(temperature)
-                    else:  # connection problem
-                        self.error_pause()
-                    if not self.wait(self.MEASUREMENT_INTERVAL, self.oven.is_connected):
-                        break
-            self.post_run()
+                with self.create_file() as file:
+                    while not self.oven.is_stable():
+                        temperature = self.oven.read_temp()
+                        if temperature is not None:  # we read successfully
+                            self.record_temperature(file, temperature)
+                        else:  # connection problem
+                            self.error_pause()
+                        if not self.wait(self.MEASUREMENT_INTERVAL, self.oven.is_connected):
+                            break
 
-    def post_run(self):
-        """Post-run tasks."""
-        self.temperature_file.close()
+    def create_file(self) -> TextIOWrapper:
+        """
+        Create the data file and its write headers.
 
-    def create_files(self):
-        """Create data files and write headers."""
-        self.temperature_file = create_temperature_file(
+        :returns: The created file.
+        """
+        return create_temperature_file(
             os.path.join(self.directory(), Files.Process.Filenames.TEMPERATURES)
         )
 
@@ -83,12 +82,10 @@ class SetTemperatureProcess(AbstractGraphingProcess):
                     return False
         return True
 
-    def record_temperature(self, temperature: float):
+    def record_temperature(self, file: TextIOWrapper, temperature: float):
         """Record a temperature in a file and on the graph."""
-        time_since_start = record_temperature_data(
-            self.temperature_file, self.start_time(), temperature
-        )
-        self.graphing_signals().addPoint.emit(time_since_start, temperature)
+        time_since_start = record_temperature_data(file, self.start_time(), temperature)
+        self.graphing_signals().addPoint.emit(0, time_since_start, temperature)
 
     def title(self) -> str:
         """Get the graph title."""

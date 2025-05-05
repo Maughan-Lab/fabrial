@@ -11,23 +11,39 @@ class GraphSignals(QObject):
     parent.
     """
 
-    initPlot = pyqtSignal(LineSettings)
-    """Initialize the plot. Emit with a **LineSettings** object."""
-    clear = pyqtSignal()
-    """Clear the plot. Emit with no parameters."""
-    addPoint = pyqtSignal(float, float)  # x, y
-    """Add a point to the plot. Emit with `x`, `y`, where `x` and `y` are **float**s."""
-    saveFig = pyqtSignal(str)
-    """Save the figure. Emit with the filename as a **str**."""
-    setLogScale = pyqtSignal(object, object)
+    initPlot = pyqtSignal(int, LineSettings)
     """
-    Set whether the graph uses a logarithmic scale. Emit with the `x_is_log` and `y_is_log`, where
-    both are **bool** or **None**. Sending a **None** will leave the log scale state unchanged.
+    Initialize a plot. Emit with the plot index as an **int** and a **LineSettings** object for the
+    line settings. If creating multiple plots, you must call this with sequential plot indexes
+    (i.e. 0, 1, 2 and not 0, 2, 1).
+    """
+    reset = pyqtSignal()
+    """
+    Destroy all plots. Emit with no parameters. After this is emitted, other signals should not be
+    emitted until a new plot is initialized.
+    """
+    clear = pyqtSignal(int)
+    """
+    Clear a plot. Emit with the index of the plot to clear as an **int**.
+    """
+    addPoint = pyqtSignal(int, float, float)  # x, y
+    """
+    Add a point to a plot. Emit with the plot index as an **int** and `x`, `y`, where `x` and `y`
+    are **float**s.
+    """
+    saveFig = pyqtSignal(int, str)
+    """Save a figure. Emit with the plot index as an **int** and the filename as a **str**."""
+    setLogScale = pyqtSignal(int, object, object)
+    """
+    Set whether a plot uses a logarithmic scale. Emit with the plot index as an **int** and
+    `x_is_log` and `y_is_log`, where both are either **bool** or **None**. Sending a **None** will
+    leave the log scale state unchanged.
     """
 
     def connect_to_other(self, other: Self):
         """All of **other**'s signals will fire this object's corresponding signal."""
         other.initPlot.connect(self.initPlot)
+        other.reset.connect(self.reset)
         other.clear.connect(self.clear)
         other.addPoint.connect(self.addPoint)
         other.saveFig.connect(self.saveFig)

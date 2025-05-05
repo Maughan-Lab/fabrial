@@ -9,6 +9,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QMessageBox
 
 from .. import Files
+from ..classes.lock import DataMutex
 from ..classes.plotting import LineSettings
 from ..classes.signals import GraphSignals
 from ..enums.status import SequenceStatus, StatusStateMachine
@@ -48,6 +49,7 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
         self.process_start_time = 0.0
         self.process_status = StatusStateMachine(SequenceStatus.INACTIVE)
         self.data_directory = ""
+        self.message_response = DataMutex[QMessageBox.StandardButton | None](None)
 
     @abstractmethod
     def run(self):
@@ -115,7 +117,7 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
         return self.status() == SequenceStatus.CANCELED
 
     def cancel(self):
-        """Cancel the current process gracefully (do not emit signals)."""
+        """Cancel the current process gracefully."""
         self.process_status.set(SequenceStatus.CANCELED)
 
     def metadata(self) -> pl.DataFrame:
@@ -154,7 +156,23 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
 
     def receive_response(self, selected_button: QMessageBox.StandardButton | int):
         """Receive the response to a previously sent message."""
-        pass
+        self.message_response.set(selected_button)  # type: ignore
+
+    def check_response(self) -> QMessageBox.StandardButton | None:
+        """
+        Check for a response to a previously sent message. Returns **None** when no response is
+        present, otherwise returns the response. If a response is found, calling this function again
+        without having sent a new message will return **None**.
+        """
+        return self.message_response.get()
+
+    def wait_on_response(self) -> QMessageBox.StandardButton:
+        """Wait for the user to response to a sent message."""
+        response = self.check_response()
+        while response is None:
+            PROCESS_EVENTS()
+            response = self.check_response()
+        return response
 
 
 class AbstractForegroundProcess(AbstractProcess):
@@ -242,6 +260,7 @@ class AbstractGraphingProcess(AbstractForegroundProcess):
 
     def init_line_plot(
         self,
+        plot_index: int,
         title: str,
         x_label: str,
         y_label: str,
@@ -264,10 +283,11 @@ class AbstractGraphingProcess(AbstractForegroundProcess):
             symbol_color,
             symbol_size,
         )
-        self.graph_signals.initPlot.emit(settings)
+        self.graph_signals.initPlot.emit(plot_index, settings)
 
     def init_scatter_plot(
         self,
+        plot_index: int,
         title: str,
         x_label: str,
         y_label: str,
@@ -288,7 +308,7 @@ class AbstractGraphingProcess(AbstractForegroundProcess):
             symbol_color,
             symbol_size,
         )
-        self.graph_signals.initPlot.emit(settings)
+        self.graph_signals.initPlot.emit(plot_index, settings)
 
 
 class AbstractBackgroundProcess(AbstractProcess):

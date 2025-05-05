@@ -24,7 +24,7 @@ def initializepstat(pstat, dc: float):
 # DREW: try to understand this
 # DREW: it's a bookkeeping thing to calculate how long to run measurements for
 def eispoints(final_freq: float, initial_freq: float, ptsperdec: int):
-    return round(0.5 + (abs(log10(final_freq) - log10(initial_freq)) * ptsperdec))
+    return round(0.5 + abs(log10(final_freq) - log10(initial_freq)) * ptsperdec)
 
 
 def writeheader(datafile: TextIOWrapper):
@@ -96,8 +96,6 @@ def main():
         client.PumpEvents(1)
         time.sleep(0.1)
         count += 1
-        # NOTE: you will have to run Gamry in a separate process. Data collection takes too long for
-        # Quincy to remain response. You can run multiple potentiostats in one process, though.
 
 
 if __name__ == "__main__":
