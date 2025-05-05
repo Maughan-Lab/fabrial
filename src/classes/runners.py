@@ -27,7 +27,7 @@ class AbstractRunner(QObject, metaclass=ABCQObjectMeta):
     """Abstract class for process/sequence runners."""
 
     errorOccurred = pyqtSignal(str, str)
-    newMessageCreated = pyqtSignal(str, str, QMessageBox.StandardButton, AbstractProcess)
+    newMessageCreated = pyqtSignal(str, str, QMessageBox.StandardButton, dict, AbstractProcess)
     statusChanged = pyqtSignal(SequenceStatus)
     currentItemChanged = pyqtSignal(object, object)
 
@@ -55,7 +55,7 @@ class AbstractRunner(QObject, metaclass=ABCQObjectMeta):
         pass
 
     @abstractmethod
-    def receive_response(
+    def send_response(
         self, selected_button: QMessageBox.StandardButton | int, recipient: AbstractProcess
     ):
         """Receive a response to a previously sent message."""
@@ -155,10 +155,10 @@ class SequenceRunner(AbstractRunner):
     def skip(self):
         self.process_runner.skip()
 
-    def receive_response(
+    def send_response(
         self, selected_button: QMessageBox.StandardButton | int, recipient: AbstractProcess
     ):
-        self.process_runner.receive_response(selected_button, recipient)
+        self.process_runner.send_response(selected_button, recipient)
 
     def graphing_signals(self) -> GraphSignals:
         """Get the runner's graphing signals."""
@@ -319,7 +319,7 @@ class ProcessRunner(AbstractRunner):
         if self.process is not None:
             self.process.skip()
 
-    def receive_response(
+    def send_response(
         self, selected_button: QMessageBox.StandardButton | int, recipient: AbstractProcess
     ):
-        recipient.receive_response(selected_button)
+        recipient.send_response(selected_button)

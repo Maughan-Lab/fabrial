@@ -25,12 +25,13 @@ if TYPE_CHECKING:
 class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
     """Abstract class for all processes."""
 
-    newMessageCreated = pyqtSignal(str, str, QMessageBox.StandardButton, QObject)
+    newMessageCreated = pyqtSignal(str, str, QMessageBox.StandardButton, dict, QObject)
     """
     Emit this to send a message to the user. Send:
     - The message as a **str**.
     - The process' name as a **str**.
     - The buttons to show on the dialog as a **QMessageBox.StandardButton**.
+    - A dictionary that maps **StandardButton**s to the text to display on the button. Can be empty.
     - The process sending the message as an **AbstractProcess** (or subclass).
     """
     errorOccurred = pyqtSignal(str, str, object)
@@ -141,20 +142,26 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
         )
         return metadata
 
-    def send_message(self, message: str, buttons: QMessageBox.StandardButton):
+    def send_message(
+        self,
+        message: str,
+        buttons: QMessageBox.StandardButton,
+        text_mapping: dict[QMessageBox.StandardButton, str] = dict(),
+    ):
         """
         Send a message to the user. The display name of the process' item is used in the title.
 
         :param message: The message text.
         :param buttons: The buttons to display on the dialog.
+        :param text_mapping: A dictionary of **StandardButton**s and the text to display on them.
         """
-        self.newMessageCreated.emit(message, self.display_name, buttons, self)
+        self.newMessageCreated.emit(message, self.display_name, buttons, text_mapping, self)
 
     def communicate_error(self, error_message: str):
         """Communicate an error to the user. The user only has the **Ok** option."""
         self.errorOccurred.emit(error_message, self.display_name, self)
 
-    def receive_response(self, selected_button: QMessageBox.StandardButton | int):
+    def send_response(self, selected_button: QMessageBox.StandardButton | int):
         """Receive the response to a previously sent message."""
         self.message_response.set(selected_button)  # type: ignore
 

@@ -92,6 +92,7 @@ class EISProcess(AbstractGraphingProcess):
                                 QMessageBox.StandardButton.Yes
                                 | QMessageBox.StandardButton.Retry
                                 | QMessageBox.StandardButton.Abort,
+                                {QMessageBox.StandardButton.Yes: "Next"},
                             )
                             match self.wait_on_response():
                                 case QMessageBox.StandardButton.Yes:  # next measurement

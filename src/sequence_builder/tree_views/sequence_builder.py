@@ -4,9 +4,10 @@ from typing import Self
 
 from PyQt6.QtCore import QItemSelection, QModelIndex, QPoint, Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QDragMoveEvent, QDropEvent, QKeyEvent
-from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QSizePolicy, QVBoxLayout
+from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QMessageBox, QSizePolicy, QVBoxLayout
 
 from ...classes.actions import Shortcut
+from ...classes.process import AbstractProcess
 from ...classes.runners import SequenceRunner
 from ...classes.signals import CommandSignals, GraphSignals
 from ...custom_widgets.augmented.button import BiggerButton, FixedButton
@@ -272,16 +273,58 @@ class SequenceTreeWidget(Container):
 
     def connect_sequence_signals(self, runner: SequenceRunner, thread: QThread) -> Self:
         """Connect signals before starting the sequence."""
+
+        def handle_message_creation(
+            message: str,
+            name: str,
+            buttons: QMessageBox.StandardButton,
+            text_mapping: dict[QMessageBox.StandardButton, str],
+            sender: AbstractProcess,
+        ):
+            """Handle a message being sent from the sequence runner."""
+            dialog = Dialog(f"Message from {name}", message, buttons)
+            for standard_button, text in text_mapping.items():
+                button = dialog.button(standard_button)
+                if button is not None:
+                    button.setText(text)
+            runner.send_response(dialog.exec(), sender)
+
+        def handle_item_change(current: TreeItem | None, previous: TreeItem | None):
+            """Handle the current sequence item changing."""
+            if previous is not None:
+                previous.set_running(False)
+            if current is not None:
+                current.set_running(True)
+            self.view.update()
+
+        def set_running(running: bool):
+            """Adjust the view and directory button based on whether a sequence is running."""
+            not_running = not running
+            if running:
+                self.view.clearSelection()
+            self.view.model().set_enabled(not_running)
+            self.view.setDragEnabled(not_running)
+            self.view.setAcceptDrops(not_running)
+            self.view.update()
+            self.directory_button.setDisabled(running)
+
+        def sequence_start_event():
+            """This runs when the sequence starts."""
+            set_running(True)
+            self.view.expandAll()
+            self.threads.append(runner)
+
+        def sequence_end_event():
+            """This runs when the sequence ends."""
+            set_running(False)
+            self.threads.remove(runner)
+
         # up towards the parent
         runner.errorOccurred.connect(
             lambda message, name: OkDialog(f"Error in {name}", message).exec()
         )
-        runner.newMessageCreated.connect(
-            lambda message, name, buttons, sender: runner.receive_response(
-                Dialog(f"Message from {name}", message, buttons).exec(), sender
-            )
-        )
-        runner.currentItemChanged.connect(self.handle_item_change)
+        runner.newMessageCreated.connect(handle_message_creation)
+        runner.currentItemChanged.connect(handle_item_change)
         runner.statusChanged.connect(self.sequenceStatusChanged)
         # down towards the child
         self.command_signals.cancelCommand.connect(runner.cancel)
@@ -290,38 +333,7 @@ class SequenceTreeWidget(Container):
         self.command_signals.skipCommand.connect(runner.skip)
         # internal-only signals
         runner.finished.connect(thread.quit)
-        thread.started.connect(lambda: self.sequence_start_event(runner))
-        thread.finished.connect(lambda: self.sequence_end_event(runner))
+        thread.started.connect(sequence_start_event)
+        thread.finished.connect(sequence_end_event)
 
         return self
-
-    def handle_item_change(self, current: TreeItem | None, previous: TreeItem | None):
-        """Handle the current sequence item changing."""
-        if previous is not None:
-            previous.set_running(False)
-        if current is not None:
-            current.set_running(True)
-        self.view.update()
-
-    def sequence_start_event(self, runner: SequenceRunner):
-        """This runs when the sequence starts."""
-        self.set_running(True)
-        self.view.expandAll()
-
-        self.threads.append(runner)
-
-    def sequence_end_event(self, runner: SequenceRunner):
-        """This runs when the sequence ends."""
-        self.set_running(False)
-        self.threads.remove(runner)
-
-    def set_running(self, running: bool):
-        """Adjust the view and directory button based on whether a sequence is running."""
-        not_running = not running
-        if running:
-            self.view.clearSelection()
-        self.view.model().set_enabled(not_running)
-        self.view.setDragEnabled(not_running)
-        self.view.setAcceptDrops(not_running)
-        self.view.update()
-        self.directory_button.setDisabled(running)

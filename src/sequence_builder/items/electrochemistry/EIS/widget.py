@@ -1,13 +1,13 @@
 from typing import Any, Self
 
-from PyQt6.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QVBoxLayout
+from PyQt6.QtGui import QShowEvent
+from PyQt6.QtWidgets import QCheckBox, QFormLayout, QVBoxLayout
 
 from .....classes.descriptions import DescriptionInfo
-from .....custom_widgets.augmented.button import Button
-from .....custom_widgets.augmented.label import Label
 from .....custom_widgets.augmented.spin_box import DoubleSpinBox, SpinBox
+from .....custom_widgets.container import Container
 from .....gamry_integration.gamry import GAMRY
-from .....utility.layouts import add_sublayout, add_to_form_layout, add_to_layout, clear_layout
+from .....utility.layouts import add_to_form_layout, clear_layout
 from ...base_widget import AbstractBaseWidget
 from . import encoding
 from .process import EISProcess
@@ -19,7 +19,7 @@ class EISWidget(AbstractBaseWidget):
     def __init__(self) -> None:
         """Create a new instance."""
         super().__init__(
-            QVBoxLayout(),
+            QFormLayout(),
             "Electrochemical Impedance Spectroscopy",
             EISProcess,
             "battery-charge.png",
@@ -46,19 +46,10 @@ class EISWidget(AbstractBaseWidget):
 
     def create_widgets(self) -> None:
         """Create subwidgets."""
-        layout: QVBoxLayout = self.parameter_widget().layout()  # type: ignore
+        layout: QFormLayout = self.parameter_widget().layout()  # type: ignore
 
-        button_layout = add_sublayout(layout, QHBoxLayout)
-        self.reload_button = Button(
-            "Reload Device List", lambda: self.reload_pstat_list(self.selected_pstats())
-        )
-        add_to_layout(button_layout, self.reload_button)
-
-        device_list_layout = add_sublayout(layout, QHBoxLayout)
-        device_list_layout.addWidget(Label(encoding.SELECTED_PSTATS))
-        self.devices_layout = add_sublayout(device_list_layout, QVBoxLayout)
-
-        parameter_layout = add_sublayout(layout, QFormLayout)
+        self.devices_layout = QVBoxLayout()
+        device_list_container = Container(self.devices_layout)
 
         self.DC_voltage_spinbox = DoubleSpinBox(4)
         self.initial_frequency_spinbox = DoubleSpinBox(4)
@@ -69,7 +60,8 @@ class EISWidget(AbstractBaseWidget):
         self.estimated_impedance_spinbox = DoubleSpinBox(4)
 
         add_to_form_layout(
-            parameter_layout,
+            layout,
+            (encoding.SELECTED_PSTATS, device_list_container),
             (encoding.DC_VOLTAGE, self.DC_voltage_spinbox),
             (encoding.INITIAL_FREQUENCY, self.initial_frequency_spinbox),
             (encoding.FINAL_FREQUENCY, self.final_frequency_spinbox),
@@ -97,15 +89,21 @@ class EISWidget(AbstractBaseWidget):
             self.devices_layout.addWidget(checkbox)
 
     def selected_pstats(self) -> list[str]:
-        """Get a list of the selected potentiostats. The list contains pstat identifiers."""
+        """Get a list of the selected potentiostats. The list contains potentiostat identifiers."""
         selected_pstats: list[str] = []
         for identifier, checkbox in self.pstat_checkboxes.items():
             if checkbox.isChecked():
                 selected_pstats.append(identifier)
         return selected_pstats
 
+    def showEvent(self, event: QShowEvent | None):  # overridden
+        if event is not None:
+            # reload the device list when the window gets opened
+            self.reload_pstat_list(self.selected_pstats())
+        super().showEvent(event)
+
     @staticmethod
-    def allowed_to_create() -> bool:
+    def allowed_to_create() -> bool:  # overridden
         return GAMRY.is_valid()
 
     @classmethod
