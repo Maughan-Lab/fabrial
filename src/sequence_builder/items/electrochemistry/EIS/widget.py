@@ -1,7 +1,7 @@
 from typing import Any, Self
 
 from PyQt6.QtGui import QShowEvent
-from PyQt6.QtWidgets import QCheckBox, QFormLayout, QVBoxLayout
+from PyQt6.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QRadioButton, QVBoxLayout
 
 from .....classes.descriptions import DescriptionInfo
 from .....custom_widgets.augmented.spin_box import DoubleSpinBox, SpinBox
@@ -35,13 +35,14 @@ class EISWidget(AbstractBaseWidget):
                         "FINAL_FREQUENCY": encoding.FINAL_FREQUENCY,
                         "POINTS_PER_DECADE": encoding.POINTS_PER_DECADE,
                         "AC_VOLTAGE": encoding.AC_VOLTAGE,
-                        "SAMPLE_AREA": encoding.AREA,
                         "ESTIMATED_IMPEDANCE": encoding.ESTIMATED_IMPEDANCE,
                     }
                 ),
             ),
         )
-        self.pstat_checkboxes: dict[str, QCheckBox] = {}
+        self.pstat_checkboxes: dict[str, QCheckBox] = dict()
+        self.impedance_reader_speed_radiobuttons: list[QRadioButton] = []
+
         self.create_widgets()
 
     def create_widgets(self) -> None:
@@ -56,8 +57,14 @@ class EISWidget(AbstractBaseWidget):
         self.final_frequency_spinbox = DoubleSpinBox(4)
         self.points_per_decade_spinbox = SpinBox()
         self.AC_voltage_spinbox = DoubleSpinBox(4)
-        self.area_spinbox = DoubleSpinBox(4)
         self.estimated_impedance_spinbox = DoubleSpinBox(4)
+
+        impedance_reader_speed_layout = QHBoxLayout()
+        impedance_reader_speed_container = Container(impedance_reader_speed_layout)
+        for label in encoding.IMPEDANCE_READER_SPEED_DICT.keys():
+            radiobutton = QRadioButton(label)
+            self.impedance_reader_speed_radiobuttons.append(radiobutton)
+            impedance_reader_speed_layout.addWidget(radiobutton)
 
         add_to_form_layout(
             layout,
@@ -67,8 +74,8 @@ class EISWidget(AbstractBaseWidget):
             (encoding.FINAL_FREQUENCY, self.final_frequency_spinbox),
             (encoding.POINTS_PER_DECADE, self.points_per_decade_spinbox),
             (encoding.AC_VOLTAGE, self.AC_voltage_spinbox),
-            (encoding.AREA, self.area_spinbox),
             (encoding.ESTIMATED_IMPEDANCE, self.estimated_impedance_spinbox),
+            ("Optimize for", impedance_reader_speed_container),
         )
 
     def reload_pstat_list(self, selected_pstats: list[str]) -> None:
@@ -114,21 +121,30 @@ class EISWidget(AbstractBaseWidget):
         widget.final_frequency_spinbox.setValue(data_as_dict[encoding.FINAL_FREQUENCY])
         widget.points_per_decade_spinbox.setValue(data_as_dict[encoding.POINTS_PER_DECADE])
         widget.AC_voltage_spinbox.setValue(data_as_dict[encoding.AC_VOLTAGE])
-        widget.area_spinbox.setValue(data_as_dict[encoding.AREA])
         widget.estimated_impedance_spinbox.setValue(data_as_dict[encoding.ESTIMATED_IMPEDANCE])
+
+        selected_speed_option = data_as_dict[encoding.IMPEDANCE_READER_SPEED]
+        for radiobutton in widget.impedance_reader_speed_radiobuttons:
+            if radiobutton.text() == selected_speed_option:
+                radiobutton.setChecked(True)
+
         widget.reload_pstat_list(data_as_dict[encoding.SELECTED_PSTATS])
 
         return widget
 
     def to_dict(self) -> dict:
+        for radiobutton in self.impedance_reader_speed_radiobuttons:
+            if radiobutton.isChecked():
+                selected_speed_option = radiobutton.text()
+
         data = {
             encoding.DC_VOLTAGE: self.DC_voltage_spinbox.value(),
             encoding.INITIAL_FREQUENCY: self.initial_frequency_spinbox.value(),
             encoding.FINAL_FREQUENCY: self.final_frequency_spinbox.value(),
             encoding.POINTS_PER_DECADE: self.points_per_decade_spinbox.value(),
             encoding.AC_VOLTAGE: self.AC_voltage_spinbox.value(),
-            encoding.AREA: self.area_spinbox.value(),
             encoding.ESTIMATED_IMPEDANCE: self.estimated_impedance_spinbox.value(),
+            encoding.IMPEDANCE_READER_SPEED: selected_speed_option,
             encoding.SELECTED_PSTATS: self.selected_pstats(),
         }
         return data

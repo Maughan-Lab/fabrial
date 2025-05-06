@@ -23,10 +23,6 @@
 
     The AC voltage for the sweep in millivolts.
 
-- **{{ SAMPLE_AREA }}**
-
-    The sample's area in cm².
-
 - **{{ ESTIMATED_IMPEDANCE }}**
 
     The initial guess for the sample's impedance in Ohms.

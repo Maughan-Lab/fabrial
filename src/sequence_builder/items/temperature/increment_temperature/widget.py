@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QFormLayout
 from .....classes.descriptions import DescriptionInfo
 from .....custom_widgets.augmented.spin_box import DoubleSpinBox
 from .....Files.Process import Filenames
+from .....instruments import INSTRUMENTS
 from ...base_widget import AbstractBaseWidget
 from . import encoding
 from .process import IncrementTemperatureProcess
@@ -41,7 +42,11 @@ class IncrementTemperatureWidget(AbstractBaseWidget):
             ),
         )
 
-        self.increment_spinbox = DoubleSpinBox(1)
+        oven = INSTRUMENTS.oven
+        maximum_temperature = oven.maximum_temperature()
+        self.increment_spinbox = DoubleSpinBox(
+            oven.num_decimals(), -maximum_temperature, maximum_temperature
+        )
         self.increment_spinbox.textChanged.connect(
             lambda value_as_str: self.setWindowTitle(
                 f"{self.DISPLAY_NAME_PREFIX} ({value_as_str} degrees)"

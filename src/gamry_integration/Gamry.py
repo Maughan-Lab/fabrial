@@ -5,6 +5,8 @@ from types import ModuleType
 from typing import Any, Self
 
 import comtypes.client as client  # type: ignore
+from comtypes.client._events import _AdviseConnection  # type: ignore
+from PyQt6.QtCore import QObject, pyqtSignal
 
 from ..Files import Settings
 from ..Files.Settings import Gamry as Keys
@@ -79,17 +81,15 @@ class Potentiostat:
         Initialize the potentiostat the same way Gamry does for the Potentiostatic EIS experiment.
         """
         # I know it's ugly, I'm sorry my child
-        self.device.SetCell(self.GamryCOM.CellOn)
-        self.device.InstrumentSpecificInitialize()
-        self.device.SetAchSelect(self.GamryCOM.AchSelect_GND)
+        self.device.SetCell(self.GamryCOM.CellOff)
+        self.device.SetAchSelect(self.GamryCOM.GND)
         self.device.SetCtrlMode(self.GamryCOM.PstatMode)
-        self.device.SetStability(self.GamryCOM.StabilityFast)
-        self.device.SetCASpeed(self.GamryCOM.CASpeedMedFast)
+        self.device.SetIEStability(self.GamryCOM.StabilityFast)
         self.device.SetSenseSpeedMode(True)
-        self.device.SetConvention(self.GamryCOM.Anodic)
+        self.device.SetIConvention(self.GamryCOM.Anodic)
         self.device.SetGround(self.GamryCOM.Float)
         self.device.SetIchRange(3.0)
-        self.device.SetIchRangeMode(False)  # might fail
+        self.device.SetIchRangeMode(False)
         self.device.SetIchFilter(2.5)
         self.device.SetVchRange(3.0)
         self.device.SetVchRangeMode(False)
@@ -99,16 +99,17 @@ class Potentiostat:
 
         self.device.SetVchFilter(2.5)
         self.device.SetAchRange(3.0)
-        self.device.SetIERangeLowerLimit(None)  # might fail
+        self.device.SetIERange(0.03)
+        self.device.SetIERangeMode(False)
+        self.device.SetAnalogOut(0.0)
+        self.device.SetVoltage(dc_voltage)
+        self.device.SetPosFeedEnable(False)
+        self.device.SetIruptMode(self.GamryCOM.IruptOff)
 
         IE_range = self.device.TestIERange(dc_voltage / impedance_guess)
         self.device.SetIERange(IE_range)
 
-        self.device.SetIERangeMode(False)
-        self.device.SetAnalogOut(0.0)
-        self.device.SetVoltage(dc_voltage)
-        self.device.SetPosFeedEnable(False)  # might fail
-        self.device.SetIruptMode(self.GamryCOM.IruptOff)
+        self.device.SetCell(self.GamryCOM.CellOn)
 
         return self
 
@@ -159,19 +160,29 @@ class Potentiostat:
         self.cleanup()
 
 
-class ImpedanceReader:
+class ImpedanceReader(QObject):
     """
     Uses a **Potentiostat** to measure electrical impedance. This is synonymous to Gamry's
     **ReadZ**.
     """
 
+    dataReady = pyqtSignal(bool)
+    """
+    Fires sometime after a call to `measure()` when the impedance reader has data ready. Sends:
+    - Whether the measurement was successful as a **bool**.
+    """
+
     def __init__(self, potentiostat: Potentiostat):
+        super().__init__()
         self.pstat = potentiostat
         # stands for Read Z (Z = impedance)
         self.readz = client.CreateObject(self.pstat.com_interface().GamryReadZ)
+        self.readz.Init(self.pstat.inner())
+        self.connection = client.GetEvents(self.readz, self)
 
-    def initialize(self, impedance_guess: float) -> Self:
+    def initialize(self, impedance_guess: float, speed_option: int) -> Self:
         """Initialize the reader the same way Gamry does in the Potentiostatic EIS experiment."""
+        self.readz.SetSpeed(speed_option)
         self.readz.SetGain(1.0)
         self.readz.SetINoise(0.0)
         self.readz.SetVNoise(0.0)
@@ -180,24 +191,28 @@ class ImpedanceReader:
         self.readz.SetIdc(self.pstat.inner().MeasureI())
         return self
 
-    def measure(self, frequency: float, ac_voltage: float) -> bool:
+    def measure(self, frequency: float, ac_voltage: float):
         """
-        Perform a measurement.
+        Perform a measurement. The reader will emit **dataReady** when data is ready to be read.
+        If the measurement limit has been reached, **dataReady** is not emitted.
 
         :param frequency: The frequency to measure at (in Hz).
         :param ac_voltage: The AC voltage to measure at (in V).
-
-        :returns: Whether the measurement succeeded.
         """
-        return self.readz.Measure(frequency, ac_voltage)
+        self.readz.Measure(frequency, ac_voltage)
 
     def cleanup(self):
         """Clean up the reader resources."""
+        del self.connection
         self.readz.Release()
 
     def potentiostat(self) -> Potentiostat:
         """Access the potentiostat this reader is using."""
         return self.pstat
+
+    def com_connection(self) -> _AdviseConnection:
+        """Get the **comtypes** connection used to send events to the reader."""
+        return self.connection
 
     # ----------------------------------------------------------------------------------------------
     # measurement values
@@ -236,6 +251,19 @@ class ImpedanceReader:
     def ie_range(self) -> float:
         """Get the current IE range (also called current range)."""
         return self.readz.IERange()
+
+    # ----------------------------------------------------------------------------------------------
+    # COM functions
+    def _IGamryReadZEvents_OnDataDone(self, this: Any, error_status: bool):
+        """
+        This is a callback called by the `comtypes` module when the a potentiostat has completed a
+        measurement.
+        """
+        self.dataReady.emit(error_status == 0)  # 0 indicates success
+
+    def _IGamryReadZEvents_OnDataAvailable(self, this: Any):
+        """Another callback that the application does not use right now."""
+        pass
 
     # ----------------------------------------------------------------------------------------------
     # context manager

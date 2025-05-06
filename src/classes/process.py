@@ -171,13 +171,22 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
         present, otherwise returns the response. If a response is found, calling this function again
         without having sent a new message will return **None**.
         """
-        return self.message_response.get()
+        response = self.message_response.get()
+        if response is not None:
+            self.message_response.set(None)
+        return response
 
-    def wait_on_response(self) -> QMessageBox.StandardButton:
-        """Wait for the user to response to a sent message."""
+    def wait_on_response(self) -> QMessageBox.StandardButton | None:
+        """
+        Wait for the user to response to a sent message.
+
+        If the process is canceled during this time, returns **None**.
+        """
         response = self.check_response()
         while response is None:
             PROCESS_EVENTS()
+            if self.is_canceled():
+                return None
             response = self.check_response()
         return response
 

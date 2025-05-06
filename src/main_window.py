@@ -7,6 +7,7 @@ from .custom_widgets.settings.window import ApplicationSettingsWindow
 from .menu.menu_bar import MenuBar
 from .secondary_window import SecondaryWindow
 from .tabs.tab_widget import TabWidget
+from .utility.events import PROCESS_EVENTS
 
 
 class MainWindow(QMainWindow):
@@ -88,7 +89,7 @@ class MainWindow(QMainWindow):
             ).run():
                 process_widget.cancelCommand.emit()
                 while process_widget.is_running():
-                    QApplication.processEvents()
+                    PROCESS_EVENTS()
             else:
                 return False
         return True

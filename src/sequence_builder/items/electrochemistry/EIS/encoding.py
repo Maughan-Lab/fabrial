@@ -1,21 +1,32 @@
+from .....gamry_integration.gamry import GAMRY
+
 INITIAL_FREQUENCY = "Initial Frequency (Hz)"
 FINAL_FREQUENCY = "Final Frequency (Hz)"
 POINTS_PER_DECADE = "Points Per Decade"
 AC_VOLTAGE = "AC Voltage (mV rms)"
 DC_VOLTAGE = "DC Voltage (V)"
-AREA = "Sample Area (cm^2)"
 ESTIMATED_IMPEDANCE = "Estimated Z (ohms)"
+IMPEDANCE_READER_SPEED = "Impedance Reader Speed"
 SELECTED_PSTATS = "Potentiostat(s)"
+
+IMPEDANCE_READER_SPEED_DICT: dict[str, int] = {
+    "Fast": GAMRY.com_interface().ReadZSpeedFast,
+    "Normal": GAMRY.com_interface().ReadZSpeedNorm,
+    "Low Noise": GAMRY.com_interface().ReadZSpeedLow,
+}
 
 
 class Headers:
     """Headers for EIS files."""
 
     # these are tab-separated
-    EXPERIMENT_HEADERS = (
+    GAMRY_HEADERS = (
         ("EXPLAIN",),
         ("TAG", "EISPOT"),
         ("TITLE", "LABEL", "Potentiostatic EIS", "Test &Identifier"),
+        (),
+    )
+    DATA_HEADERS = (
         ("ZCURVE", "TABLE"),
         (
             "",  # empty string to start line with tab

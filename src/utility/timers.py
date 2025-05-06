@@ -6,7 +6,7 @@ from PyQt6.QtCore import QObject, QTimer
 class Timer(QTimer):
     """Easier QTimer class."""
 
-    def __init__(self, parent: QObject, intverval_ms: int, *slots: Callable[[], Any]):
+    def __init__(self, parent: QObject | None, intverval_ms: int, *slots: Callable[[], Any]):
         """
         Instantiate a new timer and automatically connect the passed in **slots**.
 
@@ -14,7 +14,7 @@ class Timer(QTimer):
         :param interval_ms: The timeout interval in milliseconds.
         :param slots: Function(s) to call when the timer times out.
         """
-        super().__init__()
+        super().__init__(parent)
         self.setInterval(intverval_ms)
         for slot in slots:
             self.timeout.connect(slot)
@@ -26,7 +26,7 @@ class Timer(QTimer):
         return self
 
 
-def new_timer(parent: QObject, interval_ms: int, *slots: Callable[[], Any]) -> QTimer:
+def new_timer(parent: QObject | None, interval_ms: int, *slots: Callable[[], Any]) -> QTimer:
     """
     Instantiate a new timer. **slots** are called immediately.
 

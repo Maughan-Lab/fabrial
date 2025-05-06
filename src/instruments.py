@@ -5,7 +5,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Union
 
 import minimalmodbus as modbus  # type: ignore
-from PyQt6.QtCore import QMutex, QMutexLocker, QObject, pyqtSignal
+from PyQt6.QtCore import QMutex, QMutexLocker, QObject, QThread, pyqtSignal
 
 from .classes.lock import DataMutex
 from .classes.metaclasses import ABCQObjectMeta
@@ -72,14 +72,7 @@ class Instrument(QObject, metaclass=ABCQObjectMeta):
         """
         if self.connection_status != connection_status:
             self.connection_status = connection_status
-            connected = self.is_connected()
-            self.handle_connection_change(connected)
-            self.connectionChanged.emit(connected)
-
-    @abstractmethod
-    def handle_connection_change(self, connected: bool):
-        """Handle the instrument's connection status changing."""
-        pass
+            self.connectionChanged.emit(self.is_connected())
 
     @abstractmethod
     def connect(self):
@@ -158,14 +151,8 @@ class Oven(Instrument):
         self.stability_measurement_count = 0
         self.stable = DataMutex(False)
         self.disconnected_count = 0
-        # timers for connection and reading the temperature and setpoint
-        self.measurement_timer = Timer(
-            self, self.measurement_interval, self.read_temp, self.get_setpoint
-        )
-        self.stability_timer = Timer(
-            self, self.stability_measurement_interval, self.check_stability
-        )
-        self.connection_timer = Timer(self, 1000, self.connect)  # arbitrary interval
+        # thread for continuous background tasks like monitoring the temperature
+        self.task_thread = QThread()
 
     def load_settings(self):
         """Load the oven settings from the oven settings file."""
@@ -185,16 +172,6 @@ class Oven(Instrument):
         self.minimum_stability_measurements = settings[SettingNames.MINIMUM_STABILITY_MEASUREMENTS]
         self.measurement_interval = settings[SettingNames.MEASUREMENT_INTERVAL]
         self.stability_measurement_interval = settings[SettingNames.STABILITY_MEASUREMENT_INTERVAL]
-
-    def handle_connection_change(self, connected: bool):
-        if connected:
-            self.connection_timer.stop()
-            self.measurement_timer.start()
-        else:
-            self.measurement_timer.stop()
-            self.last_temperature = None
-            self.last_setpoint = None
-            self.connection_timer.start()
 
     def maximum_temperature(self) -> float:
         """Get the oven's maximum allowed temperature."""
@@ -361,17 +338,45 @@ class Oven(Instrument):
         Start the oven's connection timer, which handles maintaining a connection to the physical
         instrument.
         """
-        self.connection_timer.start()
-        self.stability_timer.start()
+        self.moveToThread(self.task_thread)
+        self.task_thread.started.connect(self.run)
+        self.task_thread.start()
+
+    def run(self):
+        connection_timer = Timer(self, 1000, self.connect)  # arbitrary time
+        measurement_timer = Timer(
+            self, self.measurement_interval, self.read_temp, self.get_setpoint
+        )
+        stability_timer = Timer(self, self.stability_measurement_interval, self.check_stability)
+        for timer in (connection_timer, measurement_timer, stability_timer):
+            self.thread().finished.connect(timer.stop)
+
+        def handle_connection_change(connected: bool):
+            if connected:
+                connection_timer.stop()
+                measurement_timer.start()
+            else:
+                measurement_timer.stop()
+                self.last_temperature = None
+                self.last_setpoint = None
+                connection_timer.start()
+
+        self.connectionChanged.connect(handle_connection_change)
+
+        connection_timer.start()
+        stability_timer.start()
+
+    def stop(self):
+        self.task_thread.quit()
+        self.task_thread.wait()
 
 
 @dataclass
 class InstrumentSet:
-    """Container for instruments (ovens, potentiostats, etc.)"""
+    """Container for instruments (ovens, etc.)"""
 
     oven: Union[Oven, "DeveloperOven"]
-    potentiostat: None
 
 
 global INSTRUMENTS
-INSTRUMENTS = InstrumentSet(Oven(), None)
+INSTRUMENTS = InstrumentSet(Oven())

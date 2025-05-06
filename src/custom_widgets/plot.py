@@ -145,7 +145,7 @@ class PlotWidget(Widget):
 
     def save_as_image(self):
         filename, _ = QFileDialog.getSaveFileName(
-            None, "Save Graph", "", "Portable Network Graphics (*.png)"
+            None, "Save Graph", "untitled.png", "Portable Network Graphics (*.png)"
         )
         if filename != "":
             try:

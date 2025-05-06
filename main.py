@@ -3,9 +3,11 @@ import sys
 
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
+from tendo.singleton import SingleInstance, SingleInstanceException
 
 from src.Files import FOLDERS_TO_CREATE, Icons
 from src.gamry_integration.gamry import GAMRY
+from src.instruments import INSTRUMENTS
 from src.main_window import MainWindow
 from src.utility.errors import generate_exception_handler
 
@@ -31,6 +33,11 @@ def make_application_folders():
 
 
 def main(main_window_type: type[MainWindow] = MainWindow):
+    try:
+        me = SingleInstance()  # noqa
+    except SingleInstanceException:
+        sys.exit()
+
     update_id()
     make_application_folders()
 
@@ -46,6 +53,8 @@ def main(main_window_type: type[MainWindow] = MainWindow):
     app.exec()
     # close GamryCOM
     GAMRY.cleanup()
+    # stop the oven's thread
+    INSTRUMENTS.oven.stop()
 
 
 if __name__ == "__main__":

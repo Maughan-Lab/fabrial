@@ -18,7 +18,7 @@ class SequenceSettingsTab(Widget):
                 if f.read().strip() == str(True):
                     self.non_empty_directory_warning_checkbox.setChecked(True)
         except Exception:
-            pass
+            self.non_empty_directory_warning_checkbox.setChecked(True)
 
         layout.addWidget(self.non_empty_directory_warning_checkbox)
 
