@@ -203,6 +203,7 @@ class ImpedanceReader(QObject):
 
     def cleanup(self):
         """Clean up the reader resources."""
+        self.connection.disconnect()
         del self.connection
         self.readz.Release()
 

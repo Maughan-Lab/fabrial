@@ -23,8 +23,6 @@ def generate_exception_handler(
         if issubclass(exception_type, KeyboardInterrupt):
             sys.__excepthook__(exception_type, exception, trace)
             sys.exit()
-        if issubclass(exception_type, SystemExit):
-            print("here")
         else:
             name = APPLICATION_NAME
             error_message = (

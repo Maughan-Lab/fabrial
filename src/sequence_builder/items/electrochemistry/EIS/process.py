@@ -179,8 +179,9 @@ class EISProcess(AbstractGraphingProcess):
             )
             impedance_readers.append(impedance_reader)
             # connect the impedance reader's signals
+            # this is weirdly written because non-primitive types are passed by pointer for signals
             impedance_reader.dataReady.connect(
-                lambda success: self.handle_data_ready(impedance_reader, success)
+                lambda success, reader=impedance_reader: self.handle_data_ready(reader, success)
             )
             # make the file for the reader
             file = self.create_file(impedance_reader, context_manager)
