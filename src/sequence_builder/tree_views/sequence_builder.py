@@ -307,6 +307,7 @@ class SequenceTreeWidget(Container):
             self.view.setAcceptDrops(not_running)
             self.view.update()
             self.directory_button.setDisabled(running)
+            self.load_button.setDisabled(running)
 
         def sequence_start_event():
             """This runs when the sequence starts."""
