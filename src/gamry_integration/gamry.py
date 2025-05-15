@@ -145,7 +145,7 @@ class Potentiostat:
     def close(self) -> Self:
         """Close the potentiostat. You cannot take measurements after calling this function."""
         self.device.SetCell(self.GamryCOM.CellOff)
-        time.sleep(1)  # necessary to make sure the potentiostat actually turns off
+        time.sleep(0.5)  # necessary to make sure the potentiostat actually turns off
         self.device.Close()
         return self
 
