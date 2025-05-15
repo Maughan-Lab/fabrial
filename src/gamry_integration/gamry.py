@@ -74,7 +74,7 @@ class Potentiostat:
 
     def cleanup(self):
         """Clean up the potentiostat resources."""
-        self.device.Release()
+        self.close()
 
     def initialize(self, dc_voltage: float, impedance_guess: float) -> Self:
         """
@@ -156,7 +156,6 @@ class Potentiostat:
         return self
 
     def __exit__(self, *exc_args):
-        self.close()
         self.cleanup()
 
 
@@ -205,7 +204,6 @@ class ImpedanceReader(QObject):
         """Clean up the reader resources."""
         self.connection.disconnect()
         del self.connection
-        self.readz.Release()
 
     def potentiostat(self) -> Potentiostat:
         """Access the potentiostat this reader is using."""

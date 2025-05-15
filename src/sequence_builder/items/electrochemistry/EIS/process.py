@@ -59,12 +59,11 @@ class EISProcess(AbstractGraphingProcess):
         self.impedance_reader_data: dict[ImpedanceReader, ImpedanceReaderData] = dict()
 
     def run(self) -> None:
-        try:
-            # open all files, potentiostats, and impedance readers using a context manager so they
-            # get closed automatically
-            with ExitStack() as context_manager:
-                impedance_readers = self.create_impedance_readers(context_manager)
-
+        # open all files, potentiostats, and impedance readers using a context manager so they
+        # get closed automatically
+        with ExitStack() as context_manager:
+            impedance_readers = self.create_impedance_readers(context_manager)
+            try:
                 # do the first measurement (this starts a chain)
                 for impedance_reader in impedance_readers:
                     impedance_reader.measure(self.initial_frequency, self.ac_voltage)
@@ -79,8 +78,8 @@ class EISProcess(AbstractGraphingProcess):
                             break
                     else:  # the for loop finished naturally
                         break
-        finally:
-            self.post_run(impedance_readers)
+            finally:
+                self.post_run(impedance_readers)
 
     def post_run(self, impedance_readers: Iterable[ImpedanceReader]):
         """Post-run tasks."""
@@ -101,6 +100,9 @@ class EISProcess(AbstractGraphingProcess):
         """Handle data being ready for an impedance reader."""
         # unless the impedance reader is finished with its frequency sweep, each call to this
         # function will queue another call for the same impedance reader
+
+        if self.is_canceled():
+            return
 
         impedance_reader_data = self.impedance_reader_data[impedance_reader]
         if not success:
