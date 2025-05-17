@@ -9,11 +9,15 @@ ESTIMATED_IMPEDANCE = "Estimated Z (ohms)"
 IMPEDANCE_READER_SPEED = "Impedance Reader Speed"
 SELECTED_PSTATS = "Potentiostat(s)"
 
-IMPEDANCE_READER_SPEED_DICT: dict[str, int] = {
-    "Fast": GAMRY.com_interface().ReadZSpeedFast,
-    "Normal": GAMRY.com_interface().ReadZSpeedNorm,
-    "Low Noise": GAMRY.com_interface().ReadZSpeedLow,
-}
+# fails if GamryCOM is not enabled or could not be loaded
+try:
+    IMPEDANCE_READER_SPEED_DICT: dict[str, int] = {
+        "Fast": GAMRY.com_interface().ReadZSpeedFast,
+        "Normal": GAMRY.com_interface().ReadZSpeedNorm,
+        "Low Noise": GAMRY.com_interface().ReadZSpeedLow,
+    }
+except Exception:
+    IMPEDANCE_READER_SPEED_DICT = dict()
 
 
 class Headers:
