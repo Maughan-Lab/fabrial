@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import QMessageBox
 
 from .....classes.process import AbstractGraphingProcess
 from .....classes.runners import ProcessRunner
-from .....gamry_integration.gamry import GAMRY, ImpedanceReader, Potentiostat
+from .....gamry_integration.gamry import GAMRY, ImpedanceReader, OCVoltageReader, Potentiostat
 from .....utility.dataframe import add_to_dataframe
 from . import encoding
 from .encoding import FileFormat, Headers
@@ -64,10 +64,19 @@ class EISProcess(AbstractGraphingProcess):
         with ExitStack() as context_manager:
             impedance_readers = self.create_impedance_readers(context_manager)
             try:
+                # for impedance_reader in impedance_readers:
+                #     potentiostat = impedance_reader.potentiostat()
+                #     oc_voltage_reader = OCVoltageReader(potentiostat)
+                #     open_circuit_voltage = oc_voltage_reader.run()
+                #     print(open_circuit_voltage)
+                #     potentiostat.turn_on()
+                #     potentiostat.set_dc_voltage(self.dc_voltage + open_circuit_voltage)
+
                 # do the first measurement (this starts a chain)
                 for impedance_reader in impedance_readers:
+                    # impedance_reader.potentiostat().turn_on()
+                    # impedance_reader.potentiostat().set_dc_voltage(self.dc_voltage)
                     impedance_reader.measure(self.initial_frequency, self.ac_voltage)
-
                 # run while at least one impedance reader still has measurements to do or until we
                 # get #canceled
                 while not self.is_canceled():
@@ -100,7 +109,6 @@ class EISProcess(AbstractGraphingProcess):
         """Handle data being ready for an impedance reader."""
         # unless the impedance reader is finished with its frequency sweep, each call to this
         # function will queue another call for the same impedance reader
-
         if self.is_canceled():
             return
 

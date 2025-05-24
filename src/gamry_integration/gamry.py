@@ -1,3 +1,8 @@
+"""
+This module acts as a wrapper around some GamryCOM items. If you want to understand it, I highly
+recommend going through the example code for the Electrochemistry Toolkit.
+"""
+
 import json
 import time
 import types
@@ -57,7 +62,7 @@ class Potentiostat:
         """
         self.GamryCOM = COM_interface
         self.id = identifer
-        self.device = client.CreateObject(self.GamryCOM.GamryPstat)
+        self.device = client.CreateObject(self.GamryCOM.GamryPC6Pstat)
         self.device.Init(self.id)
 
     def identifier(self) -> str:
@@ -81,13 +86,14 @@ class Potentiostat:
         Initialize the potentiostat the same way Gamry does for the Potentiostatic EIS experiment.
         """
         # I know it's ugly, I'm sorry my child
-        self.device.SetCell(self.GamryCOM.CellOff)
-        self.device.SetAchSelect(self.GamryCOM.GND)
+        self.turn_on()
         self.device.SetCtrlMode(self.GamryCOM.PstatMode)
+        # self.device.SetAchSelect(self.GamryCOM.GND)
         self.device.SetIEStability(self.GamryCOM.StabilityFast)
+        self.device.SetCASpeed(3)
         self.device.SetSenseSpeedMode(True)
-        self.device.SetIConvention(self.GamryCOM.Anodic)
         self.device.SetGround(self.GamryCOM.Float)
+        # self.device.SetIConvention(self.GamryCOM.Anodic)
         self.device.SetIchRange(3.0)
         self.device.SetIchRangeMode(False)
         self.device.SetIchFilter(2.5)
@@ -99,6 +105,7 @@ class Potentiostat:
 
         self.device.SetVchFilter(2.5)
         self.device.SetAchRange(3.0)
+        self.device.SetIERangeLowerLimit(0)
         self.device.SetIERange(0.03)
         self.device.SetIERangeMode(False)
         self.device.SetAnalogOut(0.0)
@@ -108,8 +115,6 @@ class Potentiostat:
 
         IE_range = self.device.TestIERange(dc_voltage / impedance_guess)
         self.device.SetIERange(IE_range)
-
-        self.device.SetCell(self.GamryCOM.CellOn)
 
         return self
 
@@ -144,9 +149,19 @@ class Potentiostat:
 
     def close(self) -> Self:
         """Close the potentiostat. You cannot take measurements after calling this function."""
-        self.device.SetCell(self.GamryCOM.CellOff)
+        self.turn_off()
         time.sleep(0.5)  # necessary to make sure the potentiostat actually turns off
         self.device.Close()
+        return self
+
+    def turn_on(self) -> Self:
+        """Turn the cell on."""
+        self.device.SetCell(self.GamryCOM.CellOn)
+        return self
+
+    def turn_off(self) -> Self:
+        """Turn the cell off."""
+        self.device.SetCell(self.GamryCOM.CellOff)
         return self
 
     # ----------------------------------------------------------------------------------------------
@@ -271,6 +286,53 @@ class ImpedanceReader(QObject):
 
     def __exit__(self, *exc_args):
         self.cleanup()
+
+
+class OCVoltageReader:
+    """Uses a **Potentiostat** to measure the open-circuit voltage."""
+
+    def __init__(self, potentiostat: Potentiostat):
+        self.pstat = potentiostat
+        GamryCOM = self.pstat.com_interface()
+        self.signal = client.CreateObject(GamryCOM.GamrySignalConst)
+        self.oc_reader = client.CreateObject(GamryCOM.GamryDtaqOcv)
+        self.signal.Init(self.pstat.inner(), 0, 10, 0.25, GamryCOM.PstatMode)
+        self.oc_reader.Init(self.pstat.inner())
+        self.pstat.inner().SetSignal(self.signal)
+
+        self.finished = False
+        self.open_circuit_voltage = 0.0
+
+    def inner(self) -> Any:
+        """Get the underlying COM object used to read the open-circuit voltage."""
+        return self.oc_reader
+
+    def run(self) -> float:
+        """
+        Run the open-circuit voltage test. This turns the potentiostat off.
+
+        :returns: The open-circuit voltage in Volts.
+        """
+        self.pstat.turn_off()
+
+        connection = client.GetEvents(self.oc_reader, self)
+        self.oc_reader.Run(True)
+        while not self.finished:
+            client.PumpEvents(0.1)
+        connection.disconnect()
+
+        return self.open_circuit_voltage
+
+    # ----------------------------------------------------------------------------------------------
+    # COM functions
+    def _IGamryDtaqEvents_OnDataAvailable(self, this):
+        """Unused but required by COM."""
+        points = self.oc_reader.Cook(1024)[-1]
+        self.open_circuit_voltage = points[1][0]  # Vf
+
+    def _IGamryDtaqEvents_OnDataDone(self, this):
+        """Gets called when data is ready."""
+        self.finished = True
 
 
 GAMRY = GamryInterface()
