@@ -13,8 +13,8 @@ from src.utility.layouts import add_sublayout, add_to_layout  # ../utility
 
 
 class DeveloperOven(Oven):
-    def __init__(self, oven_port: str = ""):
-        super().__init__(oven_port)
+    def __init__(self):
+        super().__init__()
         self.unlocked = True
         self.developer_temperature = 0.0
         self.developer_setpoint = 0.0

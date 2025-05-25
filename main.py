@@ -41,20 +41,26 @@ def main(main_window_type: type[MainWindow] = MainWindow):
     update_id()
     make_application_folders()
 
+    # create application
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(Icons.MAIN_ICON))
     # create the main window using `main_window_type`
     main_window = main_window_type()  # necessary for testing
     main_window.showMaximized()
-
     # catch all exceptions
     sys.excepthook = generate_exception_handler(main_window)
     # run Quincy
     app.exec()
-    # close GamryCOM
-    GAMRY.cleanup()
     # stop the oven's thread
     INSTRUMENTS.oven.stop()
+    # close GamryCOM
+    GAMRY.cleanup()
+
+    # check to relaunch
+    if main_window.should_relaunch():
+        del me  # make sure the singleton is cleared
+        # replace the current process with a new version of this one
+        os.execl(sys.executable, sys.executable, *sys.argv)
 
 
 if __name__ == "__main__":

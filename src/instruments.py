@@ -347,6 +347,7 @@ class Oven(Instrument):
         measurement_timer = Timer(
             self, self.measurement_interval, self.read_temp, self.get_setpoint
         )
+        print(self.stability_measurement_interval)
         stability_timer = Timer(self, self.stability_measurement_interval, self.check_stability)
         for timer in (connection_timer, measurement_timer, stability_timer):
             self.thread().finished.connect(timer.stop)
@@ -367,6 +368,7 @@ class Oven(Instrument):
         stability_timer.start()
 
     def stop(self):
+        """Stop the oven's automatic monitoring."""
         self.task_thread.quit()
         self.task_thread.wait()
 

@@ -10,7 +10,7 @@ from ...gamry_integration.gamry import GAMRY
 from ...utility.images import make_pixmap
 from ...utility.layouts import add_sublayout, add_to_layout
 from ..augmented.button import Button
-from ..augmented.dialog import YesCancelDialog
+from ..augmented.dialog import OkCancelDialog
 from ..augmented.label import IconLabel
 from .settings_description import SettingsDescriptionWidget
 
@@ -62,7 +62,7 @@ class GamrySettingsTab(SettingsDescriptionWidget):
         )
 
         if self.enabled_checkbox.isChecked() and not GAMRY.is_valid():
-            if YesCancelDialog(
+            if OkCancelDialog(
                 "Error",
                 (
                     "Unable to load GamryCOM.\n"

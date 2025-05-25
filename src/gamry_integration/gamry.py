@@ -50,8 +50,10 @@ class GamryInterface:
 
     def cleanup(self):
         """Clean up the interface (call this before the application terminates)."""
-        if self.valid:
+        try:
             self.device_list.Release()  # closes GamryCOM.exe
+        except Exception:
+            pass
 
 
 class Potentiostat:

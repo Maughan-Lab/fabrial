@@ -14,9 +14,10 @@ class MainWindow(QMainWindow):
     showError = pyqtSignal(str)
 
     def __init__(self) -> None:
+        self.relaunch = False
         super().__init__()
         self.setWindowTitle("Quincy")
-        self.settings_window = ApplicationSettingsWindow()
+        self.settings_window = ApplicationSettingsWindow(self)
         # create tabs
         self.tabs = TabWidget(self)
         self.setCentralWidget(self.tabs)
@@ -98,6 +99,14 @@ class MainWindow(QMainWindow):
         """Save all data that gets saved on closing. Call this when closing the application."""
         self.sequence_tab.save_on_close()
         self.connection_widget.save_on_close()
+
+    def should_relaunch(self) -> bool:
+        """Whether the application should relaunch."""
+        return self.relaunch
+
+    def set_relaunch(self, should_relaunch: bool):
+        """Set whether the application should relaunch."""
+        self.relaunch = should_relaunch
 
     # ----------------------------------------------------------------------------------------------
     # errors
