@@ -298,7 +298,7 @@ class EISProcess(AbstractGraphingProcess):
                 encoding.INITIAL_FREQUENCY: self.initial_frequency,
                 encoding.FINAL_FREQUENCY: self.final_frequency,
                 encoding.POINTS_PER_DECADE: self.points_per_decade,
-                encoding.AC_VOLTAGE: self.ac_voltage * 1000,  # V to mV
+                encoding.AC_VOLTAGE: round(self.ac_voltage * 1000, 4),  # V to mV
                 encoding.ESTIMATED_IMPEDANCE: self.impedance_guess,
                 encoding.IMPEDANCE_READER_SPEED: self.impedance_reader_speed_option,
             },
