@@ -254,6 +254,9 @@ class SequenceTreeWidget(Container):
         directory = self.data_directory()
         os.makedirs(directory, exist_ok=True)
 
+        # save the sequence settings automatically
+        self.view.to_file(os.path.join(directory, "autosave.json"))
+
         if len(os.listdir(directory)) > 0:  # the directory isn't empty
             # ask the user if they are okay with writing to a non-empty directory
             if not YesCancelDontShowDialog(
