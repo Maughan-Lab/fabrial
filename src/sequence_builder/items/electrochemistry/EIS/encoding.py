@@ -5,9 +5,13 @@ FINAL_FREQUENCY = "Final Frequency (Hz)"
 POINTS_PER_DECADE = "Points Per Decade"
 AC_VOLTAGE = "AC Voltage (mV rms)"
 DC_VOLTAGE = "DC Voltage (V)"
+DC_VOLTAGE_REFERENCE = "DC Voltage Reference"
 ESTIMATED_IMPEDANCE = "Estimated Z (ohms)"
 IMPEDANCE_READER_SPEED = "Impedance Reader Speed"
 SELECTED_PSTATS = "Potentiostat(s)"
+
+VS_EREF = "Vs. Eref"
+VS_EOC = "Vs. Eoc"
 
 # fails if GamryCOM is not enabled or could not be loaded
 try:

@@ -31,6 +31,8 @@ class EISWidget(AbstractBaseWidget):
                     parameters_dict={
                         "POTENTIOSTATS": encoding.SELECTED_PSTATS,
                         "DC_VOLTAGE": encoding.DC_VOLTAGE,
+                        "VS_EREF": encoding.VS_EREF,
+                        "VS_EOC": encoding.VS_EOC,
                         "INITIAL_FREQUENCY": encoding.INITIAL_FREQUENCY,
                         "FINAL_FREQUENCY": encoding.FINAL_FREQUENCY,
                         "POINTS_PER_DECADE": encoding.POINTS_PER_DECADE,
@@ -42,6 +44,7 @@ class EISWidget(AbstractBaseWidget):
         )
         self.pstat_checkboxes: dict[str, QCheckBox] = dict()
         self.impedance_reader_speed_radiobuttons: list[QRadioButton] = []
+        self.voltage_reference_radiobuttons: list[QRadioButton] = []
 
         self.create_widgets()
 
@@ -66,10 +69,20 @@ class EISWidget(AbstractBaseWidget):
             self.impedance_reader_speed_radiobuttons.append(radiobutton)
             impedance_reader_speed_layout.addWidget(radiobutton)
 
+        dc_voltage_layout = QHBoxLayout()
+        dc_voltage_layout.addWidget(self.DC_voltage_spinbox)
+        voltage_reference_layout = QHBoxLayout()
+        dc_voltage_layout.addLayout(voltage_reference_layout)
+        dc_voltage_container = Container(dc_voltage_layout)
+        for label in (encoding.VS_EREF, encoding.VS_EOC):
+            radiobutton = QRadioButton(label)
+            self.voltage_reference_radiobuttons.append(radiobutton)
+            voltage_reference_layout.addWidget(radiobutton)
+
         add_to_form_layout(
             layout,
             (encoding.SELECTED_PSTATS, device_list_container),
-            (encoding.DC_VOLTAGE, self.DC_voltage_spinbox),
+            (encoding.DC_VOLTAGE, dc_voltage_container),
             (encoding.INITIAL_FREQUENCY, self.initial_frequency_spinbox),
             (encoding.FINAL_FREQUENCY, self.final_frequency_spinbox),
             (encoding.POINTS_PER_DECADE, self.points_per_decade_spinbox),
@@ -127,6 +140,13 @@ class EISWidget(AbstractBaseWidget):
         for radiobutton in widget.impedance_reader_speed_radiobuttons:
             if radiobutton.text() == selected_speed_option:
                 radiobutton.setChecked(True)
+                break
+
+        selected_voltage_reference = data_as_dict[encoding.DC_VOLTAGE_REFERENCE]
+        for radiobutton in widget.voltage_reference_radiobuttons:
+            if radiobutton.text() == selected_voltage_reference:
+                radiobutton.setChecked(True)
+                break
 
         widget.reload_pstat_list(data_as_dict[encoding.SELECTED_PSTATS])
 
@@ -136,9 +156,16 @@ class EISWidget(AbstractBaseWidget):
         for radiobutton in self.impedance_reader_speed_radiobuttons:
             if radiobutton.isChecked():
                 selected_speed_option = radiobutton.text()
+                break
+
+        for radiobutton in self.voltage_reference_radiobuttons:
+            if radiobutton.isChecked():
+                selected_voltage_reference = radiobutton.text()
+                break
 
         data = {
             encoding.DC_VOLTAGE: self.DC_voltage_spinbox.value(),
+            encoding.DC_VOLTAGE_REFERENCE: selected_voltage_reference,
             encoding.INITIAL_FREQUENCY: self.initial_frequency_spinbox.value(),
             encoding.FINAL_FREQUENCY: self.final_frequency_spinbox.value(),
             encoding.POINTS_PER_DECADE: self.points_per_decade_spinbox.value(),

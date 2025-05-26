@@ -1,6 +1,7 @@
 {{ APPLICATION_NAME }} uses Gamry Framework's **GamryCOM** interface to interact with Gamry instruments. This feature is completely optional.
 
 - You can enable/disable Gamry support by clicking the checkbox.
+    - If Gamry integration is enabled, Quincy will take longer to launch (as it needs to load **GamryCOM**).
 
 - For Gamry features to work, {{ APPLICATION_NAME }} needs to know where **GamryCOM** is. You can specify the executable location using the file dialog button.
 

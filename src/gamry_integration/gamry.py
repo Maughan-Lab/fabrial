@@ -83,19 +83,18 @@ class Potentiostat:
         """Clean up the potentiostat resources."""
         self.close()
 
-    def initialize(self, dc_voltage: float, impedance_guess: float) -> Self:
+    def initialize(self, dc_voltage_vs_reference: float) -> Self:
         """
         Initialize the potentiostat the same way Gamry does for the Potentiostatic EIS experiment.
         """
         # I know it's ugly, I'm sorry my child
         self.turn_on()
         self.device.SetCtrlMode(self.GamryCOM.PstatMode)
-        # self.device.SetAchSelect(self.GamryCOM.GND)
+        self.device.SetAchSelect(self.GamryCOM.GND)
         self.device.SetIEStability(self.GamryCOM.StabilityFast)
         self.device.SetCASpeed(3)
         self.device.SetSenseSpeedMode(True)
         self.device.SetGround(self.GamryCOM.Float)
-        # self.device.SetIConvention(self.GamryCOM.Anodic)
         self.device.SetIchRange(3.0)
         self.device.SetIchRangeMode(False)
         self.device.SetIchFilter(2.5)
@@ -111,12 +110,9 @@ class Potentiostat:
         self.device.SetIERange(0.03)
         self.device.SetIERangeMode(False)
         self.device.SetAnalogOut(0.0)
-        self.device.SetVoltage(dc_voltage)
+        self.device.SetVoltage(dc_voltage_vs_reference)
         self.device.SetPosFeedEnable(False)
         self.device.SetIruptMode(self.GamryCOM.IruptOff)
-
-        IE_range = self.device.TestIERange(dc_voltage / impedance_guess)
-        self.device.SetIERange(IE_range)
 
         return self
 
@@ -166,6 +162,11 @@ class Potentiostat:
         self.device.SetCell(self.GamryCOM.CellOff)
         return self
 
+    def measure_open_circuit_voltage(self) -> float:
+        """Measure the open-circuit voltage."""
+        voltage_reader = OCVoltageReader(self)
+        return voltage_reader.run()
+
     # ----------------------------------------------------------------------------------------------
     # context manager
     def __enter__(self) -> Self:
@@ -210,12 +211,12 @@ class ImpedanceReader(QObject):
     def measure(self, frequency: float, ac_voltage: float):
         """
         Perform a measurement. The reader will emit **dataReady** when data is ready to be read.
-        If the measurement limit has been reached, **dataReady** is not emitted.
 
-        :param frequency: The frequency to measure at (in Hz).
+        :param frequency: The frequency to measure at (in Hz). This frequency is clamped to the
+        potentiostats limits.
         :param ac_voltage: The AC voltage to measure at (in V).
         """
-        self.readz.Measure(frequency, ac_voltage)
+        self.readz.Measure(self.pstat.clamp_frequency(frequency), ac_voltage)
 
     def cleanup(self):
         """Clean up the reader resources."""
@@ -293,14 +294,16 @@ class ImpedanceReader(QObject):
 class OCVoltageReader:
     """Uses a **Potentiostat** to measure the open-circuit voltage."""
 
+    SAMPLE_TIME = 0.25  # seconds
+
     def __init__(self, potentiostat: Potentiostat):
         self.pstat = potentiostat
-        GamryCOM = self.pstat.com_interface()
-        self.signal = client.CreateObject(GamryCOM.GamrySignalConst)
-        self.oc_reader = client.CreateObject(GamryCOM.GamryDtaqOcv)
-        self.signal.Init(self.pstat.inner(), 0, 10, 0.25, GamryCOM.PstatMode)
-        self.oc_reader.Init(self.pstat.inner())
-        self.pstat.inner().SetSignal(self.signal)
+        gamry_pstat = self.pstat.inner()
+        self.GamryCOM = self.pstat.com_interface()
+        self.signal = client.CreateObject(self.GamryCOM.GamrySignalConst)
+        self.oc_reader = client.CreateObject(self.GamryCOM.GamryDtaqOcv)
+        self.signal.Init(gamry_pstat, 0, 1, self.SAMPLE_TIME, self.GamryCOM.PstatMode)
+        self.oc_reader.Init(gamry_pstat)
 
         self.finished = False
         self.open_circuit_voltage = 0.0
@@ -311,29 +314,59 @@ class OCVoltageReader:
 
     def run(self) -> float:
         """
-        Run the open-circuit voltage test. This turns the potentiostat off.
+        Run the open-circuit voltage test. This turns the cell off.
 
         :returns: The open-circuit voltage in Volts.
         """
-        self.pstat.turn_off()
+        # a lot of this code is probably redundant, but I'm copying from the Common Functions.exp
+        # file (OCDelay)
+        gamry_pstat = self.pstat.inner()
+        gamry_pstat.SetCell(self.GamryCOM.CellOff)
+        gamry_pstat.SetCtrlMode(self.GamryCOM.PstatMode)
 
+        gamry_pstat.SetSenseSpeedMode(True)
+        gamry_pstat.SetIConvention(self.GamryCOM.Anodic)
+        gamry_pstat.SetGround(self.GamryCOM.Float)
+        gamry_pstat.SetIchRange(3.0)
+        gamry_pstat.SetIchRangeMode(True)
+        gamry_pstat.SetIchOffsetEnable(False)
+        gamry_pstat.SetIchFilter(1.0 / self.SAMPLE_TIME)
+        gamry_pstat.SetVchRange(10.0)
+        gamry_pstat.SetVchRangeMode(True)
+        gamry_pstat.SetVchOffsetEnable(False)
+        gamry_pstat.SetVchFilter(1.0 / self.SAMPLE_TIME)
+        gamry_pstat.SetAchRange(3.0)
+        gamry_pstat.SetIERange(0.03)
+        gamry_pstat.SetIERangeMode(False)
+        gamry_pstat.SetAnalogOut(0.0)
+        gamry_pstat.SetVoltage(0.0)
+        gamry_pstat.SetPosFeedEnable(False)
+        gamry_pstat.SetIruptMode(self.GamryCOM.IruptOff)
+
+        gamry_pstat.SetSignal(self.signal)
+        gamry_pstat.InitSignal()
+
+        gamry_pstat.FindVchRange()
+
+        # actually run the open-circuit voltage test
         connection = client.GetEvents(self.oc_reader, self)
         self.oc_reader.Run(True)
         while not self.finished:
             client.PumpEvents(0.1)
         connection.disconnect()
+        del connection
 
-        return self.open_circuit_voltage
+        return self.open_circuit_voltage  # return the last measured open-circuit voltage
 
     # ----------------------------------------------------------------------------------------------
     # COM functions
-    def _IGamryDtaqEvents_OnDataAvailable(self, this):
-        """Unused but required by COM."""
-        points = self.oc_reader.Cook(1024)[-1]
-        self.open_circuit_voltage = points[1][0]  # Vf
+    def _IGamryDtaqEvents_OnDataAvailable(self, this) -> None:
+        """Called whenever there are new open circuit voltage measurements."""
+        points: list[list[float]] = self.oc_reader.Cook(1024)[1]
+        self.open_circuit_voltage = points[1][-1]  # Vf
 
     def _IGamryDtaqEvents_OnDataDone(self, this):
-        """Gets called when data is ready."""
+        """Gets called when the timeout is reached."""
         self.finished = True
 
 

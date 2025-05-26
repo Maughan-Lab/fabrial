@@ -246,12 +246,14 @@ class SequenceTreeWidget(Container):
         return len(self.threads) > 0
 
     def run_sequence(self) -> Self:
-        """Run the sequence."""
+        """Run the sequence. Creates the data directory if it doesn't exist."""
         root_item = self.view.model().root()
         if not root_item.child_count() > 0:  # return early if there are no items to run
             return self
 
         directory = self.data_directory()
+        os.makedirs(directory, exist_ok=True)
+
         if len(os.listdir(directory)) > 0:  # the directory isn't empty
             # ask the user if they are okay with writing to a non-empty directory
             if not YesCancelDontShowDialog(

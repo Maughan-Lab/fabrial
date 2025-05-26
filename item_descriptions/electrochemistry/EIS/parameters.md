@@ -7,6 +7,14 @@
 
     The DC voltage offset in Volts.
 
+    - **{{ VS_EREF }}**
+
+        The voltage is vs. the reference.
+
+    - **{{ VS_EOC }}**
+
+        The voltage is vs. the open-circuit voltage.
+
 - **{{ INITIAL_FREQUENCY }}**
 
     The starting frequency of the frequency sweep in Hz.

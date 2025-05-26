@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import QMessageBox
 
 from .....classes.process import AbstractGraphingProcess
 from .....classes.runners import ProcessRunner
-from .....gamry_integration.gamry import GAMRY, ImpedanceReader, OCVoltageReader, Potentiostat
+from .....gamry_integration.gamry import GAMRY, ImpedanceReader, Potentiostat
 from .....utility.dataframe import add_to_dataframe
 from . import encoding
 from .encoding import FileFormat, Headers
@@ -28,6 +28,7 @@ class ImpedanceReaderData:
     plot_index: int
     frequency: float
     measurement_count: int = 0
+    calibration_measurement: bool = True
     retry_count: int = 0
 
 
@@ -42,6 +43,7 @@ class EISProcess(AbstractGraphingProcess):
         self.points_per_decade: int = data[encoding.POINTS_PER_DECADE]
         self.ac_voltage: float = data[encoding.AC_VOLTAGE] / 1000  # convert from mV to V
         self.dc_voltage: float = data[encoding.DC_VOLTAGE]
+        self.vs_open_circuit_voltage = data[encoding.DC_VOLTAGE_REFERENCE] == encoding.VS_EOC
         self.impedance_guess: float = data[encoding.ESTIMATED_IMPEDANCE]
         self.impedance_reader_speed_option: str = data[encoding.IMPEDANCE_READER_SPEED]
         self.pstat_identifiers: list[str] = data[encoding.SELECTED_PSTATS]
@@ -64,22 +66,14 @@ class EISProcess(AbstractGraphingProcess):
         with ExitStack() as context_manager:
             impedance_readers = self.create_impedance_readers(context_manager)
             try:
-                # for impedance_reader in impedance_readers:
-                #     potentiostat = impedance_reader.potentiostat()
-                #     oc_voltage_reader = OCVoltageReader(potentiostat)
-                #     open_circuit_voltage = oc_voltage_reader.run()
-                #     print(open_circuit_voltage)
-                #     potentiostat.turn_on()
-                #     potentiostat.set_dc_voltage(self.dc_voltage + open_circuit_voltage)
-
                 # do the first measurement (this starts a chain)
                 for impedance_reader in impedance_readers:
-                    # impedance_reader.potentiostat().turn_on()
-                    # impedance_reader.potentiostat().set_dc_voltage(self.dc_voltage)
                     impedance_reader.measure(self.initial_frequency, self.ac_voltage)
                 # run while at least one impedance reader still has measurements to do or until we
                 # get #canceled
                 while not self.is_canceled():
+                    # this causes a bunch of signals to fire which do most of the data acquisition
+                    # and recording
                     client.PumpEvents(0.1)
                     self.wait(50)
                     for impedance_reader in impedance_readers:
@@ -106,13 +100,22 @@ class EISProcess(AbstractGraphingProcess):
         return "Electrochemical Impedance Spectroscopy"
 
     def handle_data_ready(self, impedance_reader: ImpedanceReader, success: bool):
-        """Handle data being ready for an impedance reader."""
+        """
+        Handle data being ready for an impedance reader. The first measurement is run twice; the
+        first time calibrates the potentiostat and the second time actually records data.
+        """
         # unless the impedance reader is finished with its frequency sweep, each call to this
         # function will queue another call for the same impedance reader
         if self.is_canceled():
             return
 
         impedance_reader_data = self.impedance_reader_data[impedance_reader]
+
+        if impedance_reader_data.calibration_measurement:  # if this is the calibration measurement
+            impedance_reader_data.calibration_measurement = False
+            impedance_reader.measure(impedance_reader_data.frequency, self.ac_voltage)
+            return
+
         if not success:
             # if we failed to read, retry 10 times
             if impedance_reader_data.retry_count < 10:
@@ -155,9 +158,7 @@ class EISProcess(AbstractGraphingProcess):
                 math.log10(self.initial_frequency)
                 + impedance_reader_data.measurement_count * self.log_increment,
             )
-            impedance_reader_data.frequency = impedance_reader.potentiostat().clamp_frequency(
-                desired_frequency
-            )
+            impedance_reader_data.frequency = desired_frequency
             impedance_reader.measure(impedance_reader_data.frequency, self.ac_voltage)
 
     def is_finished(self, impedance_reader: ImpedanceReader) -> bool:
@@ -179,7 +180,14 @@ class EISProcess(AbstractGraphingProcess):
             # make the potentiostat
             potentiostat = context_manager.enter_context(
                 Potentiostat(GAMRY.com_interface(), identifer)
-            ).initialize(self.dc_voltage, self.impedance_guess)
+            )
+            # measure the open circuit voltage to calculate the voltage vs. Eref
+            if self.vs_open_circuit_voltage:
+                open_circuit_voltage = potentiostat.measure_open_circuit_voltage()
+                voltage_vs_reference = self.dc_voltage + open_circuit_voltage
+            else:
+                voltage_vs_reference = self.dc_voltage
+            potentiostat.initialize(voltage_vs_reference)
             # make the impedance reader
             impedance_reader = context_manager.enter_context(
                 ImpedanceReader(potentiostat)
@@ -286,10 +294,11 @@ class EISProcess(AbstractGraphingProcess):
             {
                 encoding.SELECTED_PSTATS: " ".join(self.pstat_identifiers),  # space separate them
                 encoding.DC_VOLTAGE: self.dc_voltage,
+                encoding.DC_VOLTAGE_REFERENCE: self.data()[encoding.DC_VOLTAGE_REFERENCE],
                 encoding.INITIAL_FREQUENCY: self.initial_frequency,
                 encoding.FINAL_FREQUENCY: self.final_frequency,
                 encoding.POINTS_PER_DECADE: self.points_per_decade,
-                encoding.AC_VOLTAGE: self.ac_voltage,
+                encoding.AC_VOLTAGE: self.ac_voltage * 1000,  # V to mV
                 encoding.ESTIMATED_IMPEDANCE: self.impedance_guess,
                 encoding.IMPEDANCE_READER_SPEED: self.impedance_reader_speed_option,
             },
