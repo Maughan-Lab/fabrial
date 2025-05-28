@@ -81,6 +81,8 @@ class EISProcess(AbstractGraphingProcess):
                             break
                     else:  # the for loop finished naturally
                         break
+            except Exception:
+                pass
             finally:
                 self.post_run(impedance_readers)
 
@@ -187,7 +189,7 @@ class EISProcess(AbstractGraphingProcess):
                 voltage_vs_reference = self.dc_voltage + open_circuit_voltage
             else:
                 voltage_vs_reference = self.dc_voltage
-            potentiostat.initialize(voltage_vs_reference)
+            potentiostat.initialize(voltage_vs_reference, self.impedance_guess)
             # make the impedance reader
             impedance_reader = context_manager.enter_context(
                 ImpedanceReader(potentiostat)
