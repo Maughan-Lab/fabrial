@@ -83,18 +83,17 @@ class Potentiostat:
         """Clean up the potentiostat resources."""
         self.close()
 
-    def initialize(self, dc_voltage_vs_reference: float, impedance_guess: float) -> Self:
+    def initialize(self, dc_voltage_vs_reference: float) -> Self:
         """
         Initialize the potentiostat the same way Gamry does for the Potentiostatic EIS experiment.
         """
         # I know it's ugly, I'm sorry my child
-        self.turn_off()
-        self.device.SetAchSelect(self.GamryCOM.GND)
+        self.turn_on()
         self.device.SetCtrlMode(self.GamryCOM.PstatMode)
+        self.device.SetAchSelect(self.GamryCOM.GND)
         self.device.SetIEStability(self.GamryCOM.StabilityFast)
-        self.device.SetCASpeed(2)  # this is probably wrong (should be 3, but 2 helps)
+        self.device.SetCASpeed(3)
         self.device.SetSenseSpeedMode(True)
-        self.device.SetIConvention(self.GamryCOM.Anodic)
         self.device.SetGround(self.GamryCOM.Float)
         self.device.SetIchRange(3.0)
         self.device.SetIchRangeMode(False)
@@ -114,11 +113,6 @@ class Potentiostat:
         self.device.SetVoltage(dc_voltage_vs_reference)
         self.device.SetPosFeedEnable(False)
         self.device.SetIruptMode(self.GamryCOM.IruptOff)
-
-        ie_range = self.device.TestIERange(dc_voltage_vs_reference / impedance_guess)
-        self.device.SetIERange(ie_range)
-
-        self.turn_on()
 
         return self
 
@@ -277,7 +271,7 @@ class ImpedanceReader(QObject):
 
     # ----------------------------------------------------------------------------------------------
     # COM functions
-    def _IGamryReadZEvents_OnDataDone(self, this: Any, error_status: int):
+    def _IGamryReadZEvents_OnDataDone(self, this: Any, error_status: bool):
         """
         This is a callback called by the `comtypes` module when the a potentiostat has completed a
         measurement.
