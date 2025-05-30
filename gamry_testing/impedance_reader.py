@@ -65,7 +65,7 @@ class ImpedanceReader:
         self.start_time = time.time()
         # calibration measurement (triggers a chain of other measurements)
         self.readz.Measure(self.initial_frequency, self.ac_voltage)
-        while self.is_finished():
+        while not self.is_finished():
             client.PumpEvents(0.1)
 
         self.file.close()
@@ -73,7 +73,7 @@ class ImpedanceReader:
         del self.connection
 
     def is_finished(self) -> bool:
-        return self.measurement_count >= self.maximum_measurements
+        return self.measurement_count > self.maximum_measurements
 
     def record_measurement(self):
         self.writer.writerow(
@@ -101,6 +101,7 @@ class ImpedanceReader:
     # ----------------------------------------------------------------------------------------------
     # COM functions
     def _IGamryReadZEvents_OnDataDone(self, this: Any, error_status: int):
+        print(self.measurement_count)
         if error_status != 0:
             # in general ignoring the error status because it isn't relevant for this example
             print("An error occurred")
@@ -112,9 +113,9 @@ class ImpedanceReader:
             return
 
         # if we got here we are actually measuring and recording data
+        self.record_measurement()
         self.measurement_count += 1
         if not self.is_finished():
-            self.record_measurement()
             desired_frequency = math.pow(
                 10,
                 math.log10(self.initial_frequency) + self.measurement_count * self.log_increment,
