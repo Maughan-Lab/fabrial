@@ -34,7 +34,7 @@ def make_application_folders():
 
 def main(main_window_type: type[MainWindow] = MainWindow):
     try:
-        me = SingleInstance()  # noqa
+        me = SingleInstance()
     except SingleInstanceException:
         sys.exit()
 
