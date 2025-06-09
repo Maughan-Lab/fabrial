@@ -4,11 +4,11 @@ A full rewrite of Quincy using PyQt6.
 Quincy is an application for controlling lab instruments. Currently, it supports ovens capable of communicating using modbus protocols and [Gamry](https://www.gamry.com/) potentiostats.
 
 # Installation
-Head to the latest release and download `QuincyInstaller.exe`, then run.
+Head over to the [latest release](https://github.com/Maughan-Lab/Quincy-New/releases/latest) and download `QuincyInstaller.exe`, then run.
 
 # Notes for Developers
 - This program uses PyInstaller to compile and InstallForge to create an installer.
-    * An awesome reference for both programs can be found [here](https://www.pythonguis.com/tutorials/packaging-pyqt6-applications-windows-pyinstaller/).
+    - An awesome reference for both programs can be found [here](https://www.pythonguis.com/tutorials/packaging-pyqt6-applications-windows-pyinstaller/).
 - You can add additional sequence builder items by following the instructions [here](/docs/Adding%20New%20Sequence%20Items.md).
 
 # Icons Attribution
