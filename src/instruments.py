@@ -40,7 +40,7 @@ class Instrument(QObject, metaclass=ABCQObjectMeta):
         self.connection_status = ConnectionStatus.NULL
         # this lock system indicates to the rest of the application whether the instrument is
         # available
-        self.unlocked = True
+        self.unlocked = DataMutex(True)
         # this lock ensures accessing the physical device is thread safe
         self.physical_device_lock = QMutex()
 
@@ -49,17 +49,17 @@ class Instrument(QObject, metaclass=ABCQObjectMeta):
         Make the instrument available for only one process. This should be followed by a call to
         **unlock()**. Emits signals.
         """
-        self.unlocked = False
+        self.unlocked.set(False)
         self.lockChanged.emit(False)
 
     def unlock(self):
         """Make the instrument available for other processes. Emits signals."""
-        self.unlocked = True
+        self.unlocked.set(True)
         self.lockChanged.emit(True)
 
     def is_unlocked(self) -> bool:
         """Whether the instrument is available."""
-        return self.unlocked
+        return self.unlocked.get()
 
     def device_lock(self) -> QMutex:
         """Get the device lock, which ensures accessing the physical device is thread safe."""

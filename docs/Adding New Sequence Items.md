@@ -83,7 +83,7 @@ Some general notes
                     - This dictates the name of the directory the process writes data to. All processes must have a data directory because they all record metadata in a **metadata.csv** file.
                     - The process runner will take care of the full file path and process number, so use something like **Set Temperature** instead of **C:/Users/.../Set Temperature**.
                 - `run()`
-                    - The sequence runner will call this method after creating a `Process` instance. It is allowed to do anything, you just need to make sure to frequently call `wait()` so you don't freeze the application.
+                    - The sequence runner will call this method after creating a `Process` instance. It is allowed to do anything, you just need to make sure to frequently call `wait()` so the process runner can send and receive signals.
 - In **src/sequence_builder/items/item_types.py**, edit the `ItemType` enum to have an entry for your action's widget.
 - This is where modifying the **\_\_init\_\_.py** files comes in handy, as you don't have to provide a full import path to the widget file.
 - Navigate to **item_initialization/[category you are adding to]**

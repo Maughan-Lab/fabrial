@@ -24,6 +24,7 @@ class ItemType(Enum):
     SET_TEMPERATURE = temperature.set_temperature.widget.SetTemperatureWidget
     INCREMENT_TEMPERATURE = temperature.increment_temperature.widget.IncrementTemperatureWidget
     BACKGROUND_TEMPERATURE = temperature.background_temperature.widget.BackgroundTemperatureWidget
+    SET_NO_STABILIZE = temperature.set_no_stabilize.widget.SetNoStabilizeWidget
 
     @classmethod
     def from_name(cls: type[Self], name: str) -> Self:
