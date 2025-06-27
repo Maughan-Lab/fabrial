@@ -1,0 +1,1 @@
+Set the oven's setpoint without waiting for it to stabilize. This can be used, for example, to return to room temperature at the end of a sequence.

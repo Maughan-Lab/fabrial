@@ -13,4 +13,5 @@
 /share/
 
 # silly scripts
-count_lines.py
+/count_lines.py
+/test.py

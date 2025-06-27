@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-import pyqtgraph as pg  # type: ignore
+from pyqtgraph import PlotDataItem
 
 
 @dataclass
@@ -24,7 +24,7 @@ class LineSettings:
 
 @dataclass
 class LineData:
-    line: pg.PlotDataItem
+    line: PlotDataItem
     x_data: list[float | int]
     y_data: list[float | int]
 
