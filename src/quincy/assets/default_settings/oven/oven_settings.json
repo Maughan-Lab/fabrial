@@ -1,0 +1,11 @@
+{
+    "Minimum Temperature": 0.0,
+    "Maximum Temperature": 232.0,
+    "Measurement Interval (ms)": 1000,
+    "Stability Tolerance": 1.0,
+    "Minimum Measurements for Stability": 150,
+    "Stability Check Interval (ms)": 5000,
+    "Temperature Register": 1,
+    "Setpoint Register": 0,
+    "Number of Decimals": 1
+}

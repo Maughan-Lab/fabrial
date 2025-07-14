@@ -1,0 +1,14 @@
+{
+    "type": "EIS",
+    "linked-widget-data": {
+        "DC Voltage (V)": 0,
+        "DC Voltage Reference": "Vs. Eoc",
+        "Initial Frequency (Hz)": 100000,
+        "Final Frequency (Hz)": 0.2,
+        "Points Per Decade": 10,
+        "AC Voltage (mV rms)": 10,
+        "Estimated Z (ohms)": 100,
+        "Impedance Reader Speed": "Normal",
+        "Potentiostat(s)": []
+    }
+}

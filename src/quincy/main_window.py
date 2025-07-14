@@ -1,0 +1,122 @@
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtGui import QCloseEvent
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
+
+from .custom_widgets import YesCancelDialog, YesNoDialog
+from .custom_widgets.settings import ApplicationSettingsWindow
+from .menu import MenuBar
+from .secondary_window import SecondaryWindow
+from .tabs import TabWidget
+from .utility import events
+
+
+class MainWindow(QMainWindow):
+    showError = pyqtSignal(str)
+
+    def __init__(self) -> None:
+        self.relaunch = False
+        super().__init__()
+        self.setWindowTitle("Quincy")
+        self.settings_window = ApplicationSettingsWindow(self)
+        # create tabs
+        self.tabs = TabWidget(self)
+        self.setCentralWidget(self.tabs)
+        # shortcuts
+        self.oven_control_tab = self.tabs.oven_control_tab
+        self.sequence_tab = self.tabs.sequence_builder_tab
+        self.sequence_visuals_tab = self.tabs.sequence_visuals_tab
+        self.connection_widget = self.oven_control_tab.instrument_connection_widget
+        # create menu bar
+        self.menu_bar = MenuBar(self)
+        self.setMenuBar(self.menu_bar)
+        # secondary windows are stored here
+        self.secondary_windows: list[QMainWindow] = []
+
+        self.connect_signals()
+
+    def connect_signals(self):
+        """Connect widget signals."""
+        self.showError.connect(self.show_error)
+
+    # ----------------------------------------------------------------------------------------------
+    # resizing
+    def toggle_fullscreen(self):
+        """Toggle fullscreen mode."""
+        if self.isFullScreen():
+            self.showNormal()
+        else:
+            self.showFullScreen()
+
+    def shrink(self):
+        """Shrink the window to its minimum size. Exits fullscreen mode."""
+        if self.isFullScreen():
+            self.showNormal()
+        self.resize(self.sizeHint())
+
+    # ----------------------------------------------------------------------------------------------
+    # multiple windows
+    def new_window(self, title: str, central_widget: QWidget) -> SecondaryWindow:
+        """
+        Create a new window owned by the main window. The window is automatically shown.
+
+        :param title: The window title.
+        :param central_widget: The widget to show inside the secondary window.
+        :returns: The created window.
+        """
+        window = SecondaryWindow(title, central_widget)
+        self.secondary_windows.append(window)
+        window.closed.connect(lambda: self.secondary_windows.remove(window))
+        window.show()
+        return window
+
+    # ----------------------------------------------------------------------------------------------
+    # closing the window
+    def closeEvent(self, event: QCloseEvent | None):  # overridden method
+        """Prevent the window from closing if a sequence or stability check are running."""
+        if event is not None:
+            if self.allowed_to_close():
+                self.save_on_close()
+                event.accept()
+            else:
+                event.ignore()
+
+    def allowed_to_close(self) -> bool:
+        """Determine if the window should close."""
+        # only close if a sequence is not running
+        process_widget = self.sequence_tab.sequence_tree
+        if process_widget.is_running():
+            if YesCancelDialog(
+                "Are you sure you want to exit?", "A sequence is currently running."
+            ).run():
+                process_widget.cancelCommand.emit()
+                while process_widget.is_running():
+                    events.PROCESS_EVENTS()
+            else:
+                return False
+        return True
+
+    def save_on_close(self):
+        """Save all data that gets saved on closing. Call this when closing the application."""
+        self.sequence_tab.save_on_close()
+        self.connection_widget.save_on_close()
+
+    def should_relaunch(self) -> bool:
+        """Whether the application should relaunch."""
+        return self.relaunch
+
+    def set_relaunch(self, should_relaunch: bool):
+        """Set whether the application should relaunch."""
+        self.relaunch = should_relaunch
+
+    # ----------------------------------------------------------------------------------------------
+    # errors
+    def show_error(self, message: str):
+        """Show a (likely) fatal error and ask to close."""
+        if YesNoDialog("Application Error", message).run():
+            QApplication.exit()
+
+    # ----------------------------------------------------------------------------------------------
+    # settings
+    def show_settings(self):
+        """Show the application settings. These settings are saved when the window closes."""
+        self.settings_window.show()

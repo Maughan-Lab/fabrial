@@ -1,0 +1,6 @@
+{
+    "type": "SET_TEMPERATURE",
+    "linked-widget-data": {
+        "Setpoint": 0
+    }
+}
