@@ -39,6 +39,7 @@ Use `Protocol` instead of ABC. Try to minimize inheritance and use interfaces in
 - Debate whether the pause button is still necessary.
     - If you keep pause capabilities, remove the "error pause" state.
 - Stop calling `process_events()`. You can probably block the `QThread`'s event loop—you'll still be able to send signals, just not receive them.
+- Figure out how to record the oven setpoint in every process, even without a global oven instance.
 
 ## Communication with the Sequence
 - Make the dialog system better. Try to still use `QMessageBox`. You should be able to do something like this:
@@ -69,16 +70,10 @@ All nested tasks will need to call some method on the `ProcessRunner` that runs 
 ## Error Logging
 - Instead of showing the whole error in a dialog that can get cut off, record the error in a logging file, then show an error dialog that says something like "Quincy encountered a fatal error and needs to close".
 
-## Constants
-- Put the `Files` module inside a `constants` module, rename it to `files`, and use `__init__.py` files to handle everything.
-
 ## Consistency
-- Make sure you aren't importing functions, just the module containing them.
-- Make all `files` modules snake case.
-- Keep the original comment style used for Quincy, don't change to Rust style.
+- Change comments to Rust style when you see them.
 - Mark methods as "overridden" or "implementation".
 - "instrument" $\to$ "device"
-- Use more `__init__.py` files for re-exporting.
 
 ## Protocols
 - Make a `Protocol` class for devices. This will make your life easier.
@@ -87,6 +82,7 @@ All nested tasks will need to call some method on the `ProcessRunner` that runs 
 - Check the `status.py` enum file to see if you can remove stuff.
 
 ## External Items
+- Ignore below, use plugins.
 - Add support for user-added sequence items. It looks like the code for these has to reside within `src` for them to be able to access the rest of the codebase, but it could be in a folder like `user_items`.
 
 ## Avoid Locks

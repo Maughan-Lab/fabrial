@@ -4,12 +4,11 @@ import time
 
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QVBoxLayout
 
-from main import main
-from src.custom_widgets.augmented.groupbox import GroupBox
-from src.custom_widgets.augmented.spin_box import TemperatureSpinBox  # ../custom_widgets
-from src.instruments import INSTRUMENTS, ConnectionStatus, Oven
-from src.main_window import MainWindow
-from src.utility.layouts import add_sublayout, add_to_layout  # ../utility
+from quincy import MainWindow
+from src.quincy.__main__ import main
+from src.quincy.custom_widgets import GroupBox, TemperatureSpinBox
+from src.quincy.instruments import INSTRUMENTS, ConnectionStatus, Oven
+from src.quincy.utility import layout as layout_util
 
 
 class DeveloperOven(Oven):
@@ -103,28 +102,36 @@ class DeveloperWidget(GroupBox):
         disconnect_button.pressed.connect(
             lambda: self.oven.set_connected(ConnectionStatus.DISCONNECTED)
         )
-        add_to_layout(add_sublayout(layout, QHBoxLayout), connect_button, disconnect_button)
+        layout_util.add_to_layout(
+            layout_util.add_sublayout(layout, QHBoxLayout), connect_button, disconnect_button
+        )
 
     def create_connection_signal_widgets(self, layout):
         connected_button = QPushButton("Emit Connected")
         connected_button.pressed.connect(lambda: self.oven.connectionChanged.emit(True))
         disconnected_button = QPushButton("Emit Disconnect")
         disconnected_button.pressed.connect(lambda: self.oven.connectionChanged.emit(False))
-        add_to_layout(add_sublayout(layout, QHBoxLayout), connected_button, disconnected_button)
+        layout_util.add_to_layout(
+            layout_util.add_sublayout(layout, QHBoxLayout), connected_button, disconnected_button
+        )
 
     def create_lock_widgets(self, layout):
         lock_button = QPushButton("Lock")
         lock_button.pressed.connect(lambda: self.oven.set_unlocked(False))
         unlock_button = QPushButton("Unlock")
         unlock_button.pressed.connect(lambda: self.oven.set_unlocked(True))
-        add_to_layout(add_sublayout(layout, QHBoxLayout), unlock_button, lock_button)
+        layout_util.add_to_layout(
+            layout_util.add_sublayout(layout, QHBoxLayout), unlock_button, lock_button
+        )
 
     def create_lock_signal_widgets(self, layout):
         acquire_button = QPushButton("Emit Acquired")
         acquire_button.pressed.connect(lambda: self.oven.lockChanged.emit(False))
         release_button = QPushButton("Emit Released")
         release_button.pressed.connect(lambda: self.oven.lockChanged.emit(True))
-        add_to_layout(add_sublayout(layout, QHBoxLayout), release_button, acquire_button)
+        layout_util.add_to_layout(
+            layout_util.add_sublayout(layout, QHBoxLayout), release_button, acquire_button
+        )
 
     def create_temperature_widgets(self, layout):
         temperature_spinbox = TemperatureSpinBox(INSTRUMENTS.oven)
@@ -135,7 +142,9 @@ class DeveloperWidget(GroupBox):
         temperature_button.pressed.connect(
             lambda: self.oven.set_temperature(temperature_spinbox.value())
         )
-        add_to_layout(add_sublayout(layout, QHBoxLayout), temperature_spinbox, temperature_button)
+        layout_util.add_to_layout(
+            layout_util.add_sublayout(layout, QHBoxLayout), temperature_spinbox, temperature_button
+        )
 
     def create_setpoint_widgets(self, layout):
         setpoint_spinbox = TemperatureSpinBox(INSTRUMENTS.oven)
@@ -144,12 +153,14 @@ class DeveloperWidget(GroupBox):
         )
         setpoint_button = QPushButton("Change Setpoint")
         setpoint_button.pressed.connect(lambda: self.oven.change_setpoint(setpoint_spinbox.value()))
-        add_to_layout(add_sublayout(layout, QHBoxLayout), setpoint_spinbox, setpoint_button)
+        layout_util.add_to_layout(
+            layout_util.add_sublayout(layout, QHBoxLayout), setpoint_spinbox, setpoint_button
+        )
 
     def create_freeze_widgets(self, layout):
         freeze_button = QPushButton("Freeze for 10s")
         freeze_button.pressed.connect(self.freeze)
-        add_to_layout(add_sublayout(layout, QHBoxLayout), freeze_button)
+        layout_util.add_to_layout(layout_util.add_sublayout(layout, QHBoxLayout), freeze_button)
 
     def freeze(self):
         for i in range(1, 11):

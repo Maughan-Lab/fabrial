@@ -1,15 +1,17 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-import os
-import shutil
+from pathlib import Path
 
-name = "Quincy"
+APP_NAME = "Quincy"
+BASE_DIR = Path("../src/quincy")
+ASSETS = BASE_DIR.joinpath("assets")
+ICONS = ASSETS.joinpath("icons")
 
 a = Analysis(
-    ["../main.py"],
+    ["../packaged_main.py"],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[(ASSETS, "assets")],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -25,13 +27,13 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name=name,
+    name=APP_NAME,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     console=False,
-    icon="../icons/oven_icon.ico",
+    icon=str(ICONS.joinpath("oven_icon.ico")),
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
@@ -46,14 +48,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name=name,
+    name=APP_NAME,
 )
-
-# copy the dependencies into dist/Quincy
-# filenames are relative to the base directory
-FILES_TO_COPY = []
-FOLDERS_TO_COPY = ["icons", "item_initialization", "item_descriptions", "default_settings"]
-for file in FILES_TO_COPY:
-    shutil.copyfile(os.path.join("..", file), os.path.join("dist", name, file))
-for folder in FOLDERS_TO_COPY:
-    shutil.copytree(os.path.join("..", folder), os.path.join("dist", name, folder))

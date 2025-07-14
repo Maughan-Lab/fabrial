@@ -1,8 +1,5 @@
-# Python virtual environment
-/venv/
 # Quincy files
 **/__pycache__/
-**/.mypy_cache/
 **/.pytest_cache/
 **/Data Files/
 **/saved_settings/
