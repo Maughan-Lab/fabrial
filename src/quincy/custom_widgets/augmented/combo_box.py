@@ -13,7 +13,7 @@ class ComboBox(QComboBox):
     pressed = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        QComboBox.__init__(self, *args, **kwargs)
         self.setStyleSheet("combobox-popup: 0")
         self.setMaxVisibleItems(MAX_VISIBLE_ITEMS)
 
@@ -45,4 +45,4 @@ class ComboBox(QComboBox):
     # overridden methods
     def showPopup(self):
         self.pressed.emit()
-        super().showPopup()
+        QComboBox.showPopup(self)

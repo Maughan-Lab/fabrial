@@ -20,7 +20,7 @@ class OvenControlTab(QWidget):
         self.instrument_connection_widget: InstrumentConnectionWidget
         self.stability_widget: StabilityCheckWidget
 
-        super().__init__()
+        QWidget.__init__(self)
 
         self.create_widgets()
 

@@ -7,7 +7,7 @@ class DataMutex[Data: Any](QReadWriteLock):  # generic class
     """QReadWriteMutex with associated data."""
 
     def __init__(self, data: Data):
-        super().__init__()
+        QReadWriteLock.__init__(self)
         self.data: Data = data
 
     def set(self, data: Data):

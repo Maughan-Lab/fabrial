@@ -17,7 +17,8 @@ class HoldWidget(AbstractBaseWidget):
 
     def __init__(self):
         layout = QFormLayout()
-        super().__init__(
+        AbstractBaseWidget.__init__(
+            self,
             layout,
             self.BASE_DISPLAY_NAME,
             HoldProcess,

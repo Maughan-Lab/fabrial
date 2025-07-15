@@ -20,7 +20,7 @@ class Dialog(QMessageBox):
         :param default_button: The initially selected button. Defaults to **StandardButton.Ok** if
         the dialog has that button, otherwise no button is selected.
         """
-        super().__init__()
+        QMessageBox.__init__(self)
 
         self.setWindowTitle(title)
         self.setText(message)
@@ -42,7 +42,8 @@ class YesCancelDialog(Dialog):
     """Dialog pop-up with Yes and Cancel buttons."""
 
     def __init__(self, title: str, message: str):
-        super().__init__(
+        Dialog.__init__(
+            self,
             title,
             message,
             Dialog.StandardButton.Yes | Dialog.StandardButton.Cancel,
@@ -54,14 +55,15 @@ class OkDialog(Dialog):
     """Dialog pop-up with an Ok button. `run()` always returns **True**."""
 
     def __init__(self, title: str, message: str):
-        super().__init__(title, message, Dialog.StandardButton.Ok, Dialog.StandardButton.Ok)
+        Dialog.__init__(self, title, message, Dialog.StandardButton.Ok, Dialog.StandardButton.Ok)
 
 
 class OkCancelDialog(Dialog):
     """Dialog pop-up with Ok and Cancel buttons."""
 
     def __init__(self, title: str, message: str):
-        super().__init__(
+        Dialog.__init__(
+            self,
             title,
             message,
             Dialog.StandardButton.Ok | Dialog.StandardButton.Cancel,
@@ -73,7 +75,8 @@ class YesNoDialog(Dialog):
     """Dialog pop-up with Yes and No buttons."""
 
     def __init__(self, title: str, message: str):
-        super().__init__(
+        Dialog.__init__(
+            self,
             title,
             message,
             Dialog.StandardButton.Yes | Dialog.StandardButton.No,
@@ -99,7 +102,7 @@ class DontShowAgainDialog(Dialog):
         :param filepath: The filepath where the "don't show again" state is saved to and loaded
         from.
         """
-        super().__init__(title, message, buttons, default_button)
+        Dialog.__init__(self, title, message, buttons, default_button)
         self.check_box = QCheckBox("Don't show again", self)
         self.setCheckBox(self.check_box)
 
@@ -130,7 +133,7 @@ class DontShowAgainDialog(Dialog):
         this always returns **True** without showing the dialog.
         """
         if self.should_run():
-            result = super().run()
+            result = Dialog.run(self)
             self.save_state()
             return result
         return True
@@ -140,7 +143,8 @@ class YesCancelDontShowDialog(DontShowAgainDialog):
     """Yes and Cancel buttons."""
 
     def __init__(self, title: str, message: str, dont_show_again_filepath: PathLike | str):
-        super().__init__(
+        DontShowAgainDialog.__init__(
+            self,
             title,
             message,
             Dialog.StandardButton.Yes | Dialog.StandardButton.Cancel,

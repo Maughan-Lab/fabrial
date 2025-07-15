@@ -12,9 +12,9 @@ class Button(QPushButton):
         :param text: The text to display on the button.
         :param push_fn: Function(s) to connect the **pressed** signal to.
         """
-        super().__init__(text)
+        QPushButton.__init__(self, text)
         for fn in push_fn:
-            self.pressed.connect(fn)
+            self.clicked.connect(fn)
 
 
 class FixedButton(Button):
@@ -23,7 +23,7 @@ class FixedButton(Button):
     """
 
     def __init__(self, text: str, *push_fn: Callable[[], None | Any]):
-        super().__init__(text, *push_fn)
+        Button.__init__(self, text, *push_fn)
         self.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
 
 
@@ -34,9 +34,9 @@ class BiggerButton(Button):  # this name feels so dumb xD
         self,
         text: str,
         *push_fn: Callable[[], None | Any],
-        size_scalars: tuple[float, float] = (1, 1)
+        size_scalars: tuple[float, float] = (1, 1),
     ):
-        super().__init__(text, *push_fn)
+        Button.__init__(self, text, *push_fn)
         self.horizontal_scalar, self.vertical_scalar = size_scalars
 
     def set_size_scalars(self, size_scalars: tuple[float, float]):
@@ -49,8 +49,8 @@ class BiggerButton(Button):  # this name feels so dumb xD
 
     # overridden method
     def sizeHint(self):
-        default_size = super().sizeHint()
+        default_size = Button.sizeHint(self)
         return QSize(
-            default_size.width() * self.horizontal_scalar,
-            default_size.height() * self.vertical_scalar,
+            round(default_size.width() * self.horizontal_scalar),
+            round(default_size.height() * self.vertical_scalar),
         )

@@ -36,7 +36,7 @@ class TreeModel(QAbstractItemModel):
         :param name: The name displayed at the top of the widget.
         :param parent: (optional) The owner of this widget.
         """
-        super().__init__(parent)
+        QAbstractItemModel.__init__(self, parent)
         self.name = name
         self.root_item = TreeItem.create_root_item()
 

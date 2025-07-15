@@ -13,7 +13,7 @@ class SequenceDisplayTab(QTabWidget):
     """
 
     def __init__(self) -> None:
-        super().__init__()
+        QTabWidget.__init__(self)
         self.plots: list[PlotWidget] = []
         self.popped_graphs: list[SecondaryWindow] = []
 

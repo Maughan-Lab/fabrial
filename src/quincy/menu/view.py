@@ -15,7 +15,7 @@ class ViewMenu(QMenu):
     def __init__(self, parent: QMenuBar, main_window: "MainWindow", graph_tab: SequenceDisplayTab):
         self.pop_graph: Action
 
-        super().__init__("&View", parent)
+        QMenu.__init__(self, "&View", parent)
 
         self.addAction(
             Action(main_window, "Fullscreen", main_window.toggle_fullscreen, shortcut="F11")

@@ -9,7 +9,7 @@ class SequenceSettingsTab(Widget):
 
     def __init__(self):
         layout = QFormLayout()
-        super().__init__(layout)
+        Widget.__init__(self, layout)
         self.non_empty_directory_warning_checkbox = QCheckBox(
             "Show a warning when starting the sequence with a non-empty data directory."
         )

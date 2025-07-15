@@ -21,7 +21,7 @@ class ParameterDescriptionWidget(Widget):
         """
 
         layout = QVBoxLayout()
-        super().__init__(layout)
+        Widget.__init__(self, layout)
         self.tab_widget = QTabWidget(self)
         layout.addWidget(self.tab_widget)
 

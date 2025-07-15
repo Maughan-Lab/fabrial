@@ -12,7 +12,7 @@ class BackgroundTemperatureProcess(AbstractBackgroundProcess):
     """Collect and record temperature samples in the background."""
 
     def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
-        super().__init__(runner, data, name)
+        AbstractBackgroundProcess.__init__(self, runner, data, name)
         self.measurement_interval = data[encoding.MEASUREMENT_INTERVAL]
 
     def run(self):

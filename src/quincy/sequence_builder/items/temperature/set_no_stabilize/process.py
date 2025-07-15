@@ -12,7 +12,7 @@ class SetNoStabilizeProcess(AbstractForegroundProcess):
     """Set the oven's setpoint without waiting to stabilize."""
 
     def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
-        super().__init__(runner, data, name)
+        AbstractForegroundProcess.__init__(self, runner, data, name)
         self.oven = INSTRUMENTS.oven
         self.setpoint = data[encoding.SETPOINT]
 
@@ -27,4 +27,6 @@ class SetNoStabilizeProcess(AbstractForegroundProcess):
                 break
 
     def metadata(self) -> DataFrame:
-        return dataframe.add_to_dataframe(super().metadata(), {"Selected Setpoint": self.setpoint})
+        return dataframe.add_to_dataframe(
+            AbstractForegroundProcess.metadata(self), {"Selected Setpoint": self.setpoint}
+        )

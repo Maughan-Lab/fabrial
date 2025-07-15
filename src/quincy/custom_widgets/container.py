@@ -17,7 +17,7 @@ class Container(Widget):
         :param horizontal_size_policy: The horizontal size policy.
         :param vertical_size_policy: The vertical size policy.
         """
-        super().__init__(layout)
+        Widget.__init__(self, layout)
         layout.setContentsMargins(0, 0, 0, 0)
         self.setSizePolicy(horizontal_size_policy, vertical_size_policy)
 
@@ -26,4 +26,4 @@ class FixedContainer(Container):
     """Container with a fixed size."""
 
     def __init__(self, layout: QLayout):
-        super().__init__(layout, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        Container.__init__(self, layout, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)

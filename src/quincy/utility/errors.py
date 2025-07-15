@@ -27,14 +27,13 @@ def generate_exception_handler(
             sys.__excepthook__(exception_type, exception, trace)
             sys.exit()
         else:
-            name = APP_NAME
             error_message = (
-                f"{name} encountered an application-level error. "
-                f"Unless the error is obviously unimportant, you should close {name}. "
+                f"{APP_NAME} encountered an application-level error. "
+                f"Unless the error is obviously unimportant, you should close {APP_NAME}. "
                 "If possible, please report this error."
             )
             exception_text = "".join(traceback.format_exception(exception_type, exception, trace))
-            error_message = f"{error_message}\n\n{exception_text}\nClose Quincy?"
+            error_message = f"{error_message}\n\n{exception_text}\nClose {APP_NAME}?"
             main_window.showError.emit(error_message)
 
     return handle_exception  # return the nested function

@@ -27,7 +27,7 @@ class Action(QAction):
         :param shortcut_context: The shortcut context. Defaults to
         `Qt.ShortcutContext.WindowShortcut`.
         """
-        super().__init__(name, parent)
+        QAction.__init__(self, name, parent)
         if action is not None:
             self.triggered.connect(action)
         self.setStatusTip(status_tip)
@@ -44,7 +44,7 @@ class Shortcut(QShortcut):
         parent: QObject,
         key: str,
         *actions: Callable[[], Any],
-        context: Qt.ShortcutContext = Qt.ShortcutContext.WindowShortcut
+        context: Qt.ShortcutContext = Qt.ShortcutContext.WindowShortcut,
     ):
         """
         Creates a QShortcut tied to **parent**.
@@ -54,6 +54,6 @@ class Shortcut(QShortcut):
         :param actions: The function(s) this shortcut executes.
         :param context: The shortcut context. Default **WindowShortcut**.
         """
-        super().__init__(QKeySequence(key), parent, context=context)
+        QShortcut.__init__(self, QKeySequence(key), parent, context=context)
         for action in actions:
             self.activated.connect(action)

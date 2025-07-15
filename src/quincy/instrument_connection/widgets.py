@@ -15,7 +15,7 @@ class InstrumentConnectionWidget(GroupBox):
     NULL_TEXT = "------------"
 
     def __init__(self):
-        super().__init__("Instrument Connection", QHBoxLayout())
+        GroupBox.__init__(self, "Instrument Connection", QHBoxLayout())
         self.oven = INSTRUMENTS.oven
 
         self.create_widgets()

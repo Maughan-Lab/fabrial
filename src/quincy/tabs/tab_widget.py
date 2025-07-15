@@ -8,7 +8,7 @@ from .sequence_display import SequenceDisplayTab
 
 class TabWidget(QTabWidget):
     def __init__(self, parent: QWidget | None = None):
-        super().__init__(parent)
+        QTabWidget.__init__(self, parent)
         self.setDocumentMode(True)
         self.sequence_visuals_tab = SequenceDisplayTab()
         self.sequence_builder_tab = SequenceBuilderTab(self.sequence_visuals_tab)

@@ -26,7 +26,7 @@ class ApplicationSettingsWindow(Container):
     def __init__(self, main_window: MainWindow) -> None:
         self.main_window = main_window
         layout = QVBoxLayout()
-        super().__init__(layout)
+        Container.__init__(self, layout)
         self.setWindowTitle(f"{APP_NAME} - Settings")
 
         tab_widget = QTabWidget(self)
@@ -54,4 +54,4 @@ class ApplicationSettingsWindow(Container):
         if event is not None:
             for tab in (self.sequence_tab, self.oven_tab, self.gamry_tab):
                 tab.save_on_close()
-        super().closeEvent(event)
+        Container.closeEvent(self, event)

@@ -9,7 +9,7 @@ class GroupBox(QGroupBox):
         :param title: The window's title.
         :param layout: The layout to initialize with.
         """
-        super().__init__()
+        QGroupBox.__init__(self)
         self.setTitle(title)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.setLayout(layout)

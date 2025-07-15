@@ -24,7 +24,7 @@ class DoubleSpinBox(QDoubleSpinBox):
         :param initial_value: The initial value of the spinbox (default higher of 0 and
         **minimum**).
         """
-        super().__init__()
+        QDoubleSpinBox.__init__(self)
         self.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
         self.setDecimals(number_of_decimals)
         self.setMinimum(minimum)
@@ -47,8 +47,8 @@ class TemperatureSpinBox(DoubleSpinBox):
 
     def __init__(self, oven: Oven):
         """:param oven: The oven to use for setting the maximum/minimum temperatures."""
-        super().__init__(
-            oven.num_decimals(), oven.minimum_temperature(), oven.maximum_temperature()
+        DoubleSpinBox.__init__(
+            self, oven.num_decimals(), oven.minimum_temperature(), oven.maximum_temperature()
         )
 
 
@@ -64,7 +64,7 @@ class SpinBox(QSpinBox):
         :param initial_value: The initial value of the spinbox (default higher of 0 and
         **minimum**).
         """
-        super().__init__()
+        QSpinBox.__init__(self)
         self.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
         self.setMinimum(minimum)
         self.setMaximum(maximum)

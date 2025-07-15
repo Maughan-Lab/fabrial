@@ -23,7 +23,7 @@ class OvenSettingsTab(SettingsDescriptionWidget):
         number_of_decimals = saved_settings[oven_settings.NUM_DECIMALS]
 
         layout = QFormLayout()
-        super().__init__(layout)
+        SettingsDescriptionWidget.__init__(self, layout)
         self.set_description_from_file(
             oven_settings.DESCRIPTION_FOLDER,
             oven_settings.DESCRIPTION_FILENAME,

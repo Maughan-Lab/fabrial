@@ -14,7 +14,7 @@ class Timer(QTimer):
         :param interval_ms: The timeout interval in milliseconds.
         :param slots: Function(s) to call when the timer times out.
         """
-        super().__init__(parent)
+        QTimer.__init__(self, parent)
         self.setInterval(intverval_ms)
         for slot in slots:
             self.timeout.connect(slot)

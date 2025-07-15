@@ -28,7 +28,7 @@ class SetTemperatureProcess(AbstractGraphingProcess):
     """The name used for the graph."""
 
     def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
-        super().__init__(runner, data, name)
+        AbstractGraphingProcess.__init__(self, runner, data, name)
         self.oven = INSTRUMENTS.oven
         self.setpoint = data[encoding.SETPOINT]
 
@@ -105,4 +105,6 @@ class SetTemperatureProcess(AbstractGraphingProcess):
         return f"Set Temperature ({self.setpoint} °C)"
 
     def metadata(self):  # overridden
-        return dataframe.add_to_dataframe(super().metadata(), {"Selected Setpoint": self.setpoint})
+        return dataframe.add_to_dataframe(
+            AbstractGraphingProcess.metadata(self), {"Selected Setpoint": self.setpoint}
+        )

@@ -7,7 +7,7 @@ from . import encoding
 
 class LoopProcess(AbstractForegroundProcess):
     def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
-        super().__init__(runner, data, name)
+        AbstractForegroundProcess.__init__(self, runner, data, name)
         self.number_of_loops = data[encoding.NUMBER_OF_LOOPS]
         self.loops_completed = 0
 
@@ -44,7 +44,7 @@ class LoopProcess(AbstractForegroundProcess):
 
     def metadata(self):
         return dataframe.add_to_dataframe(
-            super().metadata(),
+            AbstractForegroundProcess.metadata(self),
             {
                 "Selected Loop Count": self.number_of_loops,
                 "Actual Loops Completed": self.loops_completed,

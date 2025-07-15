@@ -17,7 +17,8 @@ class EISWidget(AbstractBaseWidget):
 
     def __init__(self) -> None:
         """Create a new instance."""
-        super().__init__(
+        AbstractBaseWidget.__init__(
+            self,
             QFormLayout(),
             "Electrochemical Impedance Spectroscopy",
             EISProcess,
@@ -119,7 +120,7 @@ class EISWidget(AbstractBaseWidget):
         if event is not None:
             # reload the device list when the window gets opened
             self.reload_pstat_list(self.selected_pstats())
-        super().showEvent(event)
+        AbstractBaseWidget.showEvent(self, event)
 
     @staticmethod
     def allowed_to_create() -> bool:  # overridden

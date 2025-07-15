@@ -19,7 +19,7 @@ class SecondaryWindow(QMainWindow):
         :param central_widget: The widget to set as the central widget (optional).
         :param parent: This window's parent (optional).
         """
-        super().__init__(parent)
+        QMainWindow.__init__(self, parent)
         self.setWindowTitle(title)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.setCentralWidget(central_widget)
@@ -29,7 +29,7 @@ class SecondaryWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent | None):  # overridden method
         if event is not None:
             self.closed.emit()
-        super().closeEvent(event)
+        QMainWindow.closeEvent(self, event)
 
     def close_silent(self):
         """Close the window without emitting the `closed` signal."""

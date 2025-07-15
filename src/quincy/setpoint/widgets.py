@@ -9,7 +9,7 @@ class SetpointWidget(GroupBox):
     """Widget for changing the setpoint."""
 
     def __init__(self):
-        super().__init__("Setpoint", QVBoxLayout())
+        GroupBox.__init__(self, "Setpoint", QVBoxLayout())
         self.oven = INSTRUMENTS.oven
 
         self.create_widgets()

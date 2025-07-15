@@ -19,7 +19,7 @@ class SequenceBuilderTab(QWidget):
         self.sequence_tree: SequenceTreeWidget
         self.visual_widget_container = visual_widget_container  # another tab
 
-        super().__init__()
+        QWidget.__init__(self)
         self.create_widgets()
         self.connect_signals()
 

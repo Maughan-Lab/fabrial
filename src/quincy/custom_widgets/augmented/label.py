@@ -11,7 +11,7 @@ class Label(QLabel):
     """QLabel with the ability to select text."""
 
     def __init__(self, text: str = ""):
-        super().__init__(text)
+        QLabel.__init__(self, text)
         self.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
 
     def set_color(self, color: str) -> Self:
@@ -31,7 +31,7 @@ class IconLabel(Container):
 
     def __init__(self, icon: QPixmap, text: str = ""):
         layout = QFormLayout()
-        super().__init__(layout)
+        Container.__init__(self, layout)
 
         self.icon_label = QLabel()
         self.icon_label.setPixmap(icon)

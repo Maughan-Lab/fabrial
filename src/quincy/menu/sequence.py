@@ -9,7 +9,7 @@ class SequenceMenu(QMenu):
     """Sequence menu."""
 
     def __init__(self, parent: QMenuBar, widget: SequenceTreeWidget):
-        super().__init__("&Sequence", parent)
+        QMenu.__init__(self, "&Sequence", parent)
         self.skip: Action
         self.cancel: Action
         self.widget = widget

@@ -18,7 +18,8 @@ class BackgroundTemperatureWidget(AbstractBaseWidget):
     def __init__(self):
         layout = QFormLayout()
         self.interval_spinbox = SpinBox(50)
-        super().__init__(
+        AbstractBaseWidget.__init__(
+            self,
             layout,
             self.DISPLAY_NAME_PREFIX,
             BackgroundTemperatureProcess,

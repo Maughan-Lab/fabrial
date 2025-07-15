@@ -18,7 +18,7 @@ class PlotItem(pg.PlotItem):
 
     def __init__(self) -> None:
         """Create a new PlotItem."""
-        super().__init__()
+        pg.PlotItem.__init__(self)
         self.text_color = self.palette().windowText().color().name()
         self.background_color = self.palette().window().color().name()
         self.line_data: LineData
@@ -87,7 +87,8 @@ class PlotItem(pg.PlotItem):
             line_pen = None
         else:
             line_pen = pg.mkPen(line_color, width=line_width)
-        data_item = super().plot(
+        data_item = pg.PlotItem.plot(
+            self,
             x_data,
             y_data,
             name=legend_label,
@@ -112,7 +113,7 @@ class PlotView(pg.PlotWidget):
     def __init__(self):
         """Create a new PlotView."""
         plot_item = PlotItem()
-        super().__init__(background=plot_item.background_color, plotItem=plot_item)
+        pg.PlotWidget.__init__(self, background=plot_item.background_color, plotItem=plot_item)
 
     def export_to_image(self, filename: str):
         """Export the image. This uses the image's current dimensions."""
@@ -125,7 +126,7 @@ class PlotWidget(Widget):
 
     def __init__(self):
         layout = QVBoxLayout()
-        super().__init__(layout)
+        Widget.__init__(self, layout)
         self.view = PlotView()
         layout.addWidget(self.view)
 

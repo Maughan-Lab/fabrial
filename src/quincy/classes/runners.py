@@ -32,7 +32,7 @@ class AbstractRunner(QObject, metaclass=ABCQObjectMeta):
     currentItemChanged = pyqtSignal(object, object)
 
     def __init__(self, parent: QObject | None = None):
-        super().__init__(parent)
+        QObject.__init__(self, parent)
 
     @abstractmethod
     def cancel(self):
@@ -72,7 +72,7 @@ class SequenceRunner(AbstractRunner):
         :param data_directory: The name of the base directory to write all data to.
         :root_item: The root item of the sequence builder.
         """
-        super().__init__()
+        AbstractRunner.__init__(self)
         self.data_directory = data_directory
         self.root_item = root_item
         self.process_runner = ProcessRunner(self, data_directory)
@@ -173,7 +173,7 @@ class ProcessRunner(AbstractRunner):
         :param parent: The QObject that owns this runner. The parent should be in the same thread.
         :param data_directory: The folder where all sequence data will be stored.
         """
-        super().__init__(parent)
+        AbstractRunner.__init__(self, parent)
         self.data_directory = data_directory
         self.process: AbstractForegroundProcess | None = None
         self.item: TreeItem | None = None

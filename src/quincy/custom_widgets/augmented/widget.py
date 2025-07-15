@@ -8,19 +8,19 @@ class SignalWidget(QWidget):
     closed = pyqtSignal()
 
     def __init__(self, parent: QWidget | None = None):
-        super().__init__(parent)
+        QWidget.__init__(self, parent)
 
     def closeEvent(self, event):  # overridden method
         if event is not None:
             self.closed.emit()
-        super().closeEvent(event)
+        QWidget.closeEvent(self, event)
 
 
 class FixedWidget(QWidget):
     """QWidget with a fixed size."""
 
     def __init__(self, parent: QWidget | None = None):
-        super().__init__(parent)
+        QWidget.__init__(self, parent)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
 
@@ -29,6 +29,6 @@ class Widget(QWidget):
 
     def __init__(self, layout: QLayout | None = None):
         """:param layout: The layout to initialize with."""
-        super().__init__()
+        QWidget.__init__(self)
         if layout is not None:
             self.setLayout(layout)

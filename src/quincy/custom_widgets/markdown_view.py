@@ -6,7 +6,7 @@ class MarkdownView(QTextBrowser):
     """Label with support for markdown."""
 
     def __init__(self):
-        super().__init__()
+        QTextBrowser.__init__(self)
         self.setReadOnly(True)
         self.setTextInteractionFlags(
             self.textInteractionFlags() | Qt.TextInteractionFlag.LinksAccessibleByMouse
@@ -16,4 +16,4 @@ class MarkdownView(QTextBrowser):
         self.setViewportMargins(10, 10, 10, 10)  # this just looks better
 
     def sizeHint(self):
-        return super().sizeHint() * 2
+        return QTextBrowser.sizeHint(self) * 2

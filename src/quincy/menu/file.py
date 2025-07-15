@@ -13,7 +13,7 @@ class FileMenu(QMenu):
     """File menu."""
 
     def __init__(self, parent: QMenuBar, main_window: "MainWindow"):
-        super().__init__("&File", parent)
+        QMenu.__init__(self, "&File", parent)
         # silly
         self.addAction(Action(parent, "Honk", lambda: OkCancelDialog("Honk", "Honk").exec()))
 

@@ -30,7 +30,6 @@ class AbstractWidget(ABC):
         :param supports_subitems: Whether the associated item can have subitems.
         :param draggable: Whether the associated item can be dragged.
         """
-        super().__init__()
         self.linked_process_type = process_type
         self.item_supports_subitems = supports_subitems
         self.draggable = draggable
@@ -154,7 +153,7 @@ class AbstractBaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=A
         if event is not None:
             # this makes sure show() has the parameter tab enabled
             self.parameter_widget().setEnabled(True)
-        super().closeEvent(event)
+        ParameterDescriptionWidget.closeEvent(self, event)
 
 
 class CategoryWidget(AbstractWidget):
@@ -162,7 +161,7 @@ class CategoryWidget(AbstractWidget):
 
     def __init__(self, display_name: str = ""):
         """:param display_name: The text to display on the item."""
-        super().__init__(display_name)
+        AbstractWidget.__init__(self, display_name)
         self.collapsed_icon = images.make_icon("folder-horizontal.png")
         self.expanded_icon = images.make_icon("folder-horizontal-open.png")
         self.display_icon = self.collapsed_icon

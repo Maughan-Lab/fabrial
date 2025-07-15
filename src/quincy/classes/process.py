@@ -41,7 +41,7 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
     """
 
     def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
-        super().__init__()
+        QObject.__init__(self)
         self.data_as_dict = data
         self.process_runner = runner
         self.display_name = name
@@ -262,7 +262,7 @@ class AbstractGraphingProcess(AbstractForegroundProcess):
     """**AbstractForegroundProcess** with graphing capabilities."""
 
     def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
-        super().__init__(runner, data, name)
+        AbstractForegroundProcess.__init__(self, runner, data, name)
         self.graph_signals = GraphSignals(self)
 
     def graphing_signals(self) -> GraphSignals:
@@ -349,5 +349,5 @@ class AbstractBackgroundProcess(AbstractProcess):
         return self.process_status.set(status)
 
     def cancel(self):
-        super().cancel()
+        AbstractProcess.cancel(self)
         self.finished.emit()

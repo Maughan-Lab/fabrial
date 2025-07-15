@@ -5,7 +5,7 @@ class HSeparator(QFrame):
     """A horizontal separator."""
 
     def __init__(self):
-        super().__init__()
+        QFrame.__init__(self)
         self.setFrameShape(QFrame.Shape.HLine)
         self.setLineWidth(1)
         self.setFrameShadow(QFrame.Shadow.Sunken)
@@ -16,7 +16,7 @@ class VSeparator(QFrame):
     """A vertical separator."""
 
     def __init__(self):
-        super().__init__()
+        QFrame.__init__(self)
         self.setFrameShape(QFrame.Shape.VLine)
         self.setLineWidth(1)
         self.setFrameShadow(QFrame.Shadow.Sunken)

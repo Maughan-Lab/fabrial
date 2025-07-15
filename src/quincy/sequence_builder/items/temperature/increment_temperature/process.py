@@ -13,7 +13,7 @@ class IncrementTemperatureProcess(SetTemperatureProcess):
 
     def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
         data.update({SETPOINT: 0})
-        super().__init__(runner, data, name)
+        SetTemperatureProcess.__init__(self, runner, data, name)
 
         self.increment = data[encoding.INCREMENT]
 
@@ -36,7 +36,7 @@ class IncrementTemperatureProcess(SetTemperatureProcess):
                 self.communicate_error(f"{text} oven setpoint reached. The sequence will continue.")
 
         self.setpoint = setpoint
-        super().run()
+        SetTemperatureProcess.run(self)
 
     def title(self) -> str:  # overridden
         return f"Increment Temperature ({self.increment} °C)"

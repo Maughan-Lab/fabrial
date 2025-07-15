@@ -2,6 +2,7 @@ from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
 
+from .constants import APP_NAME
 from .custom_widgets import YesCancelDialog, YesNoDialog
 from .custom_widgets.settings import ApplicationSettingsWindow
 from .menu import MenuBar
@@ -15,8 +16,8 @@ class MainWindow(QMainWindow):
 
     def __init__(self) -> None:
         self.relaunch = False
-        super().__init__()
-        self.setWindowTitle("Quincy")
+        QMainWindow.__init__(self)
+        self.setWindowTitle(APP_NAME)
         self.settings_window = ApplicationSettingsWindow(self)
         # create tabs
         self.tabs = TabWidget(self)

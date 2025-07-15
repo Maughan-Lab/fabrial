@@ -12,7 +12,7 @@ class StabilityCheckWidget(GroupBox):
     NULL_TEXT = "----------"
 
     def __init__(self) -> None:
-        super().__init__("Oven Stability", QVBoxLayout())
+        GroupBox.__init__(self, "Oven Stability", QVBoxLayout())
         self.previous_count = 0
         self.status_label: Label
         self.progress_bar: StabilityProgressBar

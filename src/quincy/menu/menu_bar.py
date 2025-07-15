@@ -16,7 +16,7 @@ class MenuBar(QMenuBar):
     """The application's menubar."""
 
     def __init__(self, main_window: "MainWindow"):
-        super().__init__()
+        QMenuBar.__init__(self)
         self.create_submenus(main_window)
 
     def create_submenus(self, main_window: "MainWindow"):

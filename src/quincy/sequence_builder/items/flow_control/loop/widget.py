@@ -14,7 +14,8 @@ class LoopWidget(AbstractBaseWidget):
 
     def __init__(self):
         layout = QFormLayout()
-        super().__init__(
+        AbstractBaseWidget.__init__(
+            self,
             layout,
             self.DISPLAY_NAME_PREFIX,
             LoopProcess,

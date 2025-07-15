@@ -35,7 +35,7 @@ class EISProcess(AbstractGraphingProcess):
     """Run a clone of the Gamry Potentiostatic EIS.exp file."""
 
     def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
-        super().__init__(runner, data, name)
+        AbstractGraphingProcess.__init__(self, runner, data, name)
         # unpack the dictionary values for easier access
         self.initial_frequency: float = data[encoding.INITIAL_FREQUENCY]
         self.final_frequency: float = data[encoding.FINAL_FREQUENCY]
@@ -291,7 +291,7 @@ class EISProcess(AbstractGraphingProcess):
 
     def metadata(self):  # overridden
         return dataframe.add_to_dataframe(
-            super().metadata(),
+            AbstractGraphingProcess.metadata(self),
             {
                 encoding.SELECTED_PSTATS: " ".join(self.pstat_identifiers),  # space separate them
                 encoding.DC_VOLTAGE: self.dc_voltage,

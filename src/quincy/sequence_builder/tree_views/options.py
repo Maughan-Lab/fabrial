@@ -17,7 +17,7 @@ class OptionsTreeView(TreeView):
 
     def __init__(self):
         model = TreeModel("Options")
-        super().__init__(model)
+        TreeView.__init__(self, model)
         self.init_from_directory(OPTIONS_INITIALIZERS)
 
         try:  # try to restore the previous view state
@@ -40,7 +40,7 @@ class OptionsTreeWidget(Container):
     """OptionsTreeView with a button for expanding and un-expanding all items."""
 
     def __init__(self) -> None:
-        super().__init__(QVBoxLayout())
+        Container.__init__(self, QVBoxLayout())
         self.view: OptionsTreeView
         self.expand_button: FixedButton
         self.create_widgets()

@@ -34,7 +34,7 @@ class Instrument(QObject, metaclass=ABCQObjectMeta):
     """
 
     def __init__(self):
-        super().__init__()
+        QObject.__init__(self)
         self.connection_status = ConnectionStatus.NULL
         # this lock system indicates to the rest of the application whether the instrument is
         # available
@@ -130,7 +130,7 @@ class Oven(Instrument):
         """The setpoint was clamped to the minimum oven temperature."""
 
     def __init__(self, oven_port: str = ""):
-        super().__init__()
+        Instrument.__init__(self)
         self.port = oven_port
         # initialize the oven settings
         self.max_temperature: float

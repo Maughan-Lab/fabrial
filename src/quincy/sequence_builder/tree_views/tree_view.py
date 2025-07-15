@@ -17,7 +17,7 @@ class TreeView(QTreeView):
     """Custom TreeView with support for copy, cut, paste, and delete (and drag and drop)."""
 
     def __init__(self, model: TreeModel, parent: QWidget | None = None):
-        super().__init__(parent)
+        QTreeView.__init__(self, parent)
 
         self.setDragEnabled(True)
         self.setDropIndicatorShown(True)
@@ -110,7 +110,7 @@ class TreeView(QTreeView):
 
     def model(self) -> TreeModel:
         """Get this view's associated model."""
-        return super().model()  # type: ignore
+        return QTreeView.model(self)  # type: ignore
 
     def copy_event(self) -> Self:
         """Copy items to the clipboard."""

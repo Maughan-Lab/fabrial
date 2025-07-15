@@ -12,7 +12,7 @@ class ProgressBar(QProgressBar):
         :param maximum: The maximum value of the progressbar.
         :param increment_value: How much increment() increments the value by. Defaults to 1.
         """
-        super().__init__()
+        QProgressBar.__init__(self)
         self.increment_value = increment_value
         self.setMinimum(minimum)
         self.setMaximum(maximum)
@@ -32,11 +32,11 @@ class StabilityProgressBar(QProgressBar):
         :param oven: The oven to base the maximum on.
         :param parent: The widget's parent.
         """
-        super().__init__(parent)
+        QProgressBar.__init__(self, parent)
         self.setMinimum(0)
         self.setMaximum(oven.minimum_measurements())
 
     def sizeHint(self):
-        size = super().sizeHint()
+        size = QProgressBar.sizeHint(self)
         size.setWidth(size.width() * 2)  # arbitrary, this just looks better
         return size

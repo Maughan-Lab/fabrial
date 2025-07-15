@@ -26,7 +26,7 @@ class GamrySettingsTab(SettingsDescriptionWidget):
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        super().__init__(layout)
+        SettingsDescriptionWidget.__init__(self, layout)
 
         self.set_description_from_file(
             gamry.DESCRIPTION_FOLDER,

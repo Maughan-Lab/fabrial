@@ -43,7 +43,7 @@ class SequenceTreeView(TreeView):
     def __init__(self):
         # initialize the super class
         model = TreeModel("Sequence Builder")
-        super().__init__(model)
+        TreeView.__init__(self, model)
         # configure the model and view
         try:
             self.init_from_file(sequence.SEQUENCE_AUTOSAVE_FILE)
@@ -64,7 +64,7 @@ class SequenceTreeView(TreeView):
         self.drag_tracker = DragTracker(timer, point)
 
     def connect_signals(self):  # overridden
-        super().connect_signals()
+        TreeView.connect_signals(self)
         self.model().itemAdded.connect(self.handle_new_item)
 
     def handle_new_item(self, index: QModelIndex):
@@ -92,14 +92,14 @@ class SequenceTreeView(TreeView):
                     self.delete_event()
                 case Qt.Key.Key_Return | Qt.Key.Key_Enter:
                     self.show_item_widget(index)
-        super().keyPressEvent(event)
+        TreeView.keyPressEvent(self, event)
 
     def dropEvent(self, event: QDropEvent | None):  # overridden
         if event is not None:
             if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
                 event.setDropAction(Qt.DropAction.CopyAction)
 
-            super().dropEvent(event)  # process the event
+            TreeView.dropEvent(self, event)  # process the event
 
     def dragMoveEvent(self, event: QDragMoveEvent | None):  # overridden
         if event is not None:
@@ -108,7 +108,7 @@ class SequenceTreeView(TreeView):
             tracked_position.setX(event_position.x())
             tracked_position.setY(event_position.y())
             self.drag_tracker.timer.start()
-        super().dragMoveEvent(event)
+        TreeView.dragMoveEvent(self, event)
 
 
 class SequenceTreeWidget(Container):
@@ -121,7 +121,7 @@ class SequenceTreeWidget(Container):
     graphSignalsChanged = pyqtSignal(GraphSignals)
 
     def __init__(self) -> None:
-        super().__init__(QVBoxLayout())
+        Container.__init__(self, QVBoxLayout())
 
         self.view: SequenceTreeView
         self.delete_button: FixedButton

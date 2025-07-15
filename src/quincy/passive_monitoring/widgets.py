@@ -11,7 +11,7 @@ class PassiveMonitoringWidget(GroupBox):
     NULL_TEXT = "-----"
 
     def __init__(self):
-        super().__init__("Measurements", QGridLayout())
+        GroupBox.__init__(self, "Measurements", QGridLayout())
         self.oven = INSTRUMENTS.oven
 
         self.create_widgets()

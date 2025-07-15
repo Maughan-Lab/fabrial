@@ -190,7 +190,7 @@ class ImpedanceReader(QObject):
     """
 
     def __init__(self, potentiostat: Potentiostat):
-        super().__init__()
+        QObject.__init__(self)
         self.pstat = potentiostat
         # stands for Read Z (Z = impedance)
         self.readz = client.CreateObject(self.pstat.com_interface().GamryReadZ)

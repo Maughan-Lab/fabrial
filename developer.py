@@ -13,7 +13,7 @@ from src.quincy.utility import layout as layout_util
 
 class DeveloperOven(Oven):
     def __init__(self):
-        super().__init__()
+        Oven.__init__(self)
         self.unlocked = True
         self.developer_temperature = 0.0
         self.developer_setpoint = 0.0
@@ -85,7 +85,7 @@ class DeveloperOven(Oven):
 class DeveloperWidget(GroupBox):
     def __init__(self):
         layout = QVBoxLayout()
-        super().__init__("Developer", layout)
+        GroupBox.__init__(self, "Developer", layout)
         self.oven = INSTRUMENTS.oven
         self.create_connection_widgets(layout)
         self.create_connection_signal_widgets(layout)
@@ -174,7 +174,7 @@ class DeveloperMainWindow(MainWindow):
     """
 
     def __init__(self) -> None:
-        super().__init__()
+        MainWindow.__init__(self)
         layout: QHBoxLayout = self.oven_control_tab.layout().itemAt(0).layout()  # type: ignore
         layout.addWidget(DeveloperWidget())
 

@@ -8,7 +8,7 @@ class HoldProcess(AbstractForegroundProcess):
     """Hold for a duration."""
 
     def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
-        super().__init__(runner, data, name)
+        AbstractForegroundProcess.__init__(self, runner, data, name)
         hours: int = data[encoding.HOURS]
         minutes: int = data[encoding.MINUTES]
         seconds: int = data[encoding.SECONDS]
