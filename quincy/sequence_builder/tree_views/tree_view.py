@@ -66,8 +66,12 @@ class TreeView(QTreeView):
     @classmethod
     def from_file(cls: type[Self], name: str, filepath: str) -> Self:
         """
-        :param name: The name displayed on top of the widget.
-        :param filepath: The filepath to build the **TreeView** from.
+        Parameters
+        ----------
+        name
+            The name displayed on top of the widget.
+        filepath
+            The filepath to build the `TreeView` from.
         """
         model = TreeModel(name)
         tree_view = cls(model).init_from_file(filepath)

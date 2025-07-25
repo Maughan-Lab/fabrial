@@ -9,7 +9,6 @@ from PyQt6.QtCore import (
     QIODevice,
     QMimeData,
     QModelIndex,
-    QObject,
     QPersistentModelIndex,
     Qt,
     pyqtSignal,
@@ -24,19 +23,22 @@ JSON = "application/json"
 
 
 class TreeModel(QAbstractItemModel):
-    """Concrete ItemModel for representing trees."""
+    """
+    Concrete `QAbstractItemModel` for representing trees.
+
+    Parameters
+    ----------
+    name
+        The name displayed at the top of the widget.
+    """
 
     itemAdded = pyqtSignal(QModelIndex)
     """
-    This is emitted every time an item is added to the model. Sends the **QModelIndex** of the item.
+    This is emitted every time an item is added to the model. Sends the `QModelIndex` of the item.
     """
 
-    def __init__(self, name: str = "", parent: QObject | None = None):
-        """
-        :param name: The name displayed at the top of the widget.
-        :param parent: (optional) The owner of this widget.
-        """
-        QAbstractItemModel.__init__(self, parent)
+    def __init__(self, name: str = ""):
+        QAbstractItemModel.__init__(self)
         self.name = name
         self.root_item = TreeItem.create_root_item()
 
@@ -125,8 +127,14 @@ class TreeModel(QAbstractItemModel):
         """
         Paste items into the model from the clipboard.
 
-        :param index: The index of the item to paste directly below.
-        :returns: Whether the operation succeeded.
+        Parameters
+        ----------
+        index
+            The index of the item to paste directly below.
+
+        Returns
+        -------
+        Whether the operation succeeded.
         """
         data = CLIPBOARD.contents()
         if data is not None:

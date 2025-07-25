@@ -4,21 +4,29 @@ from PyQt6.QtWidgets import QMainWindow, QSizePolicy, QWidget
 
 
 class SecondaryWindow(QMainWindow):
-    """Secondary window with **closed** signal."""
+    """
+    Secondary window with `closed` signal.
+
+    Parameters
+    ----------
+    title
+        The window title text.
+    central_widget
+        The widget to set as the central widget (optional).
+    parent
+        This window's parent (optional).
+
+    Notes
+    -----
+    If **parent** is specified, the created window will always be displayed on top of the parent.
+    You must call `show()` on the window as normal.
+    """
 
     closed = pyqtSignal()
 
     def __init__(
         self, title: str, central_widget: QWidget | None = None, parent: QWidget | None = None
     ):
-        """
-        Create a secondary window. If **parent** is specified, the created window will always be
-        displayed on top of the parent. You must call **show()** on the window as normal.
-
-        :param title: The window title text.
-        :param central_widget: The widget to set as the central widget (optional).
-        :param parent: This window's parent (optional).
-        """
         QMainWindow.__init__(self, parent)
         self.setWindowTitle(title)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)

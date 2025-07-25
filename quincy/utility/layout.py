@@ -1,19 +1,24 @@
-from typing import Callable, TypeVar
+from typing import Callable
 
 from PyQt6.QtWidgets import QBoxLayout, QFormLayout, QLayout, QLayoutItem, QStackedLayout, QWidget
 
-Layout = TypeVar("Layout", bound=QLayout)
 
-
-def add_sublayout(outer_layout: QBoxLayout, layout_fn: Callable[[], Layout]) -> Layout:
+def add_sublayout[LayoutType: QLayout](
+    outer_layout: QBoxLayout, layout_fn: Callable[[], LayoutType]
+) -> LayoutType:
     """
     Add an inner layout to an outer layout.
 
-    :param outer_layout: The outer layout to add an inner layout to.
-    :param layout_fn: A function to construct the inner layout (i.e. `QGridLayout`, not
-    `QGridLayout()`)
+    Parameters
+    ----------
+    outer_layout
+        The outer layout to add an inner layout to.
+    layout_fn
+        A function to construct the inner layout (i.e. `QGridLayout`, not `QGridLayout()`)
 
-    :returns: The inner layout added to **layout**.
+    Returns
+    -------
+    The inner layout added to **outer_layout**.
     """
     inner_layout = layout_fn()
     outer_layout.addLayout(inner_layout)
@@ -24,8 +29,12 @@ def add_to_layout(layout: QBoxLayout | QStackedLayout, *widgets: QWidget):
     """
     Adds widgets to a QBoxLayout or QStackedLayout. Cannot handle alignment or stretch.
 
-    :param layout: The layout to add the widgets to.
-    :param widgets: The widgets to add.
+    Parameters
+    ----------
+    layout
+        The layout to add the widgets to.
+    widgets
+        The widgets to add.
     """
     for widget in widgets:
         layout.addWidget(widget)
@@ -35,10 +44,14 @@ def add_to_form_layout(layout: QFormLayout, *item_pair: tuple[QWidget | str, QWi
     """
     Adds widgets to a QFormLayout.
 
-    :param layout: The layout to add widgets to.
-    :param item_pair: Item pair(s) in the form of (LEFT_ITEM, RIGHT_ITEM), where LEFT_ITEM is the
-    item on the left and RIGHT_ITEM is the item on the right. If LEFT_ITEM is a `str`, a label will\
-    be created with LEFT_ITEM as the text.
+    Parameters
+    ----------
+    layout
+        The layout to add widgets to.
+    item_pair
+        Item pair(s) in the form of (LEFT_ITEM, RIGHT_ITEM), where LEFT_ITEM is the item on the left
+        and RIGHT_ITEM is the item on the right. If LEFT_ITEM is a `str`, a label will be created
+        with LEFT_ITEM as the text.
     """
     for pair in item_pair:
         layout.addRow(pair[0], pair[1])

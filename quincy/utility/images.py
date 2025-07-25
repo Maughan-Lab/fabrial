@@ -14,8 +14,14 @@ def make_icon(icon_filename: str) -> QIcon:
     """
     Create a QIcon from an icon file in the application's internal icons folder.
 
-    :param icon_filename: The icon filename inside the icons folder WITH the file extension.
-    :returns: A QIcon of the icon file.
+    Parameters
+    ----------
+    icon_filename
+        The icon filename inside the icons folder WITH the file extension.
+
+    Returns
+    -------
+    A `QIcon` of the icon file.
     """
     return QIcon(get_image_file(icon_filename))
 
@@ -24,7 +30,12 @@ def make_pixmap(image_filename: str) -> QPixmap:
     """
     Create a QPixmap from an image file in the application's internal icons folder.
 
-    :param image_filename: The image filename inside the icons folder WITH the file extension.
-    :returns: A QPixmap of the image file.
+    Parameters
+    ----------
+    image_filename
+        The image filename inside the icons folder WITH the file extension.
+    Returns
+    -------
+    A `QPixmap` of the image file.
     """
     return QPixmap(get_image_file(image_filename))

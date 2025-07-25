@@ -14,11 +14,11 @@ class GraphSignals(QObject):
     initPlot = pyqtSignal(int, str, LineSettings)
     """
     Initialize a plot. Emit:
-    - The plot index as an **int**.
+    - The plot index as an `int`.
         - If creating multiple plots, you must call this with increasing sequential plot indexes
         (i.e. 0, 1, 2 and not 0, 2, 1).
-    - The name of the plot tab as a **str**.
-    - The line settings as a **LineSetting**.
+    - The name of the plot tab as a `str`.
+    - The line settings as a `LineSetting`.
     """
     reset = pyqtSignal()
     """
@@ -26,27 +26,27 @@ class GraphSignals(QObject):
     emitted until a new plot is initialized.
     """
     clear = pyqtSignal(int)
-    """Clear a plot. Emit with the index of the plot to clear as an **int**."""
+    """Clear a plot. Emit with the index of the plot to clear as an `int`."""
     addPoint = pyqtSignal(int, float, float)
     """
     Add a point to a plot. Emit:
-    - The plot index as an **int**.
-    - The x-coordinate as a **float**.
-    - The y-coordinate as a **float**.
+    - The plot index as an `int`.
+    - The x-coordinate as a `float`.
+    - The y-coordinate as a `float`.
     """
     saveFig = pyqtSignal(int, str)
     """Save a figure. Emit:
-    - The plot index as an **int**.
-    - The filepath as a **str**.
+    - The plot index as an `int`.
+    - The filepath as a `str`.
     """
     setLogScale = pyqtSignal(int, object, object)
     """
     Set whether a plot uses a logarithmic scale. Emit:
-    - The plot index as an **int**.
-    - Whether the x-axis is logarithmic as a **bool** or **None**.
-    - Whether the y-axis is logarithmic as a **bool** or **None**.
+    - The plot index as an `int`.
+    - Whether the x-axis is logarithmic as a `bool` or `None`.
+    - Whether the y-axis is logarithmic as a `bool` or `None`.
 
-    If a logarithmic setting is **None**, the axis state is unchanged.
+    If a logarithmic setting is `None`, the axis state is unchanged.
     """
 
     def connect_to_other(self, other: Self):

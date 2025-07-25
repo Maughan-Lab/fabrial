@@ -26,18 +26,18 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
     newMessageCreated = pyqtSignal(str, str, QMessageBox.StandardButton, dict, QObject)
     """
     Emit this to send a message to the user. Send:
-    - The message as a **str**.
-    - The process' name as a **str**.
-    - The buttons to show on the dialog as a **QMessageBox.StandardButton**.
-    - A dictionary that maps **StandardButton**s to the text to display on the button. Can be empty.
-    - The process sending the message as an **AbstractProcess** (or subclass).
+    - The message as a `str`.
+    - The process' name as a `str`.
+    - The buttons to show on the dialog as a `QMessageBox.StandardButton`.
+    - A dictionary that maps `StandardButton`s to the text to display on the button. Can be empty.
+    - The process sending the message as an `AbstractProcess` (or subclass).
     """
     errorOccurred = pyqtSignal(str, str, object)
     """
     Emit this when an error occurs and the user cannot do anything about it. Send
-    - The message as a **str**.
-    - The process' name as a **str**.
-    - The process sending the message as an **AbstractProcess** (or subclass).
+    - The message as a `str`.
+    - The process' name as a `str`.
+    - The process sending the message as an `AbstractProcess` (or subclass).
     """
 
     def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
@@ -78,7 +78,7 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
     def directory(self) -> str:
         """
         Get the directory to write this process' data to. The name and creation of this directory is
-        managed by the **ProcessRunner**, so you can assume it already exists.
+        managed by the `ProcessRunner`, so you can assume it already exists.
         """
         return self.data_directory
 
@@ -91,7 +91,7 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
         return self.process_start_time
 
     def runner(self) -> ProcessRunner:
-        """Get the **ProcessRunner** running this process."""
+        """Get the `ProcessRunner` running this process."""
         return self.process_runner
 
     def name(self) -> str:
@@ -107,7 +107,9 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
         """
         Set the status, possibly emitting signals.
 
-        :returns: Whether the status was updated (a valid state change occurred).
+        Returns
+        -------
+        Whether the status was updated (a valid state change occurred).
         """
         pass
 
@@ -146,14 +148,19 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
         """
         Send a message to the user. The display name of the process' item is used in the title.
 
-        :param message: The message text.
-        :param buttons: The buttons to display on the dialog.
-        :param text_mapping: A dictionary of **StandardButton**s and the text to display on them.
+        Parameters
+        ----------
+        message
+            The message text.
+        buttons
+            The buttons to display on the dialog.
+        text_mapping
+            A dictionary of `StandardButton`s and the text to display on them.
         """
         self.newMessageCreated.emit(message, self.display_name, buttons, text_mapping, self)
 
     def communicate_error(self, error_message: str):
-        """Communicate an error to the user. The user only has the **Ok** option."""
+        """Communicate an error to the user. The user only has the `Ok` option."""
         self.errorOccurred.emit(error_message, self.display_name, self)
 
     def send_response(self, selected_button: QMessageBox.StandardButton | int):
@@ -162,9 +169,9 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
 
     def check_response(self) -> QMessageBox.StandardButton | None:
         """
-        Check for a response to a previously sent message. Returns **None** when no response is
+        Check for a response to a previously sent message. Returns `None` when no response is
         present, otherwise returns the response. If a response is found, calling this function again
-        without having sent a new message will return **None**.
+        without having sent a new message will return `None`.
         """
         response = self.message_response.get()
         if response is not None:
@@ -175,7 +182,7 @@ class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
         """
         Wait for the user to response to a sent message.
 
-        If the process is canceled during this time, returns **None**.
+        If the process is canceled during this time, returns `None`.
         """
         response = self.check_response()
         while response is None:
@@ -190,19 +197,25 @@ class AbstractForegroundProcess(AbstractProcess):
     """Abstract class for foreground processes."""
 
     statusChanged = pyqtSignal(SequenceStatus)
-    """Send the status as a **SequenceStatus**."""
+    """Send the status as a `SequenceStatus`."""
 
     def wait(self, delay_ms: int, unerror_fn: Callable[[], bool] = lambda: False) -> bool:
         """
-        Hold for **delay** milliseconds or as long as the process is paused, whichever is longer.
+        Hold for **delay_ms** milliseconds or as long as the process is paused, whichever is longer.
         This is where signals are processed, so be sure to call this frequently.
 
-        :param delay_ms: How long to hold for.
-        :param unerror_fn: If the sequence is paused in an error state, this function can cause it
-        to unpause and exit the error state. This function takes no arguments and should return\
-        **True** to unpause, **False** otherwise.
+        Parameters
+        ----------
+        delay_ms
+            How long to hold for.
+        unerror_fn
+            If the sequence is paused in an error state, this function can cause it to unpause and
+            exit the error state. This function takes no arguments and should return `True` to
+            unpause, `False` otherwise.
 
-        :returns: Whether the process should continue (i.e. it was not cancelled).
+        Returns
+        -------
+        Whether the process should continue (i.e. it was not cancelled).
         """
         delay = delay_ms / 1000
         end_time = time.time() + delay
@@ -230,7 +243,7 @@ class AbstractForegroundProcess(AbstractProcess):
 
     def skip(self) -> Self:
         """
-        Skip the current process. By default, this just calls **cancel()**. You can override this
+        Skip the current process. By default, this just calls `cancel()`. You can override this
         for nested processes to skip an inner process instead.
         """
         self.cancel()
@@ -259,7 +272,7 @@ class AbstractForegroundProcess(AbstractProcess):
 
 
 class AbstractGraphingProcess(AbstractForegroundProcess):
-    """**AbstractForegroundProcess** with graphing capabilities."""
+    """`AbstractForegroundProcess` with graphing capabilities."""
 
     def __init__(self, runner: ProcessRunner, data: dict[str, Any], name: str):
         AbstractForegroundProcess.__init__(self, runner, data, name)
@@ -331,10 +344,12 @@ class AbstractBackgroundProcess(AbstractProcess):
 
     def wait(self, delay_ms: int) -> bool:
         """
-        Hold for **delay** milliseconds. This is where signals are processed, so be sure to call
+        Hold for **delay_ms** milliseconds. This is where signals are processed, so be sure to call
         this frequently.
 
-        :returns: Whether the process should continue (i.e. it was not cancelled).
+        Returns
+        -------
+        Whether the process should continue (i.e. it was not cancelled).
         """
         delay = delay_ms / 1000
         end_time = time.time() + delay

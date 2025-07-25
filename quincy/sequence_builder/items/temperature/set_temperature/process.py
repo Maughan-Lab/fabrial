@@ -15,7 +15,7 @@ class SetTemperatureProcess(AbstractGraphingProcess):
 
     When subclassing, you should override:
     - `title()` - Returns the title used on the graph.
-    - `metadata()` - You should probably call **Process**'s `metadata()` method.
+    - `metadata()` - You should probably call `Process`'s `metadata()` method.
     """
 
     MEASUREMENT_INTERVAL = 5000
@@ -75,7 +75,9 @@ class SetTemperatureProcess(AbstractGraphingProcess):
         """
         Create the data file and its write headers.
 
-        :returns: The created file.
+        Returns
+        -------
+        The created file.
         """
         self.file = temperature_util.create_temperature_file(
             os.path.join(self.directory(), filenames.TEMPERATURES)

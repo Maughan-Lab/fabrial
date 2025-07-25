@@ -10,16 +10,20 @@ from .markdown_view import MarkdownView
 
 
 class ParameterDescriptionWidget(Widget):
-    """Widget with two tabs: one for parameters and one for description text."""
+    """
+    Widget with two tabs: one for parameters and one for description text.
+
+    Parameters
+    ----------
+    layout
+        The layout for the parameter tab widget.
+    parameter_tab_name
+        The text used for the parameter tab name.
+    """
 
     def __init__(
         self, parameter_layout: QLayout | None = None, parameter_tab_name: str = "Parameters"
     ):
-        """
-        :param layout: The layout for the parameter tab widget.
-        :param parameter_tab_name: The text used for the parameter tab name.
-        """
-
         layout = QVBoxLayout()
         Widget.__init__(self, layout)
         self.tab_widget = QTabWidget(self)
@@ -60,9 +64,14 @@ class ParameterDescriptionWidget(Widget):
         Set the text (interpreted as Markdown) displayed in the description tab by parsing a
         Jinja-templated file.
 
-        :param folder: The folder that contains the text file.
-        :param filename: The name of the file *inside the folder* (i.e. not the full path).
-        :param template_dict: A dictionary to pass to jinja2.Template.render().
+        Parameters
+        ----------
+        folder
+            The folder that contains the text file.
+        filename
+            The name of the file *inside the folder* (i.e. not the full path).
+        template_dict
+            A dictionary to pass to jinja2.Template.render().
         """
         markdown_text = jinja.parse_template(folder, filename, template_dict)
         return self.set_description(markdown_text)

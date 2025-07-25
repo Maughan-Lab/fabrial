@@ -11,29 +11,38 @@ ERROR_PREFIX = "Could not parse initialization directory:"
 
 def item_dict_from_directory(directory: PathLike | str) -> dict[str, Any]:
     """
-    Build a TreeItem-friendly dictionary from a properly formatted directory. This main use of this
-    function is for constructing a TreeModel from the application's item initialization directory.
+    Build a `TreeItem`-friendly dictionary from a properly formatted directory. This main use of
+    this function is for constructing a `TreeModel` from the application's item initialization
+    directory.
 
-    # The Format
+    Parameters
+    ----------
+    directory
+        The base directory to start the build process from.
+
+    Returns
+    -------
+    The dictionary created by parsing **directory**.
+
+    Raises
+    ------
+    FileNotFoundError
+        - The directory does not contain a category.json file, or
+        - The directory does not contain any item files.
+
+    ## The Format
     This function interprets folders as categories. Folders may contain other folders to nest
-    categories. Every folder must contain a **category.json** file which initializes the category.
+    categories. Every folder must contain a `category.json` file which initializes the category.
 
-    Files are interpreted as entries in a category. Every .json file must contain a **type** entry.
-    The **widget data** entry is optional if the widget has no data, and the **children** entry will
+    Files are interpreted as entries in a category. Every .json file must contain a `type` entry.
+    The `widget data` entry is optional if the widget has no data, and the `children` entry will
     be ignored (since the category's children will be determined from the file structure).
 
-    The only file name that matters is **category.json**; every other item is defined by the
+    The only file name that matters is `category.json`; every other item is defined by the
     contents of the file, not the name.
 
     Finally, items in the output dictionary appear in an arbitrary order, so must be sorted manually
     if order matters.
-
-    # Exceptions
-    This will throw a **FileNotFoundError** if 1) the directory does not contain a category.json
-    file, or 2) the directory does not contain any item files.
-
-    :param directory: The base directory to start the build process from.
-    :returns: The dictionary created by parsing **directory**.
     """
     # get the name of a file in the directory and all folders
     item_as_dict: dict[str, Any]

@@ -5,22 +5,25 @@ from PyQt6.QtWidgets import QPushButton, QSizePolicy
 
 
 class Button(QPushButton):
-    """QPushButton that automatically connected any provided functions to the **pressed** signal."""
+    """
+    `QPushButton` that automatically connects any provided functions to the `clicked` signal.
+
+    Parameters
+    ----------
+    text
+        The text to display on the button.
+    push_fn
+        Function(s) to connect the `clicked` signal to.
+    """
 
     def __init__(self, text: str, *push_fn: Callable[[], None | Any]):
-        """
-        :param text: The text to display on the button.
-        :param push_fn: Function(s) to connect the **pressed** signal to.
-        """
         QPushButton.__init__(self, text)
         for fn in push_fn:
             self.clicked.connect(fn)
 
 
 class FixedButton(Button):
-    """
-    Button with a fixed size.
-    """
+    """Button with a fixed size."""
 
     def __init__(self, text: str, *push_fn: Callable[[], None | Any]):
         Button.__init__(self, text, *push_fn)
@@ -43,12 +46,14 @@ class BiggerButton(Button):  # this name feels so dumb xD
         """
         Set the vertical and horizontal size scalars.
 
-        :param size_scalars: The new vertical and horizontal (respectively) size scalars.
+        Parameters
+        ----------
+        size_scalars
+            The new vertical and horizontal (respectively) size scalars.
         """
         self.horizontal_scalar, self.vertical_scalar = size_scalars
 
-    # overridden method
-    def sizeHint(self):
+    def sizeHint(self):  # overridden
         default_size = Button.sizeHint(self)
         return QSize(
             round(default_size.width() * self.horizontal_scalar),

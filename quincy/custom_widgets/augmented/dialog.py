@@ -4,7 +4,21 @@ from PyQt6.QtWidgets import QCheckBox, QMessageBox
 
 
 class Dialog(QMessageBox):
-    """Base class for dialog pop-ups."""
+    """
+    Base class for dialog pop-ups.
+
+    Parameters
+    ----------
+    title
+        The window title.
+    message
+        The message text.
+    buttons
+        The buttons used on the dialog.
+    default_button
+        The initially selected button. Defaults to `StandardButton.Ok` if the dialog has that
+        button, otherwise no button is selected.
+    """
 
     def __init__(
         self,
@@ -13,13 +27,6 @@ class Dialog(QMessageBox):
         buttons: QMessageBox.StandardButton,
         default_button: QMessageBox.StandardButton = QMessageBox.StandardButton.Ok,
     ):
-        """
-        :param title: The window title.
-        :param message: The message text.
-        :param buttons: The buttons used on the dialog.
-        :param default_button: The initially selected button. Defaults to **StandardButton.Ok** if
-        the dialog has that button, otherwise no button is selected.
-        """
         QMessageBox.__init__(self)
 
         self.setWindowTitle(title)
@@ -52,7 +59,7 @@ class YesCancelDialog(Dialog):
 
 
 class OkDialog(Dialog):
-    """Dialog pop-up with an Ok button. `run()` always returns **True**."""
+    """Dialog pop-up with an Ok button. `run()` always returns `True`."""
 
     def __init__(self, title: str, message: str):
         Dialog.__init__(self, title, message, Dialog.StandardButton.Ok, Dialog.StandardButton.Ok)
@@ -85,6 +92,22 @@ class YesNoDialog(Dialog):
 
 
 class DontShowAgainDialog(Dialog):
+    """
+    A dialog that has a "Don't show again" option.
+
+    Parameters
+    ----------
+    title
+        The title of the dialog.
+    message
+        The message text shown on the dialog.
+    buttons
+        `StandardButton`s to show on the dialog.
+    default_button
+        Which `StandardButton` to have selected by default.
+    filepath
+        The filepath where the "don't show again" state is saved to and loaded from.
+    """
 
     def __init__(
         self,
@@ -94,14 +117,7 @@ class DontShowAgainDialog(Dialog):
         default_button: QMessageBox.StandardButton,
         filepath: PathLike | str,
     ):
-        """
-        :param title: The title of the dialog.
-        :param message: The message text shown on the dialog.
-        :param buttons: **StandardButton**s to show on the dialog.
-        :param default_button: Which **StandardButton** to have selected by default.
-        :param filepath: The filepath where the "don't show again" state is saved to and loaded
-        from.
-        """
+
         Dialog.__init__(self, title, message, buttons, default_button)
         self.check_box = QCheckBox("Don't show again", self)
         self.setCheckBox(self.check_box)
@@ -130,7 +146,7 @@ class DontShowAgainDialog(Dialog):
         """
         Show the dialog and save the state of the "Don't show again" checkbox afterward. Returns
         whether the proposed action was accepted. If the "Don't show again" checkbox is checked,
-        this always returns **True** without showing the dialog.
+        this always returns `True` without showing the dialog.
         """
         if self.should_run():
             result = Dialog.run(self)

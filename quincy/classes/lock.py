@@ -32,7 +32,7 @@ class DataMutex[Data: Any](QReadWriteLock):  # generic class
 
     def try_get(self) -> Data | None:
         """
-        Try to set the data in this mutex twice, calling **time.sleep()** in between. Returns True
+        Try to set the data in this mutex twice, calling `time.sleep()` in between. Returns True
         if successful, False otherwise.
         """
         if self.tryLockForRead(10):  # arbitrary time

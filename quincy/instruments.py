@@ -18,19 +18,19 @@ if TYPE_CHECKING:
 class Instrument(QObject, metaclass=ABCQObjectMeta):
     """
     Abstract class to represent instruments. When using methods that change the physical oven,
-    call acquire() followed at some point by release().
+    call `acquire()` followed at some point by `release()`.
     """
 
     # signals
     connectionChanged = pyqtSignal(bool)
     """
     Fires whenever the connection status changes. Sends whether the instrument is connected as a
-    **bool**.
+    `bool`.
     """
     lockChanged = pyqtSignal(bool)
     """
     Fires whenever the instrument is locked/unlocked. Sends whether the instrument is unlocked as a
-    **bool**.
+    `bool`.
     """
 
     def __init__(self):
@@ -45,7 +45,7 @@ class Instrument(QObject, metaclass=ABCQObjectMeta):
     def lock(self):
         """
         Make the instrument available for only one process. This should be followed by a call to
-        **unlock()**. Emits signals.
+        `unlock()`. Emits signals.
         """
         self.unlocked.set(False)
         self.lockChanged.emit(False)
@@ -78,7 +78,7 @@ class Instrument(QObject, metaclass=ABCQObjectMeta):
         pass
 
     def is_connected(self) -> bool:
-        """Get the connection status of this instrument as a **bool**."""
+        """Get the connection status of this instrument as a `bool`."""
         return bool(self.connection_status)
 
 
@@ -105,18 +105,17 @@ class Oven(Instrument):
 
     # signals
     temperatureChanged = pyqtSignal(float)
-    """Fires whenever the oven's temperature *changes*. Sends the temperature as a **float**."""
+    """Fires whenever the oven's temperature *changes*. Sends the temperature as a `float`."""
     setpointChanged = pyqtSignal(float)
-    """Fires whenever the oven's setpoint *changes*. Sends the setpoint as a **float**."""
+    """Fires whenever the oven's setpoint *changes*. Sends the setpoint as a `float`."""
     stabilityChanged = pyqtSignal(bool)
     """
-    Fires whenever the oven's stability status changes. Sends a **bool** indicating whether the
+    Fires whenever the oven's stability status changes. Sends a `bool` indicating whether the
     temperature is stable.
     """
     stabilityCountChanged = pyqtSignal(int)
     """
-    Fires whenever the oven's stability measurement count changes. Sends the new count as an
-    **int**.
+    Fires whenever the oven's stability measurement count changes. Sends the new count as an `int`.
     """
 
     class ClampResult(Enum):
@@ -193,7 +192,7 @@ class Oven(Instrument):
 
     def read_temp(self) -> float | None:
         """
-        Returns the oven's temperature if on a successful read, **None** otherwise. This is
+        Returns the oven's temperature if on a successful read, `None` otherwise. This is
         thread-safe.
         """
         with QMutexLocker(self.device_lock()):
@@ -209,8 +208,8 @@ class Oven(Instrument):
 
     def change_setpoint(self, setpoint: float) -> bool:
         """
-        Sets the oven's temperature to **setpoint**. Returns **True** if the operation was
-        successful, **False** otherwise. If the provided setpoint is outside the oven's setpoint
+        Sets the oven's temperature to **setpoint**. Returns `True` if the operation was
+        successful, `False` otherwise. If the provided setpoint is outside the oven's setpoint
         range, it is clamped. This reset's the oven's stability. This is thread-safe.
         """
         with QMutexLocker(self.device_lock()):
@@ -228,7 +227,7 @@ class Oven(Instrument):
                 return False
 
     def get_setpoint(self) -> float | None:
-        """Get the oven's setpoint. Returns **None** if the read fails. This is thread-safe."""
+        """Get the oven's setpoint. Returns `None` if the read fails. This is thread-safe."""
         with QMutexLocker(self.device_lock()):
             try:
                 setpoint = float(

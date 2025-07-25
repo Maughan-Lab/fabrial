@@ -63,15 +63,20 @@ class AbstractRunner(QObject, metaclass=ABCQObjectMeta):
 
 
 class SequenceRunner(AbstractRunner):
-    """Class for running sequences created by the SequenceBuilder."""
+    """
+    Class for running sequences created by the SequenceBuilder.
+
+    Parameters
+    ----------
+    data_directory
+        The name of the base directory to write all data to.
+    root_item
+        The root item of the sequence builder.
+    """
 
     finished = pyqtSignal()
 
     def __init__(self, data_directory: str, root_item: TreeItem):
-        """
-        :param data_directory: The name of the base directory to write all data to.
-        :root_item: The root item of the sequence builder.
-        """
         AbstractRunner.__init__(self)
         self.data_directory = data_directory
         self.root_item = root_item
@@ -123,10 +128,16 @@ class SequenceRunner(AbstractRunner):
 
     def run_task(self, item: TreeItem) -> bool:
         """
-        Run an individual item (helper function of **run()**).
+        Run an individual item (helper function of `run()`).
 
-        :param item: The current item.
-        :returns: Whether the sequence should continue.
+        Parameters
+        ----------
+        item
+            The current item.
+
+        Returns
+        -------
+        Whether the sequence should continue.
         """
         process_type = item.process_type()  # setup
         if process_type is not None:
@@ -166,13 +177,18 @@ class SequenceRunner(AbstractRunner):
 
 
 class ProcessRunner(AbstractRunner):
-    """Runs **Process**es. Contains parameters used by the `run()` method of a **Process**."""
+    """
+    Runs `Process`es. Contains parameters used by the `run()` method of a `Process`.
+
+    Parameters
+    ----------
+    parent
+        The QObject that owns this runner. The parent should be in the same thread.
+    data_directory
+        The folder where all sequence data will be stored.
+    """
 
     def __init__(self, parent: QObject, data_directory: str):
-        """
-        :param parent: The QObject that owns this runner. The parent should be in the same thread.
-        :param data_directory: The folder where all sequence data will be stored.
-        """
         AbstractRunner.__init__(self, parent)
         self.data_directory = data_directory
         self.process: AbstractForegroundProcess | None = None
@@ -202,10 +218,16 @@ class ProcessRunner(AbstractRunner):
         """
         Run a process.
 
-        :param process: The process to run.
-        :param item: The item associated with the process.
+        Parameters
+        ----------
+        process
+            The process to run.
+        item
+            The item associated with the process.
 
-        :returns: Whether the sequence was canceled.
+        Returns
+        -------
+        Whether the sequence was canceled.
         """
         self.currentItemChanged.emit(item, self.item)
         self.item = item

@@ -57,11 +57,16 @@ class GamryInterface:
 
 
 class Potentiostat:
+    """
+    Parameters
+    ----------
+    COM_interface
+        The Module object used interface with Gamry.
+    identifier
+        An identifier for the physical potentiostat.
+    """
+
     def __init__(self, COM_interface: types.ModuleType, identifer: str):
-        """
-        :param COM_interface: The Module object used interface with Gamry.
-        :param identifier: An identifier for the physical potentiostat.
-        """
         self.GamryCOM = COM_interface
         self.id = identifer
         self.device = client.CreateObject(self.GamryCOM.GamryPC6Pstat)
@@ -179,14 +184,14 @@ class Potentiostat:
 
 class ImpedanceReader(QObject):
     """
-    Uses a **Potentiostat** to measure electrical impedance. This is synonymous to Gamry's
-    **ReadZ**.
+    Uses a `Potentiostat` to measure electrical impedance. This is synonymous to Gamry's
+    `ReadZ`.
     """
 
     dataReady = pyqtSignal(bool)
     """
     Fires sometime after a call to `measure()` when the impedance reader has data ready. Sends:
-    - Whether the measurement was successful as a **bool**.
+    - Whether the measurement was successful as a `bool`.
     """
 
     def __init__(self, potentiostat: Potentiostat):
@@ -210,11 +215,15 @@ class ImpedanceReader(QObject):
 
     def measure(self, frequency: float, ac_voltage: float):
         """
-        Perform a measurement. The reader will emit **dataReady** when data is ready to be read.
+        Perform a measurement. The reader will emit `dataReady` when data is ready to be read.
 
-        :param frequency: The frequency to measure at (in Hz). This frequency is clamped to the
-        potentiostats limits.
-        :param ac_voltage: The AC voltage to measure at (in V).
+        Parameters
+        ----------
+        frequency
+            The frequency to measure at (in Hz). This frequency is clamped to the potentiostats
+            limits.
+        ac_voltage
+            The AC voltage to measure at (in V).
         """
         self.readz.Measure(self.pstat.clamp_frequency(frequency), ac_voltage)
 
@@ -228,7 +237,7 @@ class ImpedanceReader(QObject):
         return self.pstat
 
     def com_connection(self) -> _AdviseConnection:
-        """Get the **comtypes** connection used to send events to the reader."""
+        """Get the `comtypes` connection used to send events to the reader."""
         return self.connection
 
     # ----------------------------------------------------------------------------------------------
@@ -292,7 +301,7 @@ class ImpedanceReader(QObject):
 
 
 class OCVoltageReader:
-    """Uses a **Potentiostat** to measure the open-circuit voltage."""
+    """Uses a `Potentiostat` to measure the open-circuit voltage."""
 
     SAMPLE_TIME = 0.25  # seconds
 
@@ -316,7 +325,9 @@ class OCVoltageReader:
         """
         Run the open-circuit voltage test. This turns the cell off.
 
-        :returns: The open-circuit voltage in Volts.
+        Returns
+        -------
+        The open-circuit voltage in Volts.
         """
         # a lot of this code is probably redundant, but I'm copying from the Common Functions.exp
         # file (OCDelay)

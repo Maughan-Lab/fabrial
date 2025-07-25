@@ -8,11 +8,16 @@ class DescriptionInfo:
     """
     Information for setting the description of an AbstractBaseWidget.
 
-    :param category_folder: The name of the category folder inside the application's item
-    description folder.
-    :param item_folder: The name of the item folder inside the **category_folder**.
-    :param data_folder: The name of the folder the associated process writes data to.
-    :param substitutions: A collection of substitution dictionaries passed to the template renderer.
+    Parameters
+    ----------
+    category_folder
+        The name of the category folder inside the application's item description folder.
+    item_folder
+        The name of the item folder inside the **category_folder**.
+    data_folder
+        The name of the folder the associated process writes data to.
+    substitutions
+        A collection of substitution dictionaries passed to the template renderer.
     """
 
     @dataclass

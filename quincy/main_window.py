@@ -60,9 +60,16 @@ class MainWindow(QMainWindow):
         """
         Create a new window owned by the main window. The window is automatically shown.
 
-        :param title: The window title.
-        :param central_widget: The widget to show inside the secondary window.
-        :returns: The created window.
+        Parameters
+        ----------
+        title
+            The window title.
+        central_widget
+            The widget to show inside the secondary window.
+
+        Returns
+        -------
+        The created window.
         """
         window = SecondaryWindow(title, central_widget)
         self.secondary_windows.append(window)

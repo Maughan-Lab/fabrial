@@ -6,7 +6,20 @@ from ...instruments import Oven
 
 
 class DoubleSpinBox(QDoubleSpinBox):
-    """QDoubleSpinBox class without up/down buttons."""
+    """
+    `QDoubleSpinBox` without up/down buttons.
+
+    Parameters
+    ----------
+    number_of_decimals
+        The number of decimals to display.
+    minimum
+        The minimum allowed value (default 0).
+    maximum
+        The maximum allowed value (default largest possible float).
+    initial_value
+        The initial value of the spinbox (default higher of 0 and **minimum**).
+    """
 
     LARGEST_FLOAT = sys.float_info.max
 
@@ -17,13 +30,6 @@ class DoubleSpinBox(QDoubleSpinBox):
         maximum: float = LARGEST_FLOAT,
         initial_value: int = 0,
     ):
-        """
-        :param number_of_decimals: The number of decimals to display.
-        :param minimum: The minimum allowed value (default 0).
-        :param maximum: The maximum allowed value (default largest possible float).
-        :param initial_value: The initial value of the spinbox (default higher of 0 and
-        **minimum**).
-        """
         QDoubleSpinBox.__init__(self)
         self.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
         self.setDecimals(number_of_decimals)
@@ -33,7 +39,7 @@ class DoubleSpinBox(QDoubleSpinBox):
 
     def connect_to_button(self, button: QPushButton):
         """
-        Emit the **button**'s **pressed** signal when Enter is pressed and the button is enabled.
+        Emit the **button**'s `pressed` signal when Enter is pressed and the button is enabled.
         """
         line_edit = self.lineEdit()
         if line_edit is not None:
@@ -43,27 +49,38 @@ class DoubleSpinBox(QDoubleSpinBox):
 
 
 class TemperatureSpinBox(DoubleSpinBox):
-    """DoubleSpinBox for temperatures."""
+    """
+    `DoubleSpinBox` for temperatures.
+
+    Parameters
+    ----------
+    oven
+        The oven to use for setting the maximum/minimum temperatures.
+    """
 
     def __init__(self, oven: Oven):
-        """:param oven: The oven to use for setting the maximum/minimum temperatures."""
         DoubleSpinBox.__init__(
             self, oven.num_decimals(), oven.minimum_temperature(), oven.maximum_temperature()
         )
 
 
 class SpinBox(QSpinBox):
-    """QSpinBox class without up/down buttons."""
+    """
+    `QSpinBox` class without up/down buttons.
+
+    Parameters
+    ----------
+    minimum
+        The minimum allowed value (default 0).
+    maximum
+        The maximum allowed value (default largest possible integer).
+    initial_value
+        The initial value of the spinbox (default higher of 0 and **minimum**).
+    """
 
     LARGEST_INTEGER = 2147483647
 
     def __init__(self, minimum: int = 0, maximum: int = LARGEST_INTEGER, initial_value: int = 0):
-        """
-        :param minimum: The minimum allowed value (default 0).
-        :param maximum: The maximum allowed value (default largest possible integer).
-        :param initial_value: The initial value of the spinbox (default higher of 0 and
-        **minimum**).
-        """
         QSpinBox.__init__(self)
         self.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
         self.setMinimum(minimum)

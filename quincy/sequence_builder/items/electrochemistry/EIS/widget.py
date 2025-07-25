@@ -95,7 +95,10 @@ class EISWidget(AbstractBaseWidget):
         """
         Reload the list of available potentiostats.
 
-        :param selected_pstats: A list of potentiostat identifiers which should be checked.
+        Parameters
+        ----------
+        selected_pstats
+            A list of potentiostat identifiers which should be checked.
         """
         identifiers: list[str] = GAMRY.get_pstat_list()
         layout_util.clear_layout(self.devices_layout)

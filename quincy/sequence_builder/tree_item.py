@@ -44,7 +44,10 @@ class TreeItem:
         """
         Show the linked widget in its own window.
 
-        :param enabled: Whether the widget's parameters tab should be enabled.
+        Parameters
+        ----------
+        enabled
+            Whether the widget's parameters tab should be enabled.
         """
         self.linked_widget.show_widget(enabled)
 
@@ -191,8 +194,12 @@ class TreeItem:
         """
         Create a TreeItem from a JSON-style dictionary. This method is recursive.
 
-        :param parent: The item's parent. This should be `None` if the item is the root item.
-        :param item_as_dict: A dictionary representing the item's data in JSON format.
+        Parameters
+        ----------
+        parent
+            The item's parent. This should be `None` if the item is the root item.
+        item_as_dict
+            A dictionary representing the item's data in JSON format.
         """
 
         widget_type = ItemType.from_name(item_as_dict[TYPE]).value

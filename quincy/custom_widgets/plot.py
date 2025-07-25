@@ -71,17 +71,25 @@ class PlotItem(pg.PlotItem):
         """
         Plot a new line.
 
-        :param x_data: The x-data.
-        :param y_data: The y-data.
-        :param legend_label: The label for this line in the legend.
-        :param line_color: The color of the line. If set to **None**, there will be no line.
-        :param line_width: The width of the line. If set to **None**, there will be no line.
-        :param symbol: The symbol to use, i.e. "o" for a dot.
-        :param symbol_size: The point size.
-        :param symbol_color: The color of the points. Can be a hex string (i.e. "#112233") or a
-        standard color name (i.e. "green").
-
-        :returns: A reference to the data item.
+        Parameters
+        ----------
+        x_data
+            The x-data.
+        y_data
+            The y-data.
+        legend_label
+            The label for this line in the legend.
+        line_color
+            The color of the line. If set to `None`, there will be no line.
+        line_width
+            The width of the line. If set to `None`, there will be no line.
+        symbol
+            The symbol to use, i.e. "o" for a dot.
+        symbol_size
+            The point size.
+        symbol_color
+            The color of the points. Can be a hex string (i.e. "#112233") or a standard color name
+            (i.e. "green").
         """
         if line_color is None or line_width is None:
             line_pen = None
@@ -122,7 +130,7 @@ class PlotView(pg.PlotWidget):
 
 
 class PlotWidget(Widget):
-    """Contains a **PlotView** and buttons for interacting with it."""
+    """Contains a `PlotView` and buttons for interacting with it."""
 
     def __init__(self):
         layout = QVBoxLayout()
@@ -137,11 +145,11 @@ class PlotWidget(Widget):
         )
 
     def plot_item(self) -> PlotItem:
-        """Get the underlying **PlotItem**."""
+        """Get the underlying `PlotItem`."""
         return self.view.getPlotItem()
 
     def plot_view(self) -> PlotView:
-        """Get the underlying **PlotView**."""
+        """Get the underlying `PlotView`."""
         return self.view
 
     def save_as_image(self):

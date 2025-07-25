@@ -14,8 +14,11 @@ def create_temperature_file(filepath: str) -> TextIOWrapper:
 
     The header is written automatically.
 
-    :param filepath: The path to the file to create. If the file already exists, it will be
-    overwritten. The file is opened in write mode and is line buffered.
+    Parameters
+    ----------
+    filepath
+        The path to the file to create. If the file already exists, it will be overwritten. The file
+        is opened in write mode and is line buffered.
     """
     file = open(filepath, "w", 1, newline="")
     csv.writer(file).writerow(
@@ -30,11 +33,18 @@ def record_temperature_data(
     """
     Record the time since start, datetime, and temperature in the provided file.
 
-    :param file: The CSV file to write to.
-    :param start_time: The **Process**'s start time.
-    :param temperature: The temperature being recorded.
+    Parameters
+    ----------
+    file
+        The CSV file to write to.
+    start_time
+        The `Process`'s start time.
+    temperature
+        The temperature being recorded.
 
-    :returns: The number of seconds since the **Process** started.
+    Returns
+    -------
+    The number of seconds since the `Process` started.
     """
     current_time = time.time()
     time_since_start = current_time - start_time

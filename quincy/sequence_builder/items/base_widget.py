@@ -12,7 +12,26 @@ from ...utility import descriptions, images
 
 
 class AbstractWidget(ABC):
-    """Abstract class for sequence builder widgets."""
+    """
+    Abstract class for sequence builder widgets.
+
+    Parameters
+    ----------
+    layout
+        The layout to use for the parameter tab.
+    display_name
+        The name displayed on the widget's item and window.
+    process_type
+        The type of the widget's associated `Process`.
+    icon_filename
+        The name of the icon file in the application's internal icon folder.
+    description_info
+        Information for setting the text of the description tab.
+    supports_subitems
+        Whether the associated item can have subitems.
+    draggable
+        Whether the associated item can be dragged.
+    """
 
     def __init__(
         self,
@@ -21,15 +40,6 @@ class AbstractWidget(ABC):
         supports_subitems: bool = True,
         draggable: bool = False,
     ):
-        """
-        :param layout: The layout to use for the parameter tab.
-        :param display_name: The name displayed on the widget's item and window.
-        :param process_type: The type of the widget's associated **Process**.
-        :param icon_filename: The name of the icon file in the application's internal icon folder.
-        :param description_info: Information for setting the text of the description tab.
-        :param supports_subitems: Whether the associated item can have subitems.
-        :param draggable: Whether the associated item can be dragged.
-        """
         self.linked_process_type = process_type
         self.item_supports_subitems = supports_subitems
         self.draggable = draggable
@@ -41,7 +51,10 @@ class AbstractWidget(ABC):
         """
         Create a widget from a JSON-style dictionary.
 
-        :param data_as_dict: A dictionary representing the widget's data in JSON format.
+        Parameters
+        ----------
+        data_as_dict
+            A dictionary representing the widget's data in JSON format.
         """
         raise TypeError(f"You must implement 'from_dict()' for {cls.__name__}.")
 
@@ -53,7 +66,10 @@ class AbstractWidget(ABC):
         """
         Show the widget.
 
-        :param enabled: Whether the parameter tab should be enabled.
+        Parameters
+        ----------
+        enabled
+            Whether the parameter tab should be enabled.
         """
         pass
 
@@ -98,7 +114,7 @@ class AbstractWidget(ABC):
 
 
 class ABCWidgetMeta(type(ParameterDescriptionWidget), ABCMeta):  # type: ignore
-    """Metaclass combining **ParameterDescriptionWidget** and **ABCMeta**."""
+    """Metaclass combining `ParameterDescriptionWidget` and `ABCMeta`."""
 
 
 class AbstractBaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=ABCWidgetMeta):
@@ -107,6 +123,21 @@ class AbstractBaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=A
     You must override:
     - `from_dict()`
     - `to_dict()`
+
+    Parameters
+    ----------
+    layout
+        The layout to use for the parameter tab.
+    display_name
+        The name displayed on the widget's item and window.
+    process_type
+        The type of the widget's associated `Process`.
+    icon_filename
+        The name of the icon file in the application's internal icon folder.
+    description_info
+        Information for setting the text of the description tab.
+    supports_subitems
+        Whether the associated item can have subitems.
     """
 
     def __init__(
@@ -118,14 +149,6 @@ class AbstractBaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=A
         description_info: DescriptionInfo = DescriptionInfo(),
         supports_subitems: bool = False,
     ):
-        """
-        :param layout: The layout to use for the parameter tab.
-        :param display_name: The name displayed on the widget's item and window.
-        :param process_type: The type of the widget's associated **Process**.
-        :param icon_filename: The name of the icon file in the application's internal icon folder.
-        :param description_info: Information for setting the text of the description tab.
-        :param supports_subitems: Whether the associated item can have subitems.
-        """
         ParameterDescriptionWidget.__init__(self, layout)
         AbstractWidget.__init__(self, display_name, process_type, supports_subitems, True)
 
@@ -157,10 +180,16 @@ class AbstractBaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=A
 
 
 class CategoryWidget(AbstractWidget):
-    """Fake widget class for category items (i.e. non-sequence items)."""
+    """
+    Fake widget class for category items (i.e. non-sequence items).
+
+    Parameters
+    ----------
+    display_name
+        The text to display on the item.
+    """
 
     def __init__(self, display_name: str = ""):
-        """:param display_name: The text to display on the item."""
         AbstractWidget.__init__(self, display_name)
         self.collapsed_icon = images.make_icon("folder-horizontal.png")
         self.expanded_icon = images.make_icon("folder-horizontal-open.png")

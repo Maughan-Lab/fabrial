@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QLayout, QSizePolicy, QWidget
 
 
 class SignalWidget(QWidget):
-    """QWidget with a **closed** signal."""
+    """`QWidget` with a `closed` signal."""
 
     closed = pyqtSignal()
 
@@ -17,7 +17,7 @@ class SignalWidget(QWidget):
 
 
 class FixedWidget(QWidget):
-    """QWidget with a fixed size."""
+    """`QWidget` with a fixed size."""
 
     def __init__(self, parent: QWidget | None = None):
         QWidget.__init__(self, parent)
@@ -25,10 +25,16 @@ class FixedWidget(QWidget):
 
 
 class Widget(QWidget):
-    """QWidget that automatically sets the layout."""
+    """
+    `QWidget` that automatically sets the layout.
+
+    Parameters
+    ----------
+    layout
+        The layout to initialize with.
+    """
 
     def __init__(self, layout: QLayout | None = None):
-        """:param layout: The layout to initialize with."""
         QWidget.__init__(self)
         if layout is not None:
             self.setLayout(layout)

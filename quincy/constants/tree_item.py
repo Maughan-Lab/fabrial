@@ -1,4 +1,4 @@
-"""Dictionary keys for **TreeItems**."""
+"""Dictionary keys for `TreeItem`s."""
 
 TYPE = "type"
 WIDGET_DATA = "linked-widget-data"

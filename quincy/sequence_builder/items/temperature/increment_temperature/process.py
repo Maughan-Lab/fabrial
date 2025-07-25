@@ -46,8 +46,9 @@ class IncrementTemperatureProcess(SetTemperatureProcess):
         Get the oven's setpoint, going into an error state on failure. Retry until the read is
         successful.
 
-        :returns: A tuple of ([setpoint], [continue]). If [continue] is False, [setpoint] should be
-        ignored.
+        Returns
+        -------
+        A tuple of ([setpoint], [continue]). If [continue] is False, [setpoint] should be ignored.
         """
         setpoint = self.oven.get_setpoint()
         while setpoint is None:

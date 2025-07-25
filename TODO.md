@@ -53,6 +53,8 @@ match response:
 ```
 
 ## Multi-Level Cancellations
+DO NOT DO THIS
+
 If you are in a loop/other nested sequence step, you should be able to cancel the outer item or *any* of the inner items. There should be a cancel button with a combobox next to it. The combobox should show the available "depths" you can cancel. For example, if you have something like this:
 ```
 -loop 1
@@ -71,6 +73,12 @@ All nested tasks will need to call some method on the `ProcessRunner` that runs 
 - Change comments to Rust style when you see them.
 - Mark methods as "overridden" or "implementation".
 - "instrument" $\to$ "device"
+
+## Remove `parent` parameters from custom widgets.
+Do what it says.
+
+## Change `add_sublayout()` to accept a layout instead of a layout constructor.
+Do what is says.
 
 ## Protocols
 - Make a `Protocol` class for devices. This will make your life easier.

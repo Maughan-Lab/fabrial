@@ -173,8 +173,10 @@ class EISProcess(AbstractGraphingProcess):
         """
         Create, initialize, and return the process' impedance readers.
 
-        :param context_manager: The context manager used to automatically close and cleanup the
-        devices.
+        Parameters
+        ----------
+        context_manager
+            The context manager used to automatically close and cleanup the devices.
         """
         impedance_readers: list[ImpedanceReader] = []
         for index, identifer in enumerate(self.pstat_identifiers):
@@ -219,8 +221,12 @@ class EISProcess(AbstractGraphingProcess):
         """
         Create the data file for an impedance reader and their write the header.
 
-        :param reader: The impedance reader to create the file for.
-        :param context_manager: The context manager used to automatically close the file.
+        Parameters
+        ----------
+        reader
+            The impedance reader to create the file for.
+        context_manager
+            The context manager used to automatically close the file.
         """
         identifier = impedance_reader.potentiostat().identifier()
         # file names are based on the potentiostat identifier
@@ -257,8 +263,12 @@ class EISProcess(AbstractGraphingProcess):
         Record a measurement in the data file and on the graph. Only the first potentiostat's
         measurement is shown on the graph.
 
-        :param measurement_count: The current measurement count.
-        :param reader: The **ImpedanceReader** to get data from.
+        Parameters
+        ----------
+        measurement_count
+            The current measurement count.
+        reader
+            The `ImpedanceReader` to get data from.
         """
         impedance_reader_data = self.impedance_reader_data[reader]
 

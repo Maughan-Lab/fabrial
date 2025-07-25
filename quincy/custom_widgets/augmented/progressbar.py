@@ -4,14 +4,20 @@ from ...instruments import Oven
 
 
 class ProgressBar(QProgressBar):
-    """QProgressBar with easier methods."""
+    """
+    `QProgressBar` with easier methods.
+
+    Parameters
+    ----------
+    minimum
+        The minimum value of the progressbar.
+    maximum
+        The maximum value of the progressbar.
+    increment_value
+        How much increment() increments the value by. Defaults to 1.
+    """
 
     def __init__(self, minimum: int, maximum: int, increment_value: int = 1):
-        """
-        :param minimum: The minimum value of the progressbar.
-        :param maximum: The maximum value of the progressbar.
-        :param increment_value: How much increment() increments the value by. Defaults to 1.
-        """
         QProgressBar.__init__(self)
         self.increment_value = increment_value
         self.setMinimum(minimum)
@@ -23,15 +29,19 @@ class ProgressBar(QProgressBar):
 
 
 class StabilityProgressBar(QProgressBar):
-    """QProgressBar for oven stability."""
+    """
+    `QProgressBar` for oven stability. The minimum and maximum are set automatically based on the
+    **oven**.
+
+    Parameters
+    ----------
+    oven
+        The oven to base the maximum on.
+    parent
+        The widget's parent.
+    """
 
     def __init__(self, oven: Oven, parent: QWidget | None = None):
-        """
-        Automatically sets the minimum and maximum based on the oven.
-
-        :param oven: The oven to base the maximum on.
-        :param parent: The widget's parent.
-        """
         QProgressBar.__init__(self, parent)
         self.setMinimum(0)
         self.setMaximum(oven.minimum_measurements())
