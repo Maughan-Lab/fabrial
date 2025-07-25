@@ -3,9 +3,6 @@
 - When that doesn't work, email support again and ask for help.
 
 # Fixing Quincy for Modularization
-## Packaging
-- Use the `--add-data` option to copy files instead of doing it manually.
-
 ## Interface Stuff
 Use `Protocol` instead of ABC. Try to minimize inheritance and use interfaces instead.
 

@@ -8,7 +8,7 @@ ASSETS = BASE_DIR.joinpath("assets")
 ICONS = ASSETS.joinpath("icons")
 
 a = Analysis(
-    ["../packaged_main.py"],
+    ["../run.py"],
     pathex=[],
     binaries=[],
     datas=[(ASSETS, "assets")],
