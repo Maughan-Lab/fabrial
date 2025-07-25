@@ -3,7 +3,7 @@
 from pathlib import Path
 
 APP_NAME = "Quincy"
-BASE_DIR = Path("../src/quincy")
+BASE_DIR = Path("../quincy")
 ASSETS = BASE_DIR.joinpath("assets")
 ICONS = ASSETS.joinpath("icons")
 

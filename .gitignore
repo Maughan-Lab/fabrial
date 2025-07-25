@@ -1,10 +1,11 @@
 # Quincy files
-**/__pycache__/
-**/.pytest_cache/
-**/Data Files/
-**/saved_settings/
-**/build/
-**/dist/
+__pycache__/
+.pytest_cache/
+Data Files/
+saved_settings/
+build/
+dist/
+QuincyInstaller.exe
 
 # random folder I saw once
 /share/
