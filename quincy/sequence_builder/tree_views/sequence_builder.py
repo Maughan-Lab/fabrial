@@ -160,7 +160,7 @@ class SequenceTreeWidget(Container):
         layout_util.add_to_layout(layout, button_container, self.view)
 
         # the data directory selection widgets
-        directory_layout = layout_util.add_sublayout(layout, QHBoxLayout)
+        directory_layout = layout_util.add_sublayout(layout, QHBoxLayout())
         self.directory_button = BiggerButton(
             "Choose Data Directory", self.choose_directory, size_scalars=(1, 2)
         )

@@ -3,7 +3,7 @@ from os import PathLike
 from typing import Any, Self
 
 from PyQt6.QtCore import QModelIndex, QPersistentModelIndex
-from PyQt6.QtWidgets import QAbstractItemView, QTreeView, QWidget
+from PyQt6.QtWidgets import QAbstractItemView, QTreeView
 
 from ...constants import tree_item
 from ..tree_model import TreeModel
@@ -16,8 +16,8 @@ EXPANDED = "expanded"
 class TreeView(QTreeView):
     """Custom TreeView with support for copy, cut, paste, and delete (and drag and drop)."""
 
-    def __init__(self, model: TreeModel, parent: QWidget | None = None):
-        QTreeView.__init__(self, parent)
+    def __init__(self, model: TreeModel):
+        QTreeView.__init__(self)
 
         self.setDragEnabled(True)
         self.setDropIndicatorShown(True)

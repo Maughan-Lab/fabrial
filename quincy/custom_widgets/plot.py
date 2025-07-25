@@ -141,7 +141,7 @@ class PlotWidget(Widget):
         autoscale_button = Button("Autoscale", self.autoscale)
         save_button = Button("Save", self.save_as_image)
         layout_util.add_to_layout(
-            layout_util.add_sublayout(layout, QHBoxLayout), autoscale_button, save_button
+            layout_util.add_sublayout(layout, QHBoxLayout()), autoscale_button, save_button
         )
 
     def plot_item(self) -> PlotItem:

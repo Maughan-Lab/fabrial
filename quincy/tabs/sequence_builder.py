@@ -28,7 +28,7 @@ class SequenceBuilderTab(QWidget):
         self.setLayout(layout)
 
         # tree views
-        treeview_layout = layout_util.add_sublayout(layout, QHBoxLayout)
+        treeview_layout = layout_util.add_sublayout(layout, QHBoxLayout())
         self.options_tree = OptionsTreeWidget()
         self.sequence_tree = SequenceTreeWidget()
         layout_util.add_to_layout(treeview_layout, self.options_tree, self.sequence_tree)

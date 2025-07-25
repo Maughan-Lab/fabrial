@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QProgressBar, QWidget
+from PyQt6.QtWidgets import QProgressBar
 
 from ...instruments import Oven
 
@@ -37,12 +37,10 @@ class StabilityProgressBar(QProgressBar):
     ----------
     oven
         The oven to base the maximum on.
-    parent
-        The widget's parent.
     """
 
-    def __init__(self, oven: Oven, parent: QWidget | None = None):
-        QProgressBar.__init__(self, parent)
+    def __init__(self, oven: Oven):
+        QProgressBar.__init__(self)
         self.setMinimum(0)
         self.setMaximum(oven.minimum_measurements())
 

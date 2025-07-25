@@ -1,10 +1,8 @@
-from typing import Callable
-
 from PyQt6.QtWidgets import QBoxLayout, QFormLayout, QLayout, QLayoutItem, QStackedLayout, QWidget
 
 
 def add_sublayout[LayoutType: QLayout](
-    outer_layout: QBoxLayout, layout_fn: Callable[[], LayoutType]
+    outer_layout: QBoxLayout, inner_layout: LayoutType
 ) -> LayoutType:
     """
     Add an inner layout to an outer layout.
@@ -13,14 +11,13 @@ def add_sublayout[LayoutType: QLayout](
     ----------
     outer_layout
         The outer layout to add an inner layout to.
-    layout_fn
-        A function to construct the inner layout (i.e. `QGridLayout`, not `QGridLayout()`)
+    inner_layout
+        The layout to add.
 
     Returns
     -------
-    The inner layout added to **outer_layout**.
+    The **inner_layout**.
     """
-    inner_layout = layout_fn()
     outer_layout.addLayout(inner_layout)
     return inner_layout
 

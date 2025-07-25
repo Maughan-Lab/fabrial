@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 from PyQt6.QtWidgets import QMenu, QMenuBar
 
 from ..classes import Action
-from ..tabs.sequence_display import SequenceDisplayTab
 
 if TYPE_CHECKING:
     from ..main_window import MainWindow
@@ -12,7 +11,7 @@ if TYPE_CHECKING:
 class ViewMenu(QMenu):
     """View menu."""
 
-    def __init__(self, parent: QMenuBar, main_window: "MainWindow", graph_tab: SequenceDisplayTab):
+    def __init__(self, parent: QMenuBar, main_window: "MainWindow"):
         self.pop_graph: Action
 
         QMenu.__init__(self, "&View", parent)

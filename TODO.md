@@ -70,21 +70,11 @@ All nested tasks will need to call some method on the `ProcessRunner` that runs 
 - Instead of showing the whole error in a dialog that can get cut off, record the error in a logging file, then show an error dialog that says something like "Quincy encountered a fatal error and needs to close".
 
 ## Consistency
-- Change comments to Rust style when you see them.
 - Mark methods as "overridden" or "implementation".
 - "instrument" $\to$ "device"
 
-## Remove `parent` parameters from custom widgets.
-Do what it says.
-
-## Change `add_sublayout()` to accept a layout instead of a layout constructor.
-Do what is says.
-
 ## Protocols
 - Make a `Protocol` class for devices. This will make your life easier.
-
-## Legacy Code
-- Check the `status.py` enum file to see if you can remove stuff.
 
 ## External Items
 - Ignore below, use plugins.

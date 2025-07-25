@@ -22,9 +22,9 @@ class StabilityCheckWidget(GroupBox):
     def create_widgets(self):
         """Create subwidgets."""
         layout: QVBoxLayout = self.layout()  # type: ignore
-        label_layout = layout_util.add_sublayout(layout, QFormLayout)
+        label_layout = layout_util.add_sublayout(layout, QFormLayout())
         self.status_label = Label(self.NULL_TEXT)
-        self.progress_bar = StabilityProgressBar(INSTRUMENTS.oven, self)
+        self.progress_bar = StabilityProgressBar(INSTRUMENTS.oven)
         self.handle_stability_change(False)  # initialize text and color
 
         label_layout.addRow("Status:", self.status_label)

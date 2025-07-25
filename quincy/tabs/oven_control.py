@@ -28,7 +28,7 @@ class OvenControlTab(QWidget):
         """Create subwidgets."""
         # create the layout
         layout = QVBoxLayout()
-        top_layout = layout_util.add_sublayout(layout, QHBoxLayout)
+        top_layout = layout_util.add_sublayout(layout, QHBoxLayout())
         self.setLayout(layout)
 
         self.setpoint_widget = SetpointWidget()

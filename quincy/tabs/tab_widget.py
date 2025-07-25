@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QTabWidget, QWidget
+from PyQt6.QtWidgets import QTabWidget
 
 from ..utility import images
 from .oven_control import OvenControlTab
@@ -7,8 +7,8 @@ from .sequence_display import SequenceDisplayTab
 
 
 class TabWidget(QTabWidget):
-    def __init__(self, parent: QWidget | None = None):
-        QTabWidget.__init__(self, parent)
+    def __init__(self):
+        QTabWidget.__init__(self)
         self.setDocumentMode(True)
         self.sequence_visuals_tab = SequenceDisplayTab()
         self.sequence_builder_tab = SequenceBuilderTab(self.sequence_visuals_tab)

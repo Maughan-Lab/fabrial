@@ -35,11 +35,11 @@ class InstrumentConnectionWidget(GroupBox):
         self.oven_connection_label = Label(self.NULL_TEXT)
 
         # this could probably be put in a for loop if more instruments are added
-        inner_layout = layout_util.add_sublayout(layout, QVBoxLayout)
+        inner_layout = layout_util.add_sublayout(layout, QVBoxLayout())
         # the top label and combobox
         layout_util.add_to_layout(inner_layout, Label("Oven Port"), self.oven_combobox)
         # the two bottom labels with the connection status
-        label_layout = layout_util.add_sublayout(inner_layout, QFormLayout)
+        label_layout = layout_util.add_sublayout(inner_layout, QFormLayout())
         label_layout.addRow("Status:", self.oven_connection_label)
 
     def connect_signals(self):

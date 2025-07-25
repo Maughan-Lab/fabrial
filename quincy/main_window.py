@@ -20,7 +20,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(APP_NAME)
         self.settings_window = ApplicationSettingsWindow(self)
         # create tabs
-        self.tabs = TabWidget(self)
+        self.tabs = TabWidget()
         self.setCentralWidget(self.tabs)
         # shortcuts
         self.oven_control_tab = self.tabs.oven_control_tab

@@ -41,7 +41,7 @@ class GamrySettingsTab(SettingsDescriptionWidget):
         self.gamry_location_label = IconLabel(
             images.make_pixmap("document-code.png"), settings_dict[gamry.LOCATION]
         )
-        button_layout = layout_util.add_sublayout(layout, QHBoxLayout)
+        button_layout = layout_util.add_sublayout(layout, QHBoxLayout())
         self.gamry_location_button = Button("Select GamryCOM Location", self.choose_gamry_location)
         self.gamry_location_label.label().setWordWrap(True)
         self.default_location_button = Button(
