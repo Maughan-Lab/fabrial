@@ -1,0 +1,17 @@
+{
+    "item": {
+        "type": "some.module.path",
+        "param1": 1,
+        "param2": 2
+    },
+    "children": [
+        {
+            "item": {
+                "type": "some.module.path",
+                "param1": 1,
+                "param2": 2
+            },
+            "children": []
+        }
+    ]
+}
