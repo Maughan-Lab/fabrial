@@ -115,7 +115,7 @@ class DontShowAgainDialog(Dialog):
         message: str,
         buttons: QMessageBox.StandardButton,
         default_button: QMessageBox.StandardButton,
-        filepath: PathLike | str,
+        filepath: PathLike[str] | str,
     ):
 
         Dialog.__init__(self, title, message, buttons, default_button)

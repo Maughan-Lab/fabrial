@@ -6,7 +6,7 @@ from PyQt6.QtCore import QModelIndex, QPersistentModelIndex
 from PyQt6.QtWidgets import QAbstractItemView, QTreeView
 
 from ...constants import tree_item
-from ..tree_model import TreeModel
+from ..tree_models.tree_model import TreeModel
 
 ITEM_DATA = "item-data"
 VIEW_DATA = "view-data"
@@ -32,13 +32,13 @@ class TreeView(QTreeView):
         self.init_view_state(data_dict[VIEW_DATA])
         return self
 
-    def init_from_file(self, filepath: PathLike | str) -> Self:
+    def init_from_file(self, filepath: PathLike[str] | str) -> Self:
         """Initialize the view from a properly formatted JSON file."""
         with open(filepath, "r") as f:
             data_dict = json.load(f)
         return self.init_from_dict(data_dict)
 
-    def init_from_directory(self, directory_path: PathLike | str) -> Self:
+    def init_from_directory(self, directory_path: PathLike[str] | str) -> Self:
         """Initialize the view from a properly formatted directory."""
         self.model().init_from_directory(directory_path)
         return self
@@ -57,7 +57,7 @@ class TreeView(QTreeView):
 
         recursively_init_state(self.rootIndex(), view_state_dict)
 
-    def init_view_state_from_file(self, path: PathLike | str):
+    def init_view_state_from_file(self, path: PathLike[str] | str):
         """Initialize the view state from a file."""
         with open(path, "r") as f:
             view_state_dict = json.load(f)
@@ -100,7 +100,7 @@ class TreeView(QTreeView):
         }
         return view_data
 
-    def to_file(self, filepath: PathLike | str):
+    def to_file(self, filepath: PathLike[str] | str):
         """Save this view's data to a file."""
         with open(filepath, "w") as f:
             json.dump(self.to_dict(), f)

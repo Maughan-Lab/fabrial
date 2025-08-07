@@ -1,13 +1,14 @@
-from typing import Protocol
 from abc import abstractmethod
+from typing import Protocol
+
 from PyQt6.QtGui import QIcon
+
+from ..classes import Process
 from ..utility.serde import Deserialize, Serialize
 
 
-class Item(Protocol, Deserialize, Serialize):
+class DataItem(Protocol, Deserialize, Serialize):
     """An inner item used by a `TreeItem`."""
-
-    SUPPORTS_SUBITEMS: bool
 
     # visuals
     @abstractmethod
@@ -25,15 +26,20 @@ class Item(Protocol, Deserialize, Serialize):
         """Handle the item being "opened" (i.e. double clicked)."""
         ...
 
+    def supports_subitems(self) -> bool:
+        """Whether the item supports subitems. By default, `Item`s do not support subitems."""
+        return False
+
     def expand_event(self):
-        """Handle the item being expanded."""
+        """Handle the item being expanded. Does nothing by default."""
         pass
 
     def collapse_event(self):
-        """Handle the item being collapsed."""
+        """Handle the item being collapsed. Does nothing by default."""
         pass
 
     # sequence
-    def create_process(self) -> None:  # TODO: Process class
+    @abstractmethod
+    def create_process(self) -> Process:
         """Create the `Process` this item represents."""
         ...

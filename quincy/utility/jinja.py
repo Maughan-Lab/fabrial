@@ -1,9 +1,9 @@
 from os import PathLike
 
-from jinja2 import Environment, FileSystemLoader, StrictUndefined
+from jinja2 import Environment, FileSystemLoader, StrictUndefined, Template
 
 
-def make_template(folder: PathLike | str, filename: str):
+def make_template(folder: PathLike[str] | str, filename: str) -> Template:
     """
     Make a Jinja template from **folder** and **filename**.
 
@@ -17,7 +17,7 @@ def make_template(folder: PathLike | str, filename: str):
 
 
 def parse_template(
-    folder: PathLike | str, filename: str, template_dict: dict[str, str] = dict()
+    folder: PathLike[str] | str, filename: str, template_dict: dict[str, str] = dict()
 ) -> str:
     """
     Parse a Jinja-templated file into a string.

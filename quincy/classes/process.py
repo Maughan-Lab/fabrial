@@ -20,6 +20,11 @@ if TYPE_CHECKING:
     from .runners import ProcessRunner
 
 
+class Process:
+    # TODO: doc
+    pass
+
+
 class AbstractProcess(QObject, metaclass=ABCQObjectMeta):
     """Abstract class for all processes."""
 

@@ -28,3 +28,18 @@ quincy = "quincy.__main__:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+
+# mypy config
+[tool.mypy]
+explicit_package_bases = true
+check_untyped_defs = true
+follow_untyped_imports = true
+enable_error_code = ["possibly-undefined"]
+strict = true
+disallow_incomplete_defs = false
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+no_implicit_reexport = false
+disallow_any_generics = false
+extra_checks = false

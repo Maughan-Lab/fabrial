@@ -1,75 +1,100 @@
-import json
 import os
+import tomllib
 from os import PathLike
-from typing import Any
+from pathlib import Path
+from typing import Iterable
 
-from ..constants import tree_item
+from ..constants import paths
+from ..sequence_builder import DataItem
+from ..sequence_builder.tree_items import CategoryItem, SequenceItem
+from ..utility import serde
 
-CATEGORY_FILENAME = "category.json"
-ERROR_PREFIX = "Could not parse initialization directory:"
+FILE_EXTENSION = ".toml"
+CATEGORY_FILENAME = "category" + FILE_EXTENSION
+NAME = "name"
 
 
-def item_dict_from_directory(directory: PathLike | str) -> dict[str, Any]:
+def items_from_directories(
+    directories: Iterable[PathLike[str] | str],
+) -> Iterable[CategoryItem]:
     """
-    Build a `TreeItem`-friendly dictionary from a properly formatted directory. This main use of
-    this function is for constructing a `TreeModel` from the application's item initialization
-    directory.
+    Helper function for `OptionsModel.from_directory()`.
 
-    Parameters
-    ----------
-    directory
-        The base directory to start the build process from.
-
-    Returns
-    -------
-    The dictionary created by parsing **directory**.
+    Creates an iterable of `CategoryItem`s from a group of properly formatted directories.
 
     Raises
     ------
-    FileNotFoundError
-        - The directory does not contain a category.json file, or
-        - The directory does not contain any item files.
+    ValueError
+        A category file has the wrong contents.
 
-    ## The Format
-    This function interprets folders as categories. Folders may contain other folders to nest
-    categories. Every folder must contain a `category.json` file which initializes the category.
+    Also any errors from `serde.load_toml()`.
 
-    Files are interpreted as entries in a category. Every .json file must contain a `type` entry.
-    The `widget data` entry is optional if the widget has no data, and the `children` entry will
-    be ignored (since the category's children will be determined from the file structure).
+    The Format
+    ----------
+    ```
+    base
+    ├── category1
+    │   ├── category.toml
+    │   ├── item1.toml
+    │   └── toml2.toml
+    └── category2
+        ├── category.toml
+        ├── item1.toml
+        └── toml2.toml
+    ```
+    An example structure is shown above. Folders containing a `category.toml` file are
+    interpreted as categories. All item files in the folder are grouped under the same category
+    defined by the `category.toml` file. Item files can be named anything other than
+    `category.toml`, for example `item.toml`. The file name is unimportant; only the contents
+    matter. Non-TOML files are ignored. Categories are flattened; you cannot nest categories.
 
-    The only file name that matters is `category.json`; every other item is defined by the
-    contents of the file, not the name.
-
-    Finally, items in the output dictionary appear in an arbitrary order, so must be sorted manually
-    if order matters.
+    Notes
+    -----
+    The categories and their contained items are all sorted alphabetically by display name after
+    being loaded.
     """
-    # get the name of a file in the directory and all folders
-    item_as_dict: dict[str, Any]
-    children: list[dict] = list()
-    category_file_found = False
+    category_map: dict[str, list[SequenceItem]] = {}
 
-    for filename in os.listdir(directory):
-        real_filename = os.path.join(directory, filename)
-        if os.path.isdir(real_filename):  # it is a subcategory of the category
-            children.append(item_dict_from_directory(real_filename))
-        elif os.path.isfile(real_filename):
-            with open(real_filename, "r") as f:
-                item_data = json.load(f)
-            if tree_item.WIDGET_DATA not in item_data:  # widget data is optional
-                item_data[tree_item.WIDGET_DATA] = dict()
-            if filename == CATEGORY_FILENAME:  # it is the category item
-                category_file_found = True
-                item_as_dict = item_data
-            else:  # it is a child of the category item
-                item_data[tree_item.CHILDREN] = dict()  # ignore children entries
-                children.append(item_data)
+    for directory in directories:
+        for dir, _, files in os.walk(directory):
+            category_file = Path(dir).joinpath(CATEGORY_FILENAME)
+            # ignore directories that don't contain a category file
+            if not category_file.exists():
+                continue
+            # initialize the category (if it hasn't already been initialized)
+            with open(category_file, "rb") as f:
+                category_info = tomllib.load(f)
+            try:
+                category_name: str = category_info[NAME]
+            except KeyError:
+                raise ValueError(f"No `{NAME}` field in category file {str(category_file)}")
+            if category_name not in category_map:
+                category_map[category_name] = []  # initialize with empty list
 
-    if not category_file_found:
-        # you must have a category.json file
-        raise FileNotFoundError(f"{ERROR_PREFIX} {CATEGORY_FILENAME} file not found in {directory}")
+            for file in files:
+                path = Path(file)
+                # ignore non-item files and the category file
+                if path.suffix != FILE_EXTENSION or path.name == CATEGORY_FILENAME:
+                    continue
+                # load the `DataItem` and build the `SequenceItem`, then append it to the category
+                data_item: DataItem = serde.load_toml(path)
+                sequence_item = SequenceItem(None, data_item)
+                category_map[category_name].append(sequence_item)
 
-    # put the subitems in the current item
-    item_as_dict[tree_item.CHILDREN] = children
+    # create the category items
+    category_items: list[CategoryItem] = []
+    # sort the categories alphabetically before iterating
+    for category_name, sequence_items in sorted(category_map.items()):
+        # sort all `SequenceItem`s by display name
+        sequence_items.sort(key=lambda item: item.get_display_name())
+        # create and append the `CategoryItem`
+        category_items.append(CategoryItem(None, category_name, sequence_items))
 
-    return item_as_dict
+    return category_items
+
+
+def get_initialization_directories() -> Iterable[Path]:
+    """
+    Get the application's item initialization directories. This includes items from any plugins.
+    """
+    return [paths.sequence_builder.OPTIONS_INITIALIZERS]

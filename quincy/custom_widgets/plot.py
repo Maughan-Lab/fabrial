@@ -1,8 +1,9 @@
+import typing
 from typing import Literal
 
-import pyqtgraph as pg  # type: ignore
+import pyqtgraph as pg
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QVBoxLayout
-from pyqtgraph.exporters import ImageExporter  # type: ignore
+from pyqtgraph.exporters import ImageExporter
 
 from ..classes import LineData
 from ..utility import layout as layout_util
@@ -146,7 +147,8 @@ class PlotWidget(Widget):
 
     def plot_item(self) -> PlotItem:
         """Get the underlying `PlotItem`."""
-        return self.view.getPlotItem()
+        # this cast is safe because the view is initialized with a `PlotItem`
+        return typing.cast(PlotItem, self.view.getPlotItem())
 
     def plot_view(self) -> PlotView:
         """Get the underlying `PlotView`."""

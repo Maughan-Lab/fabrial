@@ -26,8 +26,8 @@ from ...custom_widgets import (
 )
 from ...enums import SequenceStatus
 from ...utility import images, layout as layout_util
-from ..tree_item import TreeItem
-from ..tree_model import TreeModel
+from ..tree_items.tree_item import TreeItem
+from ..tree_models.tree_model import TreeModel
 from .tree_view import TreeView
 
 

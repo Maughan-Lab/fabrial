@@ -58,7 +58,7 @@ class ParameterDescriptionWidget(Widget):
         return self
 
     def set_description_from_file(
-        self, folder: PathLike | str, filename: str, template_dict: dict[str, str] = dict()
+        self, folder: PathLike[str] | str, filename: str, template_dict: dict[str, str] = dict()
     ) -> Self:
         """
         Set the text (interpreted as Markdown) displayed in the description tab by parsing a

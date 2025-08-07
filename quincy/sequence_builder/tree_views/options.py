@@ -8,7 +8,7 @@ from ...constants.paths.sequence_builder import OPTIONS_INITIALIZERS
 from ...constants.paths.settings import sequence
 from ...custom_widgets import Container, FixedButton
 from ...utility import layout as layout_util
-from ..tree_model import TreeModel
+from ..tree_models.tree_model import TreeModel
 from .tree_view import TreeView
 
 

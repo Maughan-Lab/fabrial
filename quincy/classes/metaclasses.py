@@ -1,7 +1,7 @@
-from abc import ABCMeta
+from typing import Protocol
 
 from PyQt6.QtCore import QObject
 
 
-class ABCQObjectMeta(ABCMeta, type(QObject)):  # type: ignore
-    """Metaclass combining `ABCMeta` and `QObject`."""
+class QProtocolMeta(Protocol, type(QObject)):  # type: ignore
+    """Metaclass combining `Protocol` and `QObject`."""
