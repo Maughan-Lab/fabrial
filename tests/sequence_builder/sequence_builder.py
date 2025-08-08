@@ -7,6 +7,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 from pytest import fixture
 
+from quincy.classes import Process
 from quincy.sequence_builder.data_item import DataItem
 from quincy.sequence_builder.tree_items import CategoryItem, SequenceItem
 from quincy.utility import sequence_builder
@@ -26,7 +27,7 @@ class MockDataItem(DataItem):
             typing.cast(str, serialized_obj["name"]), typing.cast(int, serialized_obj["number"])
         )
 
-    def serialize(self) -> Mapping[str, Json]:  # implementation
+    def serialize(self) -> dict[str, Json]:  # implementation
         return {"name": self.name, "number": self.number}
 
     def get_display_name(self) -> str:  # implementation
@@ -38,8 +39,8 @@ class MockDataItem(DataItem):
     def open_event(self):  # implementation
         return  # do nothing
 
-    def create_process(self):
-        return None  # this function isn't being tested so we just return `None`
+    def create_process(self) -> Process:
+        raise NotImplementedError("`create_process()` called on `MockDataItem`")
 
     # testing
     def __eq__(self, other: Self):  # type: ignore

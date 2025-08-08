@@ -41,6 +41,15 @@ class Serialize(Protocol):
         # str(TYPE) gives "<class 'TYPE'>" so we just extract the TYPE part
         return {TYPE: str(type(self)).split("'")[1]}
 
+    def save_json(self, file: PathLike[str] | str) -> bool:
+        """Save the object to a JSON file. Returns whether the operation succeeded."""
+        try:
+            with open(file, "w") as f:
+                json.dump(self.serialize(), f)
+            return True
+        except Exception:
+            return False
+
 
 def get_type(typename: str) -> type[Deserialize]:
     """Get a `Deserialize` subtype from a string representation."""
@@ -50,9 +59,9 @@ def get_type(typename: str) -> type[Deserialize]:
         raise KeyError(f"`{typename}` does not represent a `Deserialize` object")
 
 
-def deserialize(object_as_dict: Mapping[str, Any]) -> Any:
+def deserialize(serialied_obj: Any) -> Any:
     """
-    Deserialize `object_as_dict` into an object. Any dictionaries containing the key `type` are
+    Deserialize `serialized_obj` into an object. Any dictionaries containing the key `type` are
     interpreted as `Deserialize` objects.
     """
     # TODO: better type annotations using Json
@@ -75,32 +84,33 @@ def deserialize(object_as_dict: Mapping[str, Any]) -> Any:
 
     # deserializes a list
     def inner_deserialize_list(items: Sequence[dict[str, Any]]) -> Any:
-        print(items)
         # all entries in a list must be dictionaries for JSON-like formats
         deserialized_items: list[Any] = []
         for inner_item in items:
             # replace each element in the list with its deserialized version
-            deserialized_items.append(inner_deserialize_dict(inner_item))
+            deserialized_items.append(inner_deserialize_json(inner_item))
         # return the modified list
         return deserialized_items
 
     # helper function to recurse into dictionaries
     def replace_dict_values(item: Mapping[str, Any]) -> Mapping[str, Any]:
-        replaced_items: dict[str, Any] = {}
-        for inner_key, inner_item in item.items():
-            # if the item is a dictionary, deserialize the dictionary
-            if isinstance(inner_item, dict):
-                replaced_items[inner_key] = inner_deserialize_dict(inner_item)
-            # if the item is a list, deserialize the list
-            elif isinstance(inner_item, list):
-                replaced_items[inner_key] = inner_deserialize_list(inner_item)
-            # otherwise the item is primitive, don't deserialize
-            else:
-                replaced_items[inner_key] = inner_item
-        return replaced_items
+        return {
+            inner_key: inner_deserialize_json(inner_item) for inner_key, inner_item in item.items()
+        }
 
-    # we know the outer value from a JSON/TOML file will be a dictionary, so we start there
-    return inner_deserialize_dict(object_as_dict)
+    # helper function to recurse into JSON structures
+    def inner_deserialize_json(item: Any) -> Any:
+        # if the item is a dictionary, deserialize the dictionary
+        if isinstance(item, dict):
+            return inner_deserialize_dict(item)
+        # if the item is a list, deserialize the list
+        elif isinstance(item, list):
+            return inner_deserialize_list(item)
+        # otherwise the item is primitive, don't deserialize
+        else:
+            return item
+
+    return inner_deserialize_json(serialied_obj)
 
 
 def load_json(file: PathLike[str] | str) -> Any:
@@ -108,17 +118,6 @@ def load_json(file: PathLike[str] | str) -> Any:
     with open(file, "r") as f:
         object_as_dict = json.load(f)
     return deserialize(object_as_dict)
-
-
-def save_json(file: PathLike[str] | str, obj: Serialize) -> bool:
-    """Save a `Serialize` object to a file. Returns whether the operation succeeded."""
-    try:
-        object_as_dict = obj.serialize()
-        with open(file, "w") as f:
-            json.dump(object_as_dict, f)
-        return True
-    except Exception:
-        return False
 
 
 def load_toml(file: PathLike[str] | str) -> Any:

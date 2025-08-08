@@ -51,5 +51,5 @@ extra_checks = false
 [tool.pytest.ini_options]
 addopts = "-q -s"
 testpaths = ["tests"]
-python_files = ["tests.py"]
+python_files = ["*.py"]
 python_functions = ["test_*"]

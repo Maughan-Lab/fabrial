@@ -1,0 +1,5 @@
+random_thing = 47
+
+[item]
+type = "tests.utility.serde.serde.MockSerde"
+number = 50
