@@ -7,7 +7,7 @@ from ..classes import Process
 from ..utility.serde import Deserialize, Serialize
 
 
-class DataItem(Protocol, Deserialize, Serialize):
+class DataItem(Deserialize, Serialize, Protocol):
     """An inner item used by a `TreeItem`."""
 
     # visuals
@@ -32,11 +32,11 @@ class DataItem(Protocol, Deserialize, Serialize):
 
     def expand_event(self):
         """Handle the item being expanded. Does nothing by default."""
-        pass
+        return
 
     def collapse_event(self):
         """Handle the item being collapsed. Does nothing by default."""
-        pass
+        return
 
     # sequence
     @abstractmethod

@@ -12,13 +12,14 @@ from PyQt6.QtCore import (
     Qt,
 )
 
+from ...classes import QABC
 from ..clipboard import Clipboard
 from ..tree_items import RootItem, SequenceItem, TreeItem
 
 JSON = "application/json"
 
 
-class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, Protocol):
+class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
     """
     `QAbstractItemModel` for representing trees.
 

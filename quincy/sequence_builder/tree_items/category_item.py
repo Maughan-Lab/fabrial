@@ -23,15 +23,17 @@ class CategoryItem(TreeItem[SequenceItem]):
         The item's subitems. The items' parent is automatically set to this item.
     """
 
-    COLLAPSED_ICON = images.make_icon("folder-horizontal.png")
-    EXPANDED_ICON = images.make_icon("folder-horizontal-open.png")
-
     def __init__(
         self, parent: TreeItem[Self] | None, category_name: str, subitems: Sequence[SequenceItem]
     ):
         self.parent = parent
         self.display_name = category_name
-        self.icon = self.COLLAPSED_ICON
+        # these two need to be instance attributes instead of class attributes because you have to
+        # construct a `QApplication` before a `QIcon`
+        self.collapsed_icon = images.make_icon("folder-horizontal.png")
+        self.expanded_icon = images.make_icon("folder-horizontal-open.png")
+
+        self.icon = self.collapsed_icon
         for item in subitems:
             item.set_parent(self)
         self.subitems = subitems
@@ -61,7 +63,7 @@ class CategoryItem(TreeItem[SequenceItem]):
         return tree_item.get_subitem(self.subitems, index)
 
     def expand_event(self):  # overridden
-        self.icon = self.EXPANDED_ICON
+        self.icon = self.expanded_icon
 
     def collapse_event(self):  # overridden
-        self.icon = self.COLLAPSED_ICON
+        self.icon = self.collapsed_icon

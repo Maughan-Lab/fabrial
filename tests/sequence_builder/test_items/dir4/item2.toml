@@ -1,0 +1,3 @@
+type = "tests.sequence_builder.tests.MockDataItem"
+name = "dir4item2"
+number = 42

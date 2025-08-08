@@ -1,0 +1,5 @@
+# this file should be ignored; no category file
+
+type = "tests.sequence_builder.tests.MockDataItem"
+name = "dir3item1"
+number = 31

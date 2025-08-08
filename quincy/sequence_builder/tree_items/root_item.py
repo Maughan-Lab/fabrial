@@ -1,4 +1,4 @@
-from typing import Iterable, Self, Sequence
+from typing import Iterable, Self
 
 from ...utility.serde import Json
 from . import tree_item
@@ -16,7 +16,7 @@ class RootItem[SubItem: SubItemType](TreeItem[SubItem]):
     def __init__(self):
         self.subitems: list[SubItem] = []
 
-    def serialize(self) -> Sequence[Json]:  # implementation
+    def serialize(self) -> list[Json]:  # implementation
         return [subitem.serialize() for subitem in self.subitems]
 
     def get_parent(self) -> TreeItem[Self] | None:  # implementation

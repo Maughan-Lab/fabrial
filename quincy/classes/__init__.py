@@ -1,14 +1,14 @@
 from .actions import Action, Shortcut
 from .descriptions import DescriptionInfo
 from .lock import DataMutex
-from .metaclasses import QProtocolMeta
+from .metaclasses import QABC, ABCQObjectMeta, QABCMeta, QProtocol, QProtocolMeta
+from .new_process import Process
 from .plotting import LineData, LineSettings, TemperaturePoint
 from .process import (
     AbstractBackgroundProcess,
     AbstractForegroundProcess,
     AbstractGraphingProcess,
     AbstractProcess,
-    Process,
 )
 from .runners import AbstractRunner, ProcessRunner, SequenceRunner
 from .signals import CommandSignals, GraphSignals

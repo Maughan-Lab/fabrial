@@ -19,6 +19,9 @@ dependencies = [
     "tendo==0.3.0",
 ]
 
+[project.optional-dependencies]
+testing = ["pytest==8.4.1", "pytest-qt==4.5.0"]
+
 [project.urls]
 Repository = "https://github.com/Maughan-Lab/Quincy-New"
 
@@ -43,3 +46,10 @@ disallow_untyped_calls = false
 no_implicit_reexport = false
 disallow_any_generics = false
 extra_checks = false
+
+# pytest config
+[tool.pytest.ini_options]
+addopts = "-q -s"
+testpaths = ["tests"]
+python_files = ["tests.py"]
+python_functions = ["test_*"]

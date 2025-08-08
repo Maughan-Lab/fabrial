@@ -9,7 +9,7 @@ from typing import Any, Mapping, Protocol, Self, Sequence
 TYPE = "type"
 DESERIALIZABLE_CLASSES: dict[str, type[Deserialize]] = {}
 
-type Json = Mapping[str, Json] | Sequence[Json] | str | int | float | bool | None
+type Json = dict[str, Json] | list[Json] | str | int | float | bool | None
 
 
 class Deserialize(Protocol):
@@ -33,7 +33,7 @@ class Serialize(Protocol):
     """An object that can be serialized and store the type."""
 
     @abstractmethod
-    def serialize(self) -> Mapping[str, Json]:
+    def serialize(self) -> dict[str, Json]:
         """
         Convert the object to a JSON-like structure. You must call the base method and extent the
         result.
@@ -75,6 +75,7 @@ def deserialize(object_as_dict: Mapping[str, Any]) -> Any:
 
     # deserializes a list
     def inner_deserialize_list(items: Sequence[dict[str, Any]]) -> Any:
+        print(items)
         # all entries in a list must be dictionaries for JSON-like formats
         deserialized_items: list[Any] = []
         for inner_item in items:
@@ -88,10 +89,10 @@ def deserialize(object_as_dict: Mapping[str, Any]) -> Any:
         replaced_items: dict[str, Any] = {}
         for inner_key, inner_item in item.items():
             # if the item is a dictionary, deserialize the dictionary
-            if isinstance(inner_item, Mapping):
+            if isinstance(inner_item, dict):
                 replaced_items[inner_key] = inner_deserialize_dict(inner_item)
             # if the item is a list, deserialize the list
-            elif isinstance(inner_item, Sequence):
+            elif isinstance(inner_item, list):
                 replaced_items[inner_key] = inner_deserialize_list(inner_item)
             # otherwise the item is primitive, don't deserialize
             else:

@@ -1,0 +1,3 @@
+# this is a repeated category so it shouldn't create a new category
+
+name = "category2"

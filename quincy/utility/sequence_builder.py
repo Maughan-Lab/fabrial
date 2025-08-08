@@ -2,7 +2,7 @@ import os
 import tomllib
 from os import PathLike
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Sequence
 
 from ..constants import paths
 from ..sequence_builder import DataItem
@@ -16,7 +16,7 @@ NAME = "name"
 
 def items_from_directories(
     directories: Iterable[PathLike[str] | str],
-) -> Iterable[CategoryItem]:
+) -> Sequence[CategoryItem]:
     """
     Helper function for `OptionsModel.from_directory()`.
 
@@ -57,7 +57,8 @@ def items_from_directories(
 
     for directory in directories:
         for dir, _, files in os.walk(directory):
-            category_file = Path(dir).joinpath(CATEGORY_FILENAME)
+            dir_path = Path(dir)
+            category_file = dir_path.joinpath(CATEGORY_FILENAME)
             # ignore directories that don't contain a category file
             if not category_file.exists():
                 continue
@@ -72,12 +73,12 @@ def items_from_directories(
                 category_map[category_name] = []  # initialize with empty list
 
             for file in files:
-                path = Path(file)
+                file_path = dir_path.joinpath(file)
                 # ignore non-item files and the category file
-                if path.suffix != FILE_EXTENSION or path.name == CATEGORY_FILENAME:
+                if file_path.suffix != FILE_EXTENSION or file_path.name == CATEGORY_FILENAME:
                     continue
                 # load the `DataItem` and build the `SequenceItem`, then append it to the category
-                data_item: DataItem = serde.load_toml(path)
+                data_item: DataItem = serde.load_toml(file_path)
                 sequence_item = SequenceItem(None, data_item)
                 category_map[category_name].append(sequence_item)
 

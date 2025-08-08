@@ -41,7 +41,7 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
         item.append_subitems(subitems)  # add them to the outer item
         return item
 
-    def serialize(self) -> Mapping[str, Json]:  # implementation
+    def serialize(self) -> dict[str, Json]:  # implementation
         return {
             ITEM: self.item.serialize(),
             SUBITEMS: [subitem.serialize() for subitem in self.subitems],
