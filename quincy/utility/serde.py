@@ -1,7 +1,13 @@
+"""
+Utilities for serializing and deserializing objects. When deserializing, the object type is read
+from the file.
+"""
+
 from __future__ import annotations
 
 import json
 import tomllib
+import typing
 from abc import abstractmethod
 from os import PathLike
 from typing import Any, Mapping, Protocol, Self, Sequence
@@ -30,22 +36,25 @@ class Deserialize(Protocol):
 
 
 class Serialize(Protocol):
-    """An object that can be serialized and store the type."""
+    """An object that can be serialized into a type-tagged JSON dictionary."""
 
     @abstractmethod
     def serialize(self) -> dict[str, Json]:
-        """
-        Convert the object to a JSON-like structure. You must call the base method and extent the
-        result.
-        """
+        """Convert the object to a JSON-like structure. This method does not add a type tag."""
+        ...
+
+    def serialize_tagged(self) -> dict[str, Json]:
+        """Serialize and add a type tag. This calls `serialize()`."""
         # str(TYPE) gives "<class 'TYPE'>" so we just extract the TYPE part
-        return {TYPE: str(type(self)).split("'")[1]}
+        type_tagged_dict: dict[str, Json] = {TYPE: str(type(self)).split("'")[1]}
+        type_tagged_dict.update(self.serialize())
+        return type_tagged_dict
 
     def save_json(self, file: PathLike[str] | str) -> bool:
         """Save the object to a JSON file. Returns whether the operation succeeded."""
         try:
             with open(file, "w") as f:
-                json.dump(self.serialize(), f)
+                json.dump(self.serialize_tagged(), f)
             return True
         except Exception:
             return False
@@ -54,52 +63,44 @@ class Serialize(Protocol):
 def get_type(typename: str) -> type[Deserialize]:
     """Get a `Deserialize` subtype from a string representation."""
     try:
-        return DESERIALIZABLE_CLASSES[typename]  # defined at top of file
+        return DESERIALIZABLE_CLASSES[typename]  # defined at the top of the file
     except KeyError:
         raise KeyError(f"`{typename}` does not represent a `Deserialize` object")
 
 
-def deserialize(serialied_obj: Any) -> Any:
+def deserialize(serialized_obj: Json) -> Any:
     """
-    Deserialize `serialized_obj` into an object. Any dictionaries containing the key `type` are
-    interpreted as `Deserialize` objects.
+    Deserialize **serialized_obj**. Any type-tagged dictionaries are deserialized into the
+    corresponding `Deserialize` object.
     """
-    # TODO: better type annotations using Json
 
     # deserializes a dictionary
-    def inner_deserialize_dict(item: Mapping[str, Any]) -> Any:
+    def inner_deserialize_dict(item: Mapping[str, Json]) -> Any:
         try:
             # get the typename key
-            typename: str = item[TYPE]
+            typename = typing.cast(str, item[TYPE])  # cast assumes `typename` is `str`
         except KeyError:
-            # if we got here the `item` dictionary is not a `Deserialize object`
-            # recurse into the rest of the dictionary and deserialize it
-            return replace_dict_values(item)
-        # if we get here we have a value for `typename` so we can deserialize
-        # get the actual type from a pre-created dictionary
-        cls = get_type(typename)
-        # recurse into the rest of the dictionary and deserialize it, then
+            # if we got here the `item` dictionary is not a `Deserialize` object
+            return {  # recurse into the rest of the dictionary and deserialize it
+                inner_key: inner_deserialize_json(inner_item)
+                for inner_key, inner_item in item.items()
+            }
+        # if we get here we have a type tag
+        cls = get_type(typename)  # get the actual type
         # convert the dictionary into the actual `Deserialize` object
-        return cls.deserialize(replace_dict_values(item))
+        return cls.deserialize(item)
 
     # deserializes a list
-    def inner_deserialize_list(items: Sequence[dict[str, Any]]) -> Any:
-        # all entries in a list must be dictionaries for JSON-like formats
-        deserialized_items: list[Any] = []
+    def inner_deserialize_list(items: Sequence[Json]) -> Any:
+        deserialized_items = []
         for inner_item in items:
             # replace each element in the list with its deserialized version
             deserialized_items.append(inner_deserialize_json(inner_item))
         # return the modified list
         return deserialized_items
 
-    # helper function to recurse into dictionaries
-    def replace_dict_values(item: Mapping[str, Any]) -> Mapping[str, Any]:
-        return {
-            inner_key: inner_deserialize_json(inner_item) for inner_key, inner_item in item.items()
-        }
-
     # helper function to recurse into JSON structures
-    def inner_deserialize_json(item: Any) -> Any:
+    def inner_deserialize_json(item: Json) -> Any:
         # if the item is a dictionary, deserialize the dictionary
         if isinstance(item, dict):
             return inner_deserialize_dict(item)
@@ -110,18 +111,24 @@ def deserialize(serialied_obj: Any) -> Any:
         else:
             return item
 
-    return inner_deserialize_json(serialied_obj)
+    return inner_deserialize_json(serialized_obj)
 
 
 def load_json(file: PathLike[str] | str) -> Any:
-    """Load an object from a JSON file. Any `Deserialize` objects are deserialized."""
+    """
+    Load an object from a JSON file. Any type-tagged dictionaries are deserialized into the
+    corresponding `Deserialize` object.
+    """
     with open(file, "r") as f:
         object_as_dict = json.load(f)
     return deserialize(object_as_dict)
 
 
 def load_toml(file: PathLike[str] | str) -> Any:
-    """Load an object from a TOML file. Any `Deserialize` objects are deserialized."""
+    """
+    Load an object from a TOML file. Any type-tagged dictionaries are deserialized into the
+    corresponding `Deserialize` object.
+    """
     with open(file, "rb") as f:
         object_as_dict = tomllib.load(f)
     return deserialize(object_as_dict)

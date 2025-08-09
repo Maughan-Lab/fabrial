@@ -27,7 +27,7 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
 
     @classmethod
     def from_dict(cls, parent: TreeItem[SequenceItem], item_as_dict: Mapping[str, Json]) -> Self:
-        """Create the item from a dictionary."""
+        """Create the item from a JSON dictionary."""
         # deserialize the inner item
         inner_item: DataItem = serde.deserialize(
             typing.cast(Mapping[str, Json], item_as_dict[ITEM])
@@ -43,7 +43,7 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
 
     def serialize(self) -> dict[str, Json]:  # implementation
         return {
-            ITEM: self.item.serialize(),
+            ITEM: self.item.serialize_tagged(),
             SUBITEMS: [subitem.serialize() for subitem in self.subitems],
         }
 
@@ -118,9 +118,7 @@ class TestDataItem(DataItem):
         return cls(serialized_obj["number"])
 
     def serialize(self):
-        o = Serialize.serialize(self)
-        o["number"] = self.number
-        return o
+        return {"number": self.number}
 
     def get_display_name(self):
         return "dsfklds"

@@ -1,7 +1,6 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHBoxLayout, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
-from ..classes import Clipboard
 from ..constants.paths.settings import sequence as sequence_paths
 from ..custom_widgets import BiggerButton, Container, HSeparator, Label
 from ..enums import SequenceStatus
@@ -31,11 +30,8 @@ class SequenceBuilderTab(QWidget):
 
         # tree views
         treeview_layout = layout_util.add_sublayout(layout, QHBoxLayout())
-        clipboard = Clipboard()
-        self.options_tree = OptionsTreeWidget.from_initialization_directories(clipboard)
-        self.sequence_tree = SequenceTreeWidget.from_json(
-            sequence_paths.SEQUENCE_AUTOSAVE_FILE, clipboard
-        )
+        self.options_tree = OptionsTreeWidget.from_initialization_directories()
+        self.sequence_tree = SequenceTreeWidget.from_json(sequence_paths.SEQUENCE_AUTOSAVE_FILE)
         layout_util.add_to_layout(treeview_layout, self.options_tree, self.sequence_tree)
 
         runner_layout = QVBoxLayout()

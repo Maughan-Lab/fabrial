@@ -11,8 +11,9 @@ from PyQt6.QtCore import (
     QModelIndex,
     Qt,
 )
+from PyQt6.QtWidgets import QApplication
 
-from ...classes import QABC, Clipboard
+from ...classes import QABC
 from ..tree_items import RootItem, SequenceItem, TreeItem
 
 JSON = "application/json"
@@ -28,17 +29,14 @@ class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
         The name displayed at the top of the widget.
     items
         The items to initialize with. Can be empty.
-    clipboard
-        The `Clipboard` to copy items to.
     """
 
-    def __init__(self, title: str, items: Iterable[ItemType], clipboard: Clipboard):
+    def __init__(self, title: str, items: Iterable[ItemType]):
         QAbstractItemModel.__init__(self)
 
         self.title = title
         self.root_item: RootItem[ItemType] = RootItem()
         self.root_item.append_subitems(items)
-        self.clipboard = clipboard
 
         self.base_flag = Qt.ItemFlag.ItemIsEnabled
 
@@ -53,7 +51,9 @@ class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
     def copy_items(self, indexes: Iterable[QModelIndex]):
         """Copy items to the clipboard."""
         data = self.mimeData(sorted(indexes))
-        self.clipboard.set_contents(data)
+        clipboard = QApplication.clipboard()
+        if clipboard is not None:
+            clipboard.setMimeData(data)
 
     def is_enabled(self) -> bool:
         "Whether the model's items are enabled."
@@ -137,7 +137,7 @@ class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
             return QModelIndex()
         return self.createIndex(row, column, item)
 
-    def mimeData(self, indexes: Iterable[QModelIndex]) -> QMimeData:  # overridden
+    def mimeData(self, indexes: Iterable[QModelIndex]) -> QMimeData | None:  # overridden
         mime_data = QMimeData()
         encoded_data = QByteArray()
         stream = QDataStream(encoded_data, QIODevice.OpenModeFlag.WriteOnly)
@@ -146,6 +146,9 @@ class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
             if item is not None:
                 text = json.dumps(item.serialize())
                 stream.writeQString(text)
+
+        if encoded_data.length() == 0:
+            return None  # return `None` instead of an empty `QMimeData`
 
         mime_data.setData(JSON, encoded_data)
         return mime_data

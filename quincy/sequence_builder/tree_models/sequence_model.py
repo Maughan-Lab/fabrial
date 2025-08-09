@@ -5,33 +5,38 @@ from typing import Any, Iterable, Mapping, Self, Sequence
 from PyQt6.QtCore import QDataStream, QMimeData, QModelIndex, QPersistentModelIndex, Qt, pyqtSignal
 from PyQt6.QtWidgets import QApplication
 
-from ...classes import Clipboard
 from ...utility.serde import Json
 from ..tree_items import MutableTreeItem, SequenceItem, TreeItem
 from .tree_model import JSON, TreeModel
 
 
 class SequenceModel(TreeModel[SequenceItem]):
-    """`TreeModel` for the sequence builder."""
+    """
+    `TreeModel` for the sequence builder.
+
+    Parameters
+    ----------
+    items
+        The items in the model.
+    """
 
     itemAdded = pyqtSignal(QModelIndex)
     """
     This is emitted every time an item is added to the model. Sends the `QModelIndex` of the item.
     """
 
-    def __init__(self, items: Iterable[SequenceItem], clipboard: Clipboard):
-        TreeModel.__init__(self, "Sequence", items, clipboard)
+    def __init__(self, items: Iterable[SequenceItem]):
+        TreeModel.__init__(self, "Sequence", items)
 
     def init_from_jsonlike(self, items_as_json: Sequence[Mapping[str, Json]]) -> Self:
         """Initialize the model's data from a JSON-like structure."""
         # remove all items from the root
-        self.get_root().remove_subitems(0, self.root_item.get_count())
+        self.removeRows(0, self.get_root().get_count(), QModelIndex())
         # deserialize the items
         items = [
-            SequenceItem.from_dict(self.root_item, item_as_json) for item_as_json in items_as_json
+            SequenceItem.from_dict(self.get_root(), item_as_json) for item_as_json in items_as_json
         ]
-        self.get_root().append_subitems(items)  # add the new items
-        self.layoutChanged.emit()
+        self.insert_rows(0, QModelIndex(), items)
         return self
 
     def to_jsonlike(self) -> list[Json]:
@@ -116,8 +121,6 @@ class SequenceModel(TreeModel[SequenceItem]):
 
         self.insert_rows(begin_row, parent_index, items)
 
-        self.layoutChanged.emit()
-
         return True
 
     def supportedDropActions(self) -> Qt.DropAction:  # overridden
@@ -142,7 +145,7 @@ class SequenceModel(TreeModel[SequenceItem]):
             # notify that items were added
             self.itemAdded.emit(self.createIndex(row + i, 0, item))
 
-    def paste_items(self, index: QModelIndex) -> bool:
+    def paste_items(self, index: QModelIndex):
         """
         Paste items into the model from the clipboard.
 
@@ -155,9 +158,13 @@ class SequenceModel(TreeModel[SequenceItem]):
         -------
         Whether the operation succeeded.
         """
-        data = self.clipboard.contents()
+        clipboard = QApplication.clipboard()
+        if clipboard is None:
+            return
+
+        data = clipboard.mimeData()
         if data is None:
-            return False
+            return
 
         success = self.dropMimeData(
             data,
@@ -176,5 +183,5 @@ class SequenceModel(TreeModel[SequenceItem]):
         persistent_indexes = [QPersistentModelIndex(index) for index in indexes]
         for index in persistent_indexes:
             if index.isValid():
-                success = self.removeRow(index.row(), index.parent())
+                success = success and self.removeRow(index.row(), index.parent())
         return success

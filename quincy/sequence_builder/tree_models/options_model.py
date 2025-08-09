@@ -2,7 +2,6 @@ from typing import Any, Iterable, Self
 
 from PyQt6.QtCore import QModelIndex, Qt
 
-from ...classes import Clipboard
 from ...utility import sequence_builder
 from ..tree_items import CategoryItem
 from .tree_model import TreeModel
@@ -16,15 +15,13 @@ class OptionsModel(TreeModel[CategoryItem]):
     ----------
     items
         The direct subitems of the root item.
-    clipboard
-        The clipboard to copy items to.
     """
 
-    def __init__(self, items: Iterable[CategoryItem], clipboard: Clipboard):
-        TreeModel.__init__(self, "Options", items, clipboard)
+    def __init__(self, items: Iterable[CategoryItem]):
+        TreeModel.__init__(self, "Options", items)
 
     @classmethod
-    def from_initialization_directories(cls, clipboard: Clipboard) -> Self:
+    def from_initialization_directories(cls) -> Self:
         """
         Create the model from the application's item initialization directories.
 
@@ -35,14 +32,11 @@ class OptionsModel(TreeModel[CategoryItem]):
         ----------
         directories
             The directories to load items from.
-        clipboard
-            The clipboard to copy items to.
         """
         return cls(
             sequence_builder.items_from_directories(
                 sequence_builder.get_initialization_directories()
             ),
-            clipboard,
         )
 
     def data(self, index: QModelIndex, role: int | None = None) -> Any:  # implementation

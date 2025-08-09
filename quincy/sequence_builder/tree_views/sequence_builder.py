@@ -13,12 +13,11 @@ from PyQt6.QtCore import (
     QThread,
     pyqtSignal,
 )
-from PyQt6.QtGui import QDragMoveEvent, QDropEvent, QKeyEvent
+from PyQt6.QtGui import QDragMoveEvent, QKeyEvent
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QMessageBox, QSizePolicy, QVBoxLayout
 
 from ...classes import (
     AbstractProcess,
-    Clipboard,
     CommandSignals,
     GraphSignals,
     SequenceRunner,
@@ -53,7 +52,14 @@ class DragTracker:
 
 
 class SequenceTreeView(TreeView[SequenceModel]):
-    """Custom TreeView for displaying sequence settings."""
+    """
+    Custom `TreeView` for displaying sequence settings.
+
+    Parameters
+    ----------
+    model
+        The model the view will use.
+    """
 
     def __init__(self, model: SequenceModel):
         TreeView.__init__(self, model)
@@ -68,8 +74,8 @@ class SequenceTreeView(TreeView[SequenceModel]):
         self.drag_tracker = DragTracker(timer, point)
 
     @classmethod
-    def from_json(cls, file: PathLike[str] | str, clipboard: Clipboard) -> Self:
-        model = SequenceModel([], clipboard)
+    def from_json(cls, file: PathLike[str] | str) -> Self:
+        model = SequenceModel([])
         return cls(model).init_from_json(file)
 
     def init_from_json(self, file: PathLike[str] | str) -> Self:
@@ -140,7 +146,6 @@ class SequenceTreeView(TreeView[SequenceModel]):
                 if not new_selection_index.isValid():
                     # at this point there should be no items in the model
                     self.clearSelection()
-                    return self
 
         self.setCurrentIndex(new_selection_index)
 
@@ -153,14 +158,6 @@ class SequenceTreeView(TreeView[SequenceModel]):
                 case Qt.Key.Key_Return | Qt.Key.Key_Enter:
                     self.open_event(self.selectedIndexes())
         TreeView.keyPressEvent(self, event)
-
-    def dropEvent(self, event: QDropEvent | None):  # overridden
-        # TODO: see if you actually need to change the drop action or if Qt does it for you
-        if event is not None:
-            if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-                event.setDropAction(Qt.DropAction.CopyAction)
-
-            TreeView.dropEvent(self, event)  # process the event
 
     def dragMoveEvent(self, event: QDragMoveEvent | None):  # overridden
         if event is not None:
@@ -198,8 +195,8 @@ class SequenceTreeWidget(Container):
         self.cancelCommand = self.command_signals.cancelCommand  # shortcut for external users
 
     @classmethod
-    def from_json(cls, file: PathLike[str] | str, clipboard: Clipboard) -> Self:
-        view = SequenceTreeView.from_json(file, clipboard)
+    def from_json(cls, file: PathLike[str] | str) -> Self:
+        view = SequenceTreeView.from_json(file)
         return cls(view)
 
     def create_widgets(self, layout: QVBoxLayout) -> Self:

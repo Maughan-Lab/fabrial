@@ -1,5 +1,5 @@
 # this file should be ignored; no category file
 
-type = "tests.sequence_builder.tests.MockDataItem"
+type = "tests.sequence_builder.sequence_builder.MockDataItem"
 name = "dir3item1"
 number = 31

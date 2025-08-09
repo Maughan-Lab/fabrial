@@ -21,9 +21,7 @@ class MockSerde(Deserialize, Serialize):
         return cls(typing.cast(int, serialized_obj["number"]))
 
     def serialize(self) -> dict[str, Json]:
-        serialized_obj = Serialize.serialize(self)
-        serialized_obj["number"] = self.number
-        return serialized_obj
+        return {"number": self.number}
 
     def __eq__(self, other: Self):  # type: ignore
         return self.number == other.number
@@ -55,16 +53,19 @@ def test_deserialize(mock_object: MockSerde, number: int):
     # primitive case
     assert serde.deserialize(47) == 47
     # simple case
-    simple_deserializable = {"type": TYPENAME, "number": number}
+    simple_deserializable: dict[str, Json] = {"type": TYPENAME, "number": number}
     assert serde.deserialize(simple_deserializable) == mock_object
     # nested case
-    nested_obj = {"random_thing": 47, "actual_item": {"type": TYPENAME, "number": number}}
+    nested_obj: dict[str, Json] = {
+        "random_thing": 47,
+        "actual_item": {"type": TYPENAME, "number": number},
+    }
     assert serde.deserialize(nested_obj) == {"random_thing": 47, "actual_item": mock_object}
     # list case
-    list_obj = ["something", 47, {"type": TYPENAME, "number": number}]
+    list_obj: list[Json] = ["something", 47, {"type": TYPENAME, "number": number}]
     assert serde.deserialize(list_obj) == ["something", 47, mock_object]
     # nested list and dict case
-    complex_obj = {
+    complex_obj: dict[str, Json] = {
         "random_thing": 47,
         "list": [47, "something", {"type": TYPENAME, "number": number}],
         "nested": {

@@ -8,7 +8,6 @@ from PyQt6.QtWidgets import QSizePolicy, QVBoxLayout
 from ...constants.paths.settings import sequence as sequence_paths
 from ...custom_widgets import Container, FixedButton
 from ...utility import layout as layout_util
-from ...classes import Clipboard
 from ..tree_models import OptionsModel
 from .tree_view import TreeView
 
@@ -17,9 +16,9 @@ class OptionsTreeView(TreeView[OptionsModel]):
     """Custom QTreeView containing the options for the sequence."""
 
     @classmethod
-    def from_initialization_directories(cls, clipboard: Clipboard) -> Self:
+    def from_initialization_directories(cls) -> Self:
         """Create from the application's item initialization directories."""
-        view = cls(OptionsModel.from_initialization_directories(clipboard))
+        view = cls(OptionsModel.from_initialization_directories())
         if not view.init_view_state_from_json(sequence_paths.OPTIONS_STATE_AUTOSAVE_FILE):
             view.expandAll()
         return view
@@ -58,9 +57,9 @@ class OptionsTreeWidget(Container):
         self.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
 
     @classmethod
-    def from_initialization_directories(cls, clipboard: Clipboard) -> Self:
+    def from_initialization_directories(cls) -> Self:
         """Create from the application's item initialization directories."""
-        return cls(OptionsTreeView.from_initialization_directories(clipboard))
+        return cls(OptionsTreeView.from_initialization_directories())
 
     def save_on_close(self):
         """Call this when closing the application to save settings."""
