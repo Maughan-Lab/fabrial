@@ -75,13 +75,18 @@ class TreeItem[SubItem: TreeItem](Protocol):
         """Get the subitem at **index**."""
         ...
 
-    def open_event(self) -> bool:
+    def open_event(self, editable: bool) -> bool:
         """
         Handle the item being "opened" (i.e. double clicked).
 
+        Parameters
+        ----------
+        editable
+            Whether the item should be editable.
+
         Returns
         -------
-        Whether the item should be expanded in the model.
+        Whether the item's expansion state should be toggled.
         """
         return True
 

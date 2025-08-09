@@ -1,6 +1,0 @@
-category = "A Category Name"
-
-type = "some.module.path"
-[data]
-param1 = 1
-param2 = 2

@@ -1,6 +1,6 @@
 import json
 from abc import abstractmethod
-from typing import Any, Iterable, Protocol
+from typing import Any, Iterable
 
 from PyQt6.QtCore import (
     QAbstractItemModel,
@@ -12,8 +12,7 @@ from PyQt6.QtCore import (
     Qt,
 )
 
-from ...classes import QABC
-from ..clipboard import Clipboard
+from ...classes import QABC, Clipboard
 from ..tree_items import RootItem, SequenceItem, TreeItem
 
 JSON = "application/json"
@@ -33,34 +32,50 @@ class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
         The `Clipboard` to copy items to.
     """
 
-    @abstractmethod
+    def __init__(self, title: str, items: Iterable[ItemType], clipboard: Clipboard):
+        QAbstractItemModel.__init__(self)
+
+        self.title = title
+        self.root_item: RootItem[ItemType] = RootItem()
+        self.root_item.append_subitems(items)
+        self.clipboard = clipboard
+
+        self.base_flag = Qt.ItemFlag.ItemIsEnabled
+
     def get_title(self) -> str:
         """Get the model's title."""
-        ...
+        return self.title
 
-    @abstractmethod
     def get_root(self) -> RootItem[ItemType]:
         """Get the root item."""
-        ...
+        return self.root_item
 
-    @abstractmethod
     def copy_items(self, indexes: Iterable[QModelIndex]):
         """Copy items to the clipboard."""
-        ...
+        data = self.mimeData(sorted(indexes))
+        self.clipboard.set_contents(data)
 
-    @abstractmethod
     def is_enabled(self) -> bool:
         "Whether the model's items are enabled."
-        ...
+        return self.base_flag != Qt.ItemFlag.NoItemFlags
 
-    @abstractmethod
     def set_enabled(self, enabled: bool):
         """Set whether the model's items are enabled."""
-        ...
+        self.base_flag = Qt.ItemFlag.ItemIsEnabled if enabled else Qt.ItemFlag.NoItemFlags
 
-    @abstractmethod
     def flags(self, index: QModelIndex) -> Qt.ItemFlag:  # overridden
-        ...
+        flags = self.base_flag
+        item = self.get_item(index)
+        if item is None:
+            if self.get_root().supports_subitems():
+                flags |= Qt.ItemFlag.ItemIsDropEnabled
+            return flags
+
+        if item.supports_subitems():
+            flags |= Qt.ItemFlag.ItemIsDropEnabled
+        if item.supports_dragging():
+            flags |= Qt.ItemFlag.ItemIsDragEnabled | Qt.ItemFlag.ItemIsSelectable
+        return flags
 
     @abstractmethod
     def data(self, index: QModelIndex, role: int | None = None) -> Any:  # overridden
@@ -83,7 +98,6 @@ class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
     # ----------------------------------------------------------------------------------------------
     # overridden
     def parent(self, index: QModelIndex) -> QModelIndex:  # type: ignore
-        # TODO: make sure this is all correct
         item = self.get_item(index)
         if item is None:
             return QModelIndex()
@@ -101,12 +115,9 @@ class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
     def columnCount(self, parent: QModelIndex | None = None) -> int:  # overridden
         return 1
 
-    def rowCount(self, parent_index: QModelIndex = QModelIndex()) -> int:  # overridden
-        parent_item = self.get_item(parent_index)
-        if parent_item is not None:
-            return parent_item.get_count()
-        else:
-            return self.get_root().get_count()
+    def rowCount(self, index: QModelIndex = QModelIndex()) -> int:  # overridden
+        item: TreeItem[SequenceItem] = self.get_item(index) or self.get_root()
+        return item.get_count()
 
     # overridden
     def headerData(
@@ -120,14 +131,11 @@ class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
     def index(
         self, row: int, column: int, parent_index: QModelIndex = QModelIndex()
     ) -> QModelIndex:
-        parent_item = self.get_item(parent_index)
-        if parent_item is None:
+        parent_item: TreeItem[SequenceItem] = self.get_item(parent_index) or self.get_root()
+        item = parent_item.get_subitem(row)
+        if item is None:
             return QModelIndex()
-        child_item = parent_item.get_subitem(row)
-        if child_item is not None:
-            # createIndex() is defined by QAbstractItemModel
-            return self.createIndex(row, column, child_item)
-        return QModelIndex()
+        return self.createIndex(row, column, item)
 
     def mimeData(self, indexes: Iterable[QModelIndex]) -> QMimeData:  # overridden
         mime_data = QMimeData()
@@ -156,30 +164,3 @@ class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
         item = self.get_item(index)
         if item is not None:
             item.collapse_event()
-
-
-def copy_items[SubItem: TreeItem[SequenceItem]](
-    model: TreeModel[SubItem], clipboard: Clipboard, indexes: Iterable[QModelIndex]
-):
-    """
-    Helper function for `TreeModel.copy_items()`. Gets the items at **indexes** in **model** and
-    copies them to the **clipboard**.
-    """
-    data = model.mimeData(sorted(indexes))
-    clipboard.set_contents(data)
-
-
-def flags[SubItem: TreeItem[SequenceItem]](
-    model: TreeModel[SubItem], base_flag: Qt.ItemFlag, index: QModelIndex
-) -> Qt.ItemFlag:
-    """Helper function for `TreeModel.flags()`."""
-    item = model.get_item(index)
-    if item is None:
-        return base_flag
-
-    flags = base_flag
-    if item.supports_subitems():
-        flags |= Qt.ItemFlag.ItemIsDropEnabled
-    if item.supports_dragging():
-        flags |= Qt.ItemFlag.ItemIsDragEnabled | Qt.ItemFlag.ItemIsSelectable
-    return flags

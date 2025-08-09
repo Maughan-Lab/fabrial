@@ -1,20 +1,31 @@
+import json
 import os
 from dataclasses import dataclass
-from typing import Self
+from os import PathLike
+from typing import Mapping, Self, Sequence
 
-from PyQt6.QtCore import QItemSelection, QModelIndex, QPoint, Qt, QThread, pyqtSignal
+from PyQt6.QtCore import (
+    QItemSelection,
+    QModelIndex,
+    QPersistentModelIndex,
+    QPoint,
+    Qt,
+    QThread,
+    pyqtSignal,
+)
 from PyQt6.QtGui import QDragMoveEvent, QDropEvent, QKeyEvent
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QMessageBox, QSizePolicy, QVBoxLayout
 
 from ...classes import (
     AbstractProcess,
+    Clipboard,
     CommandSignals,
     GraphSignals,
     SequenceRunner,
     Shortcut,
     Timer,
 )
-from ...constants.paths.settings import sequence
+from ...constants.paths.settings import sequence as sequence_paths
 from ...custom_widgets import (
     BiggerButton,
     Container,
@@ -26,9 +37,13 @@ from ...custom_widgets import (
 )
 from ...enums import SequenceStatus
 from ...utility import images, layout as layout_util
+from ...utility.serde import Json
 from ..tree_items.tree_item import TreeItem
-from ..tree_models.tree_model import TreeModel
+from ..tree_models import SequenceModel
 from .tree_view import TreeView
+
+ITEM_DATA = "items"
+VIEW_DATA = "view_state"
 
 
 @dataclass
@@ -37,31 +52,48 @@ class DragTracker:
     position: QPoint
 
 
-class SequenceTreeView(TreeView):
+class SequenceTreeView(TreeView[SequenceModel]):
     """Custom TreeView for displaying sequence settings."""
 
-    def __init__(self):
-        # initialize the super class
-        model = TreeModel("Sequence Builder")
+    def __init__(self, model: SequenceModel):
         TreeView.__init__(self, model)
-        # configure the model and view
-        try:
-            self.init_from_file(sequence.SEQUENCE_AUTOSAVE_FILE)
-        except Exception:  # if we fail just don't load anything
-            pass
-        model.set_supported_drag_actions(Qt.DropAction.MoveAction | Qt.DropAction.CopyAction)
-        model.set_supported_drop_actions(Qt.DropAction.MoveAction | Qt.DropAction.CopyAction)
         # configure
         self.setAcceptDrops(True)
         self.setDefaultDropAction(Qt.DropAction.MoveAction)
 
-        self.create_shortcuts()
-
-        # used to expand expandable items when hovering over them
+        # used to expand items when hovering over them
         point = QPoint()
         timer = Timer(self, 500, lambda: self.expand(self.indexAt(point)))
         timer.setSingleShot(True)
         self.drag_tracker = DragTracker(timer, point)
+
+    @classmethod
+    def from_json(cls, file: PathLike[str] | str, clipboard: Clipboard) -> Self:
+        model = SequenceModel([], clipboard)
+        return cls(model).init_from_json(file)
+
+    def init_from_json(self, file: PathLike[str] | str) -> Self:
+        """Initialize the items from a JSON file."""
+        try:
+            with open(file, "r") as f:
+                data: Mapping[str, Sequence[Mapping[str, Json]]] = json.load(f)
+            self.model().init_from_jsonlike(data[ITEM_DATA])
+            self.init_view_state(data[VIEW_DATA])
+        except Exception:  # if we fail just don't load anything
+            pass
+        return self
+
+    def to_json(self, file: PathLike[str] | str) -> bool:
+        """Save to a JSON file. Returns whether the operation succeeded."""
+        try:
+            data: dict[str, Sequence[Json]] = {}
+            data[ITEM_DATA] = self.model().to_jsonlike()
+            data[VIEW_DATA] = self.get_view_state()
+            with open(file, "w") as f:
+                json.dump(data, f)
+            return True
+        except Exception:
+            return False
 
     def connect_signals(self):  # overridden
         TreeView.connect_signals(self)
@@ -69,13 +101,11 @@ class SequenceTreeView(TreeView):
 
     def handle_new_item(self, index: QModelIndex):
         """Handle an item being added to the model."""
-        self.expand(index)
-        self.expand(index.parent())
+        self.expand(index)  # expand the new item
+        self.expand(index.parent())  # and its parent
 
-    def create_shortcuts(self):
-        Shortcut(
-            self, "Ctrl+C", self.copy_event, context=Qt.ShortcutContext.WidgetWithChildrenShortcut
-        )
+    def create_shortcuts(self):  # overridden
+        TreeView.create_shortcuts(self)
         Shortcut(
             self, "Ctrl+X", self.cut_event, context=Qt.ShortcutContext.WidgetWithChildrenShortcut
         )
@@ -83,18 +113,49 @@ class SequenceTreeView(TreeView):
             self, "Ctrl+V", self.paste_event, context=Qt.ShortcutContext.WidgetWithChildrenShortcut
         )
 
+    def cut_event(self):
+        """Move items to the clipboard."""
+        self.copy_event()
+        self.delete_event()
+
+    def paste_event(self):
+        """Paste items from the clipboard after the currently selected item."""
+        self.model().paste_items(self.currentIndex())
+
+    def delete_event(self):
+        """Delete currently selected items."""
+        # store the index below the current index
+        persistent_new_selection_index = QPersistentModelIndex(self.indexBelow(self.currentIndex()))
+
+        self.model().delete_items(self.selectedIndexes())
+
+        # select the next available item after deleting
+        new_selection_index = QModelIndex(persistent_new_selection_index)
+        if not new_selection_index.isValid():
+            # try the item below the currently selected item
+            new_selection_index = self.indexBelow(self.currentIndex())
+            if not new_selection_index.isValid():
+                # try whatever is currently selected (usually the last item in this situation)
+                new_selection_index = self.currentIndex()
+                if not new_selection_index.isValid():
+                    # at this point there should be no items in the model
+                    self.clearSelection()
+                    return self
+
+        self.setCurrentIndex(new_selection_index)
+
     # ----------------------------------------------------------------------------------------------
     def keyPressEvent(self, event: QKeyEvent | None):  # overridden
         if event is not None:
-            index = self.currentIndex()
             match event.key():
                 case Qt.Key.Key_Delete:  # delete the current item
                     self.delete_event()
                 case Qt.Key.Key_Return | Qt.Key.Key_Enter:
-                    self.show_item_widget(index)
+                    self.open_event(self.selectedIndexes())
         TreeView.keyPressEvent(self, event)
 
     def dropEvent(self, event: QDropEvent | None):  # overridden
+        # TODO: see if you actually need to change the drop action or if Qt does it for you
         if event is not None:
             if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
                 event.setDropAction(Qt.DropAction.CopyAction)
@@ -120,25 +181,28 @@ class SequenceTreeWidget(Container):
     sequenceStatusChanged = pyqtSignal(SequenceStatus)
     graphSignalsChanged = pyqtSignal(GraphSignals)
 
-    def __init__(self) -> None:
-        Container.__init__(self, QVBoxLayout())
+    def __init__(self, view: SequenceTreeView):
+        layout = QVBoxLayout()
+        Container.__init__(self, layout)
 
-        self.view: SequenceTreeView
+        self.view = view
         self.delete_button: FixedButton
         self.directory_button: BiggerButton
         self.directory_label: IconLabel
-        self.create_widgets().connect_signals()
+        self.create_widgets(layout)
+        self.connect_signals()
 
         self.threads: list[SequenceRunner] = []
 
         self.command_signals = CommandSignals()
         self.cancelCommand = self.command_signals.cancelCommand  # shortcut for external users
 
-    def create_widgets(self) -> Self:
-        layout: QVBoxLayout = self.layout()  # type: ignore
+    @classmethod
+    def from_json(cls, file: PathLike[str] | str, clipboard: Clipboard) -> Self:
+        view = SequenceTreeView.from_json(file, clipboard)
+        return cls(view)
 
-        self.view = SequenceTreeView()
-
+    def create_widgets(self, layout: QVBoxLayout) -> Self:
         button_layout = QHBoxLayout()
         button_container = Container(button_layout)
 
@@ -205,44 +269,44 @@ class SequenceTreeWidget(Container):
         self.directoryChanged.emit(self.directory_is_valid())
         return self
 
+    def directory_is_valid(self):
+        """Whether the selected directory is valid."""
+        return self.directory_label.label().text() != ""
+
     def read_previous_directory(self) -> str:
         """Try to load the previously used directory."""
         try:
-            with open(sequence.SEQUENCE_DIRECTORY_FILE, "r") as f:
+            with open(sequence_paths.SEQUENCE_DIRECTORY_FILE, "r") as f:
                 directory = f.read()
                 return directory
         except Exception:
             return ""
 
-    def directory_is_valid(self) -> bool:
-        """Whether the directory text represents a valid directory."""
-        return False if self.directory_label.label().text() == "" else True
-
     def save_on_close(self):
         """Call this when closing the application to save settings."""
-        self.view.to_file(sequence.SEQUENCE_AUTOSAVE_FILE)
-        directory = self.directory_label.label().text()
-        with open(sequence.SEQUENCE_DIRECTORY_FILE, "w") as f:
+        self.view.to_json(sequence_paths.SEQUENCE_AUTOSAVE_FILE)
+        directory = self.data_directory()
+        with open(sequence_paths.SEQUENCE_DIRECTORY_FILE, "w") as f:
             f.write(directory)
 
     def save_settings(self):
         """Save the sequence to a file."""
-        filename, _ = QFileDialog.getSaveFileName(
+        file = QFileDialog.getSaveFileName(
             self,
             "Select save file",
             os.path.join(os.path.expanduser("~"), "untitled.json"),
             "JSON files (*.json)",
-        )
-        if filename != "":
-            self.view.to_file(filename)
+        )[0]
+        if file != "":
+            self.view.to_json(file)
 
     def load_settings(self):
         """Load a sequence from a file."""
-        filename, _ = QFileDialog.getOpenFileName(
+        file = QFileDialog.getOpenFileName(
             self, "Select sequence file", filter="JSON files (*.json)"
-        )
-        if filename != "":
-            self.view.init_from_file(filename)
+        )[0]
+        if file != "":
+            self.view.init_from_json(file)
 
     def data_directory(self) -> str:
         """Get the current data directory."""
@@ -256,8 +320,8 @@ class SequenceTreeWidget(Container):
 
     def run_sequence(self) -> Self:
         """Run the sequence. Creates the data directory if it doesn't exist."""
-        root_item = self.view.model().root()
-        if not root_item.child_count() > 0:  # return early if there are no items to run
+        root_item = self.view.model().get_root()
+        if not root_item.get_count() > 0:  # return early if there are no items to run
             return self
 
         directory = self.data_directory()
@@ -268,15 +332,16 @@ class SequenceTreeWidget(Container):
             if not YesCancelDontShowDialog(
                 "Note",
                 "Data directory is not empty, proceed?",
-                sequence.NON_EMPTY_DIRECTORY_WARNING_FILE,
+                sequence_paths.NON_EMPTY_DIRECTORY_WARNING_FILE,
             ).run():
                 return self
 
         # save the sequence settings automatically
-        self.view.to_file(os.path.join(directory, "autosave.json"))
+        self.view.to_json(os.path.join(directory, "autosave.json"))
 
         thread = QThread(self)
-        runner = SequenceRunner(directory, root_item)
+        # TODO: change SequenceRunner to accept Path
+        runner = SequenceRunner(str(directory), root_item)
         runner.moveToThread(thread)
         self.connect_sequence_signals(runner, thread)
         self.graphSignalsChanged.emit(runner.graphing_signals())
@@ -305,6 +370,8 @@ class SequenceTreeWidget(Container):
 
         def handle_item_change(current: TreeItem | None, previous: TreeItem | None):
             """Handle the current sequence item changing."""
+            # TODO: fix
+            return
             if previous is not None:
                 previous.set_running(False)
             if current is not None:

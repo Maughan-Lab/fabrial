@@ -3,14 +3,14 @@ from typing import Iterable, Self
 from ...utility.serde import Json
 from . import tree_item
 from .sequence_item import SequenceItem
-from .tree_item import TreeItem
+from .tree_item import MutableTreeItem, TreeItem
 
 ITEMS = "items"
 
 type SubItemType = TreeItem[SequenceItem]
 
 
-class RootItem[SubItem: SubItemType](TreeItem[SubItem]):
+class RootItem[SubItem: SubItemType](MutableTreeItem[SubItem]):
     SUPPORTS_DRAGGING = False
 
     def __init__(self):
@@ -24,7 +24,7 @@ class RootItem[SubItem: SubItemType](TreeItem[SubItem]):
 
     def set_parent(self, parent: TreeItem[Self] | None):
         if parent is not None:
-            raise NotImplementedError("The parent of a `RootItem` must always be `None`")
+            raise ValueError("The parent of a `RootItem` must always be `None`")
 
     def get_count(self) -> int:  # implementation
         return len(self.subitems)

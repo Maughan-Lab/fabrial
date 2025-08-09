@@ -1,14 +1,13 @@
 import json
-from os import PathLike
+import typing
 from typing import Any, Iterable, Mapping, Self, Sequence
 
 from PyQt6.QtCore import QDataStream, QMimeData, QModelIndex, QPersistentModelIndex, Qt, pyqtSignal
 from PyQt6.QtWidgets import QApplication
 
+from ...classes import Clipboard
 from ...utility.serde import Json
-from ..clipboard import Clipboard
-from ..tree_items import RootItem, SequenceItem
-from . import tree_model
+from ..tree_items import MutableTreeItem, SequenceItem, TreeItem
 from .tree_model import JSON, TreeModel
 
 
@@ -21,72 +20,38 @@ class SequenceModel(TreeModel[SequenceItem]):
     """
 
     def __init__(self, items: Iterable[SequenceItem], clipboard: Clipboard):
-        self.root_item: RootItem[SequenceItem] = RootItem()
-        self.root_item.append_subitems(items)
-        self.clipboard = clipboard
+        TreeModel.__init__(self, "Sequence", items, clipboard)
 
-        self.base_flag = Qt.ItemFlag.ItemIsEnabled
-
-    def init_from_file(self, file: PathLike[str] | str) -> Self:
-        """Initialize the model's data from a JSON file."""
+    def init_from_jsonlike(self, items_as_json: Sequence[Mapping[str, Json]]) -> Self:
+        """Initialize the model's data from a JSON-like structure."""
         # remove all items from the root
-        self.root_item.remove_subitems(0, self.root_item.get_count())
-        # load the file (this assumes it contains a sequence of `SequenceItem` representations)
-        with open(file, "r") as f:
-            items_as_dicts: Sequence[Mapping[str, Json]] = json.load(f)
-        # deserialize the dictionaries
+        self.get_root().remove_subitems(0, self.root_item.get_count())
+        # deserialize the items
         items = [
-            SequenceItem.from_dict(self.root_item, item_as_dict) for item_as_dict in items_as_dicts
+            SequenceItem.from_dict(self.root_item, item_as_json) for item_as_json in items_as_json
         ]
-        self.root_item.append_subitems(items)  # add the new items
+        self.get_root().append_subitems(items)  # add the new items
+        self.layoutChanged.emit()
         return self
 
-    def to_file(self, file: PathLike[str] | str) -> bool:
-        """
-        Save this model's data to a JSON file. Returns whether the operation succeeded.
-        """
-        try:
-            serialized_root = self.get_root().serialize()
-            with open(file, "w") as f:
-                json.dump(serialized_root, f)
-            return True
-        except Exception:
-            return False
-
-    def get_title(self) -> str:  # implementation
-        return "Sequence"
-
-    def get_root(self) -> RootItem[SequenceItem]:  # implementation
-        return self.root_item
-
-    def copy_items(self, indexes: Iterable[QModelIndex]):  # implementation
-        tree_model.copy_items(self, self.clipboard, indexes)
-
-    def is_enabled(self):  # implementation
-        return self.base_flag != Qt.ItemFlag.NoItemFlags
-
-    def set_enabled(self, enabled: bool):  # implementation
-        self.base_flag = Qt.ItemFlag.ItemIsEnabled if enabled else Qt.ItemFlag.NoItemFlags
-
-    def flags(self, index: QModelIndex) -> Qt.ItemFlag:  # implementation
-        return tree_model.flags(self, self.base_flag, index)
+    def to_jsonlike(self) -> list[Json]:
+        """Convert the model's data to a JSON-like structure."""
+        return self.get_root().serialize()
 
     def data(self, index: QModelIndex, role: int | None = None) -> Any:  # implementation
         item = self.get_item(index)
-        if item is None:
-            return None
-
-        match role:
-            case Qt.ItemDataRole.DisplayRole:
-                return item.get_display_name()
-            case Qt.ItemDataRole.FontRole:
-                font = QApplication.font()
-                # items that are running are shown in bold
-                if item.is_active():
-                    font.setBold(True)
-                return font
-            case Qt.ItemDataRole.DecorationRole:
-                return item.get_icon()
+        if item is not None:
+            match role:
+                case Qt.ItemDataRole.DisplayRole:
+                    return item.get_display_name()
+                case Qt.ItemDataRole.FontRole:
+                    font = QApplication.font()
+                    # items that are running are shown in bold
+                    if item.is_active():
+                        font.setBold(True)
+                    return font
+                case Qt.ItemDataRole.DecorationRole:
+                    return item.get_icon()
         return None
 
     # ----------------------------------------------------------------------------------------------
@@ -95,10 +60,7 @@ class SequenceModel(TreeModel[SequenceItem]):
         if not self.is_enabled():
             return False
 
-        parent_item = self.get_item(parent_index)
-        if parent_item is None:
-            return False
-
+        parent_item: MutableTreeItem[SequenceItem] = self.get_item(parent_index) or self.get_root()
         self.beginRemoveRows(parent_index, row, row + count - 1)
         try:
             parent_item.remove_subitems(row, count)
@@ -132,9 +94,6 @@ class SequenceModel(TreeModel[SequenceItem]):
     ) -> bool:
         if not self.canDropMimeData(data, action, row, column, parent_index):
             return False
-        # I know we already check in `canDropMimeData()`, but for typing we have to check again
-        if data is None:
-            return False
 
         if row != -1:  # the drop occurred above/below an item, insert appropriately
             begin_row = row
@@ -143,13 +102,12 @@ class SequenceModel(TreeModel[SequenceItem]):
         else:  # the drop didn't occur on an item, so insert at the end
             begin_row = self.rowCount(parent_index)
 
-        parent_item = self.get_item(parent_index)
-        if parent_item is None:
-            return False
+        parent_item: TreeItem[SequenceItem] = self.get_item(parent_index) or self.get_root()
 
         items = []
         # NOTE: do not set the OpenModeFlag for this stream, it causes weird issues
-        stream = QDataStream(data.data(JSON))
+        # cast is safe because we already check for `data` being `None` in `canDropMimeData()`
+        stream = QDataStream(typing.cast(QMimeData, data).data(JSON))
         while not stream.atEnd():
             raw_text = stream.readQString()
             item_as_dict = json.loads(raw_text)
@@ -172,11 +130,9 @@ class SequenceModel(TreeModel[SequenceItem]):
     def insert_rows(self, row: int, parent_index: QModelIndex, items: Sequence[SequenceItem]):
         """Insert items into the model. Returns whether the operation succeeded."""
         if not self.is_enabled():
-            return False
+            return
 
-        parent_item = self.get_item(parent_index)
-        if parent_item is None:
-            return False
+        parent_item: MutableTreeItem[SequenceItem] = self.get_item(parent_index) or self.get_root()
 
         self.beginInsertRows(parent_index, row, row + len(items) - 1)
         parent_item.insert_subitems(row, items)

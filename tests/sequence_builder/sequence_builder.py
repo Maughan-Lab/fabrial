@@ -36,7 +36,7 @@ class MockDataItem(DataItem):
     def get_icon(self) -> QIcon:  # implementation
         return QIcon()
 
-    def open_event(self):  # implementation
+    def open_event(self, editable: bool):  # implementation
         return  # do nothing
 
     def create_process(self) -> Process:

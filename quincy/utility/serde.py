@@ -9,7 +9,7 @@ from typing import Any, Mapping, Protocol, Self, Sequence
 TYPE = "type"
 DESERIALIZABLE_CLASSES: dict[str, type[Deserialize]] = {}
 
-type Json = dict[str, Json] | list[Json] | str | int | float | bool | None
+type Json = Mapping[str, Json] | Sequence[Json] | str | int | float | bool | None
 
 
 class Deserialize(Protocol):

@@ -1,22 +1,27 @@
-import json
-from os import PathLike
-from typing import Any, Self
+from __future__ import annotations
 
-from PyQt6.QtCore import QModelIndex, QPersistentModelIndex
+import json
+import typing
+from os import PathLike
+from typing import Iterable, Mapping, Self, Sequence
+
+from PyQt6.QtCore import QModelIndex, Qt
 from PyQt6.QtWidgets import QAbstractItemView, QTreeView
 
-from ...constants import tree_item
+from ...classes import Shortcut
+from ...utility.serde import Json
+from ..tree_items import TreeItem
 from ..tree_models.tree_model import TreeModel
 
-ITEM_DATA = "item-data"
-VIEW_DATA = "view-data"
 EXPANDED = "expanded"
+SUBITEMS = "subitems"
+# TODO: move SUBITEMS to a constant
 
 
-class TreeView(QTreeView):
+class TreeView[Model: TreeModel](QTreeView):
     """Custom TreeView with support for copy, cut, paste, and delete (and drag and drop)."""
 
-    def __init__(self, model: TreeModel):
+    def __init__(self, model: Model):
         QTreeView.__init__(self)
 
         self.setDragEnabled(True)
@@ -25,139 +30,84 @@ class TreeView(QTreeView):
         self.setExpandsOnDoubleClick(False)
         self.setModel(model)
         self.connect_signals()
+        self.create_shortcuts()
 
-    def init_from_dict(self, data_dict: dict[str, Any]) -> Self:
-        """Initialize the view from a JSON-like dictionary."""
-        self.model().init_from_dict(data_dict[ITEM_DATA])
-        self.init_view_state(data_dict[VIEW_DATA])
+    def create_shortcuts(self) -> Self:
+        """Create shortcuts at construction."""
+        Shortcut(
+            self, "Ctrl+C", self.copy_event, context=Qt.ShortcutContext.WidgetWithChildrenShortcut
+        )
         return self
 
-    def init_from_file(self, filepath: PathLike[str] | str) -> Self:
-        """Initialize the view from a properly formatted JSON file."""
-        with open(filepath, "r") as f:
-            data_dict = json.load(f)
-        return self.init_from_dict(data_dict)
+    def items_editable(self) -> bool:
+        """Whether the items are editable."""
+        return False
 
-    def init_from_directory(self, directory_path: PathLike[str] | str) -> Self:
-        """Initialize the view from a properly formatted directory."""
-        self.model().init_from_directory(directory_path)
-        return self
-
-    def init_view_state(self, view_state_dict: dict[str, Any]):
-        """Recursively set the view state based on **view_state_dict**."""
+    def init_view_state(self, view_states: Sequence[Mapping[str, Json]]):
+        """Recursively set the view state based on **view_states**."""
         model = self.model()
 
-        def recursively_init_state(index: QModelIndex, view_state_dict: dict[str, Any]):
-            if view_state_dict[EXPANDED]:
-                self.expand(index)
-            children_data: list[dict[str, Any]] = view_state_dict[tree_item.CHILDREN]
-            for i, child_expansion_dict in enumerate(children_data):
-                child_index = model.index(i, 0, index)
-                recursively_init_state(child_index, child_expansion_dict)
+        # initialize the view states of all subitems of **index**
+        def recursively_init_state(index: QModelIndex, view_states: Sequence[Mapping[str, Json]]):
+            for i, subitem_view_state in enumerate(view_states):
+                subitem_index = model.index(i, index.column(), index)
+                if subitem_view_state[EXPANDED]:
+                    self.expand(subitem_index)
+                    recursively_init_state(
+                        subitem_index,
+                        typing.cast(Sequence[Mapping[str, Json]], subitem_view_state[SUBITEMS]),
+                    )
 
-        recursively_init_state(self.rootIndex(), view_state_dict)
+        recursively_init_state(self.rootIndex(), view_states)
 
-    def init_view_state_from_file(self, path: PathLike[str] | str):
-        """Initialize the view state from a file."""
-        with open(path, "r") as f:
-            view_state_dict = json.load(f)
-        self.init_view_state(view_state_dict)
+    def init_view_state_from_json(self, path: PathLike[str] | str) -> bool:
+        """Initialize the view state from a JSON file. Returns whether the operation succeeded."""
+        try:
+            with open(path, "r") as f:
+                view_states: Sequence[Mapping[str, Json]] = json.load(f)
+            self.init_view_state(view_states)
+            return True
+        except Exception:
+            return False
 
-    @classmethod
-    def from_file(cls: type[Self], name: str, filepath: str) -> Self:
-        """
-        Parameters
-        ----------
-        name
-            The name displayed on top of the widget.
-        filepath
-            The filepath to build the `TreeView` from.
-        """
-        model = TreeModel(name)
-        tree_view = cls(model).init_from_file(filepath)
-        return tree_view
-
-    def get_view_state(self) -> dict[str, Any]:
+    def get_view_state(self) -> list[dict[str, Json]]:
         """Get the view state as a JSON-style dictionary."""
         model = self.model()
 
-        def get_state(index: QModelIndex) -> dict[str, Any]:
-            view_state_dict: dict[str, Any] = {EXPANDED: self.isExpanded(index)}
-            children_states = []
+        # gets the view state of all subitems
+        def get_state(index: QModelIndex) -> list[dict[str, Json]]:
+            subitem_states: list[dict[str, Json]] = []
             for i in range(model.rowCount(index)):
-                child_index = model.index(i, 0, index)
-                children_states.append(get_state(child_index))
-            view_state_dict[tree_item.CHILDREN] = children_states
-            return view_state_dict
+                subitem_index = model.index(i, 0, index)
+                subitem_states.append(
+                    {
+                        EXPANDED: self.isExpanded(subitem_index),
+                        SUBITEMS: get_state(subitem_index),
+                    }
+                )
+            return subitem_states
 
         return get_state(self.rootIndex())
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert this view's data to a JSON dictionary."""
-        view_data = {
-            ITEM_DATA: self.model().to_dict(),
-            VIEW_DATA: self.get_view_state(),
-        }
-        return view_data
-
-    def to_file(self, filepath: PathLike[str] | str):
-        """Save this view's data to a file."""
-        with open(filepath, "w") as f:
-            json.dump(self.to_dict(), f)
-
     def connect_signals(self) -> Self:
-        """Connect signals."""
-        self.expanded.connect(self.model().expand_event)
-        self.collapsed.connect(self.model().collapse_event)
-        self.doubleClicked.connect(self.show_item_widget)
+        """Connect signals at construction."""
+        self.expanded.connect(lambda index: self.model().expand_event(index))
+        self.collapsed.connect(lambda index: self.model().collapse_event(index))
+        self.doubleClicked.connect(lambda index: self.open_event([index]))
         return self
 
-    def model(self) -> TreeModel:
+    def model(self) -> Model:  # overridden for typing
         """Get this view's associated model."""
-        return QTreeView.model(self)  # type: ignore
+        return typing.cast(Model, QTreeView.model(self))
 
-    def copy_event(self) -> Self:
+    def copy_event(self):
         """Copy items to the clipboard."""
         self.model().copy_items(self.selectedIndexes())
-        return self
 
-    def cut_event(self) -> Self:
-        """Move items to the clipboard."""
-        self.copy_event()
-        self.delete_event()
-        return self
-
-    def paste_event(self) -> Self:
-        """Paste items from the clipboard after the currently selected item."""
-        self.model().paste_items(self.currentIndex())
-        return self
-
-    def delete_event(self) -> Self:
-        """Delete currently selected items."""
-        # store the index below the current index
-        next_selection_index = self.indexBelow(self.currentIndex())
-        persistent_new_selection_index = QPersistentModelIndex(next_selection_index)
-
-        self.model().delete_items(self.selectedIndexes())
-
-        # select the next available item after deleting
-        new_selection_index = QModelIndex(persistent_new_selection_index)
-        if not new_selection_index.isValid():
-            # try the item below the currently selected item
-            new_selection_index = self.indexBelow(self.currentIndex())
-            if not new_selection_index.isValid():
-                # try whatever is currently selected (usually the last item in this situation)
-                new_selection_index = self.currentIndex()
-                if not new_selection_index.isValid():
-                    # at this point there should be no items in the model
-                    self.clearSelection()
-                    return self
-
-        self.setCurrentIndex(new_selection_index)
-        return self
-
-    def show_item_widget(self, index: QModelIndex):
-        """Show an item's widget."""
-        model = self.model()
-        item = model.item(index)
-        item.show_widget(model.is_enabled())
+    def open_event(self, indexes: Iterable[QModelIndex]):
+        """Perform the items' "open" functions."""
+        for index in indexes:
+            item = self.model().get_item(index)
+            if item is not None:
+                if typing.cast(TreeItem, item).open_event(self.items_editable()):
+                    self.setExpanded(index, not self.isExpanded(index))

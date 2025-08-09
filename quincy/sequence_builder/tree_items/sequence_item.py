@@ -83,9 +83,15 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
     def remove_subitems(self, starting_row_index: int, count: int):  # implementation
         tree_item.remove_subitems(self.subitems, starting_row_index, count)
 
-    def open_event(self) -> bool:  # overridden
-        self.item.open_event()
+    def open_event(self, editable: bool) -> bool:  # overridden
+        self.item.open_event(editable)
         return False
+
+    def expand_event(self):
+        self.item.expand_event()
+
+    def collapse_event(self):
+        self.item.collapse_event()
 
     def set_active(self, active: bool):
         """Set whether the item is active."""
@@ -98,3 +104,32 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
     def create_process(self) -> Process:
         """Create the process this item represents."""
         return self.item.create_process()
+
+
+from ...utility.serde import Serialize
+
+
+class TestDataItem(DataItem):
+    def __init__(self, number: int):
+        self.number = number
+
+    @classmethod
+    def deserialize(cls, serialized_obj):
+        return cls(serialized_obj["number"])
+
+    def serialize(self):
+        o = Serialize.serialize(self)
+        o["number"] = self.number
+        return o
+
+    def get_display_name(self):
+        return "dsfklds"
+
+    def get_icon(self):
+        return QIcon()
+
+    def open_event(self, editable):
+        return False
+
+    def create_process(self):
+        raise NotImplementedError()

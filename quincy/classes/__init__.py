@@ -1,4 +1,5 @@
 from .actions import Action, Shortcut
+from .clipboard import Clipboard
 from .descriptions import DescriptionInfo
 from .lock import DataMutex
 from .metaclasses import QABC, ABCQObjectMeta, QABCMeta, QProtocol, QProtocolMeta

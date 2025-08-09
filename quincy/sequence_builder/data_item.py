@@ -22,8 +22,15 @@ class DataItem(Deserialize, Serialize, Protocol):
         ...
 
     @abstractmethod
-    def open_event(self):
-        """Handle the item being "opened" (i.e. double clicked)."""
+    def open_event(self, editable: bool):
+        """
+        Handle the item being "opened" (i.e. double clicked).
+
+        Parameters
+        ----------
+        editable
+            Whether the item's data should be editable.
+        """
         ...
 
     def supports_subitems(self) -> bool:
