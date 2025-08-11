@@ -1,14 +1,13 @@
-from typing import Self, Sequence
+from typing import Sequence
 
 from PyQt6.QtGui import QIcon
 
 from ...utility import images
 from . import tree_item
-from .sequence_item import SequenceItem
 from .tree_item import TreeItem
 
 
-class CategoryItem(TreeItem[SequenceItem]):
+class CategoryItem(TreeItem):
     """
     An item representing a category. Categories do nothing by themselves; they just hold other
     items.
@@ -23,9 +22,7 @@ class CategoryItem(TreeItem[SequenceItem]):
         The item's subitems. The items' parent is automatically set to this item.
     """
 
-    def __init__(
-        self, parent: TreeItem[Self] | None, category_name: str, subitems: Sequence[SequenceItem]
-    ):
+    def __init__(self, parent: TreeItem | None, category_name: str, subitems: Sequence[TreeItem]):
         self.parent = parent
         self.display_name = category_name
         # these two need to be instance attributes instead of class attributes because you have to
@@ -41,7 +38,7 @@ class CategoryItem(TreeItem[SequenceItem]):
     def serialize(self):  # implementation
         raise NotImplementedError("`CategoryItem`s do not support serialization")
 
-    def get_parent(self) -> TreeItem[Self] | None:  # implementation
+    def get_parent(self) -> TreeItem | None:  # implementation
         return self.parent
 
     def set_parent(self, parent: TreeItem | None):  # implementation
@@ -56,10 +53,10 @@ class CategoryItem(TreeItem[SequenceItem]):
     def get_count(self) -> int:  # implementation
         return len(self.subitems)
 
-    def index(self, item: SequenceItem) -> int | None:  # implementation
+    def index(self, item: TreeItem) -> int | None:  # implementation
         return tree_item.index(self.subitems, item)
 
-    def get_subitem(self, index: int) -> SequenceItem | None:  # implementation
+    def get_subitem(self, index: int) -> TreeItem | None:  # implementation
         return tree_item.get_subitem(self.subitems, index)
 
     def expand_event(self):  # overridden
@@ -67,3 +64,11 @@ class CategoryItem(TreeItem[SequenceItem]):
 
     def collapse_event(self):  # overridden
         self.icon = self.collapsed_icon
+
+    # debugging
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__} {{ "
+            f"display_name: {self.get_display_name()!r}, "
+            f"subitems: {self.subitems!r} }}"
+        )

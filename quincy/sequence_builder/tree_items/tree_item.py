@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Iterable, Protocol, Self, Sequence
+from typing import Iterable, MutableSequence, Protocol, Sequence
 
 from PyQt6.QtGui import QIcon
 
 from ...utility.serde import Json
 
 
-class TreeItem[SubItem: TreeItem](Protocol):
+class TreeItem(Protocol):
     """Interface representing items in a tree model."""
 
     @abstractmethod
@@ -17,12 +17,12 @@ class TreeItem[SubItem: TreeItem](Protocol):
         ...
 
     @abstractmethod
-    def get_parent(self) -> TreeItem[Self] | None:
+    def get_parent(self) -> TreeItem | None:
         """Get the item's parent, which is `None` if this is the root item."""
         ...
 
     @abstractmethod
-    def set_parent(self, parent: TreeItem[Self] | None):
+    def set_parent(self, parent: TreeItem | None):
         """Set the item's parent."""
         ...
 
@@ -52,7 +52,7 @@ class TreeItem[SubItem: TreeItem](Protocol):
         return self.get_count() > 0
 
     @abstractmethod
-    def index(self, item: SubItem) -> int | None:
+    def index(self, item: TreeItem) -> int | None:
         """
         Try to find the index of **item** in this item's subitems. Returns `None` if **item** is not
         found.
@@ -71,7 +71,7 @@ class TreeItem[SubItem: TreeItem](Protocol):
         return parent.index(self)
 
     @abstractmethod
-    def get_subitem(self, index: int) -> SubItem | None:
+    def get_subitem(self, index: int) -> TreeItem | None:
         """Get the subitem at **index**."""
         ...
 
@@ -99,8 +99,16 @@ class TreeItem[SubItem: TreeItem](Protocol):
         return
 
 
-class MutableTreeItem[SubItem: TreeItem](TreeItem):
-    """`TreeItem` that can have subitems added/removed."""
+class GenericTreeItem[SubItem: TreeItem](TreeItem):
+    """`TreeItem` with a known subitem type."""
+
+    @abstractmethod
+    def get_subitem(self, index: int) -> SubItem | None:  # overridden for typing
+        ...
+
+
+class MutableTreeItem[SubItem: TreeItem](GenericTreeItem[SubItem]):
+    """`GenericTreeItem` with support for adding/removing subitems."""
 
     @abstractmethod
     def append_subitems(self, items: Iterable[SubItem]):
@@ -108,34 +116,26 @@ class MutableTreeItem[SubItem: TreeItem](TreeItem):
         ...
 
     @abstractmethod
-    def insert_subitems(self, starting_row_index: int, items: Iterable[SubItem]):
-        """
-        Insert all **items** starting at **starting_row_index**, with the newest subitems on top.
-        """
+    def insert_subitems(self, start: int, items: Iterable[SubItem]):
+        """Insert all **items**, starting at **start**, with the newest subitems on top."""
         ...
 
     @abstractmethod
-    def remove_subitems(self, starting_row_index: int, count: int):
-        """
-        Remove **count** subitems starting at **starting_row_index**. Returns whether the operation
-        succeeded.
-
-        Raises
-        ------
-        IndexError
-            **starting_row_index** or **count** are out of range.
-        """
+    def remove_subitems(self, start: int, count: int):
+        """Remove **count** subitems starting at **start**."""
         ...
 
 
 # --------------------------------------------------------------------------------------------------
 # helper functions for external use
 def index[SubItem: TreeItem](items: Sequence[SubItem], item: SubItem) -> int | None:
-    """Helper function for `TreeItem.index()`."""
-    try:
-        return items.index(item)
-    except ValueError:
-        return None
+    """Helper function for `TreeItem.index()`. Linear searches for **item** by memory address."""
+    # we don't use `Sequence.index()` here because if `SubItem` implements `__eq__()` we might
+    # find the wrong item. We need to specifically compare by memory address, not value
+    for i, subitem in enumerate(items):
+        if subitem is item:
+            return i
+    return None
 
 
 def get_subitem[SubItem: TreeItem](items: Sequence[SubItem], index: int) -> SubItem | None:
@@ -147,7 +147,7 @@ def get_subitem[SubItem: TreeItem](items: Sequence[SubItem], index: int) -> SubI
 
 
 def append_subitems[SubItem: TreeItem](
-    parent: TreeItem[SubItem], items: list[SubItem], subitems: Iterable[SubItem]
+    parent: MutableTreeItem[SubItem], items: MutableSequence[SubItem], subitems: Iterable[SubItem]
 ):
     """Helper function for `TreeItem.append_subitem`. Appends all **items** to **subitems**."""
     for item in subitems:
@@ -156,28 +156,23 @@ def append_subitems[SubItem: TreeItem](
 
 
 def insert_subitems[SubItem: TreeItem](
-    parent: TreeItem[SubItem],
-    items: list[SubItem],
-    starting_row_index: int,
+    parent: MutableTreeItem[SubItem],
+    items: MutableSequence[SubItem],
+    start: int,
     subitems: Iterable[SubItem],
 ):
     """
     Helper function for `TreeItem.insert_subitems()`. Inserts all **items** into **subitems**,
-    starting at **starting_row_index**.
+    starting at **start**.
     """
     for i, item in enumerate(subitems):
         item.set_parent(parent)
-        items.insert(starting_row_index + i, item)
+        items.insert(start + i, item)
 
 
-def remove_subitems[SubItem: TreeItem](items: list[SubItem], starting_row_index: int, count: int):
+def remove_subitems[SubItem: TreeItem](items: MutableSequence[SubItem], start: int, count: int):
     """
     Helper function for `TreeItem.remove_subitems()`. Removes **count** items from **items**
-    starting at **starting_row_index**.
-
-    Raises
-    ------
-    IndexError
-        **starting_row_index** or **count** are out of range.
+    starting at **start**.
     """
-    del items[starting_row_index : starting_row_index + count]
+    del items[start : start + count]

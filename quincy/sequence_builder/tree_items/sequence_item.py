@@ -6,7 +6,7 @@ from typing import Iterable, Mapping, Self
 from PyQt6.QtGui import QIcon
 
 from ...classes import Process
-from ...utility import serde
+from ...utility import images, serde
 from ...utility.serde import Json
 from ..data_item import DataItem
 from . import tree_item
@@ -19,14 +19,14 @@ ITEM = "item"
 class SequenceItem(MutableTreeItem["SequenceItem"]):
     """An item that represents a sequence step."""
 
-    def __init__(self, parent: TreeItem[Self] | None, data_item: DataItem):
-        self.parent: TreeItem | None = parent
+    def __init__(self, parent: TreeItem | None, data_item: DataItem):
+        self.parent = parent
         self.item = data_item
         self.active = False
-        self.subitems: list[Self] = []
+        self.subitems: list[SequenceItem] = []
 
     @classmethod
-    def from_dict(cls, parent: TreeItem[SequenceItem], item_as_dict: Mapping[str, Json]) -> Self:
+    def from_dict(cls, parent: TreeItem, item_as_dict: Mapping[str, Json]) -> Self:
         """Create the item from a JSON dictionary."""
         # deserialize the inner item
         inner_item: DataItem = serde.deserialize(
@@ -47,10 +47,10 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
             SUBITEMS: [subitem.serialize() for subitem in self.subitems],
         }
 
-    def get_parent(self) -> TreeItem[Self] | None:  # implementation
+    def get_parent(self) -> TreeItem | None:  # implementation
         return self.parent
 
-    def set_parent(self, parent: TreeItem[Self] | None):
+    def set_parent(self, parent: TreeItem | None):
         self.parent = parent
 
     def get_display_name(self) -> str:  # overridden
@@ -68,20 +68,20 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
     def get_count(self) -> int:  # implementation
         return len(self.subitems)
 
-    def index(self, item: Self) -> int | None:  # implementation
+    def index(self, item: TreeItem) -> int | None:  # implementation
         return tree_item.index(self.subitems, item)
 
-    def get_subitem(self, index: int) -> Self | None:  # implementation
+    def get_subitem(self, index: int) -> SequenceItem | None:  # implementation
         return tree_item.get_subitem(self.subitems, index)
 
-    def append_subitems(self, items: Iterable[Self]):  # implementation
+    def append_subitems(self, items: Iterable[SequenceItem]):  # implementation
         tree_item.append_subitems(self, self.subitems, items)
 
-    def insert_subitems(self, starting_row_index: int, items: Iterable[Self]):  # implementation
-        tree_item.insert_subitems(self, self.subitems, starting_row_index, items)
+    def insert_subitems(self, start: int, items: Iterable[SequenceItem]):  # implementation
+        tree_item.insert_subitems(self, self.subitems, start, items)
 
-    def remove_subitems(self, starting_row_index: int, count: int):  # implementation
-        tree_item.remove_subitems(self.subitems, starting_row_index, count)
+    def remove_subitems(self, start: int, count: int):  # implementation
+        tree_item.remove_subitems(self.subitems, start, count)
 
     def open_event(self, editable: bool) -> bool:  # overridden
         self.item.open_event(editable)
@@ -105,13 +105,21 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
         """Create the process this item represents."""
         return self.item.create_process()
 
+    # debugging
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__} {{ "
+            f"active: {self.is_active()!r}, "
+            f"item: {self.item!r}, "
+            f"subitems: {self.subitems!r} }}"
+        )
 
-from ...utility.serde import Serialize
 
-
+# TODO: remove
 class TestDataItem(DataItem):
     def __init__(self, number: int):
         self.number = number
+        self.icon = images.make_icon("battery-charge.png")
 
     @classmethod
     def deserialize(cls, serialized_obj):
@@ -124,7 +132,7 @@ class TestDataItem(DataItem):
         return "dsfklds"
 
     def get_icon(self):
-        return QIcon()
+        return self.icon
 
     def open_event(self, editable):
         return False

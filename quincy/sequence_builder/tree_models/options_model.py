@@ -1,6 +1,6 @@
 from typing import Any, Iterable, Self
 
-from PyQt6.QtCore import QModelIndex, Qt
+from PyQt6.QtCore import QModelIndex, QSize, Qt
 
 from ...utility import sequence_builder
 from ..tree_items import CategoryItem
@@ -33,11 +33,11 @@ class OptionsModel(TreeModel[CategoryItem]):
         directories
             The directories to load items from.
         """
-        return cls(
-            sequence_builder.items_from_directories(
-                sequence_builder.get_initialization_directories()
-            ),
+        items, failure_paths = sequence_builder.items_from_directories(
+            sequence_builder.get_initialization_directories()
         )
+        # TODO: show a dialog with the failure paths
+        return cls(items)
 
     def data(self, index: QModelIndex, role: int | None = None) -> Any:  # implementation
         if not index.isValid():
@@ -49,6 +49,8 @@ class OptionsModel(TreeModel[CategoryItem]):
                     return item.get_display_name()
                 case Qt.ItemDataRole.DecorationRole:
                     return item.get_icon()
+                case Qt.ItemDataRole.SizeHintRole:
+                    return QSize(0, 23)
         return None
 
     def supportedDragActions(self) -> Qt.DropAction:  # overridden

@@ -53,7 +53,7 @@ class BiggerButton(Button):  # this name feels so dumb xD
         """
         self.horizontal_scalar, self.vertical_scalar = size_scalars
 
-    def sizeHint(self):  # overridden
+    def sizeHint(self) -> QSize:  # overridden
         default_size = Button.sizeHint(self)
         return QSize(
             round(default_size.width() * self.horizontal_scalar),

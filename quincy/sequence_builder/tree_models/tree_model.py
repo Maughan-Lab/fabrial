@@ -14,12 +14,12 @@ from PyQt6.QtCore import (
 from PyQt6.QtWidgets import QApplication
 
 from ...classes import QABC
-from ..tree_items import RootItem, SequenceItem, TreeItem
+from ..tree_items import RootItem, TreeItem
 
 JSON = "application/json"
 
 
-class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
+class TreeModel[Item: TreeItem](QAbstractItemModel, QABC):
     """
     `QAbstractItemModel` for representing trees.
 
@@ -31,11 +31,11 @@ class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
         The items to initialize with. Can be empty.
     """
 
-    def __init__(self, title: str, items: Iterable[ItemType]):
+    def __init__(self, title: str, items: Iterable[Item]):
         QAbstractItemModel.__init__(self)
 
         self.title = title
-        self.root_item: RootItem[ItemType] = RootItem()
+        self.root_item: RootItem[Item] = RootItem()
         self.root_item.append_subitems(items)
 
         self.base_flag = Qt.ItemFlag.ItemIsEnabled
@@ -44,7 +44,7 @@ class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
         """Get the model's title."""
         return self.title
 
-    def get_root(self) -> RootItem[ItemType]:
+    def get_root(self) -> RootItem[Item]:
         """Get the root item."""
         return self.root_item
 
@@ -81,7 +81,7 @@ class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
     def data(self, index: QModelIndex, role: int | None = None) -> Any:  # overridden
         ...
 
-    def get_item(self, index: QModelIndex) -> ItemType | None:
+    def get_item(self, index: QModelIndex) -> Item | None:
         """
         Get the item at the provided **index**. Returns `None` if **index** is invalid.
         """
@@ -90,7 +90,7 @@ class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
             # look up the docs for QModelIndex
             # I think it is related to the index() function
             # it's something with pointers, idk
-            item: ItemType | None = index.internalPointer()
+            item: Item | None = index.internalPointer()
             if item is not None:
                 return item
         return None
@@ -116,7 +116,7 @@ class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
         return 1
 
     def rowCount(self, index: QModelIndex = QModelIndex()) -> int:  # overridden
-        item: TreeItem[SequenceItem] = self.get_item(index) or self.get_root()
+        item: TreeItem = self.get_item(index) or self.get_root()
         return item.get_count()
 
     # overridden
@@ -131,7 +131,7 @@ class TreeModel[ItemType: TreeItem[SequenceItem]](QAbstractItemModel, QABC):
     def index(
         self, row: int, column: int, parent_index: QModelIndex = QModelIndex()
     ) -> QModelIndex:
-        parent_item: TreeItem[SequenceItem] = self.get_item(parent_index) or self.get_root()
+        parent_item: TreeItem = self.get_item(parent_index) or self.get_root()
         item = parent_item.get_subitem(row)
         if item is None:
             return QModelIndex()

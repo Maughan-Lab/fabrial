@@ -3,20 +3,10 @@
 - When that doesn't work, email support again and ask for help.
 
 # Fixing Quincy for Modularization
-## Interface Stuff
-Use `Protocol` instead of ABC. Try to minimize inheritance and use interfaces instead.
-
-## Sequence View
-- All human-written files should use `TOML`
-- Make the `TreeItem` class the thing that gets saved to a file, not the widget.
-    - This involves your `serde` code.
-- Change how the SequenceOptions model initialization works
-    - All human-written JSON files should be converted to TOML files.
 
 ## Items
 - *Items* should create the process, not the SequenceRunner. i.e., the SequenceRunner should call something like `make_process()` on the item, then use that process.
     - With this, instead of passing the root item to the sequence runner, just pass a collection of `Process`s. For the loop, this may involve recursion.
-- Items and widgets should use `from_dict()` and `as_dict()` methods for serde.
 
 ## The Oven
 - The oven should not be a constant part of the application. My current idea is to put manual control of the oven in a separate application that shares source code with the rest of Quincy.
@@ -52,33 +42,17 @@ match response:
         # this is probably an error
 ```
 
-## Multi-Level Cancellations
-DO NOT DO THIS
-
-If you are in a loop/other nested sequence step, you should be able to cancel the outer item or *any* of the inner items. There should be a cancel button with a combobox next to it. The combobox should show the available "depths" you can cancel. For example, if you have something like this:
-```
--loop 1
-    - loop 2
-        - loop 3
-            - some item
-```
-you should be able to cancel `loop 1`, `loop 2`, `loop 3`, or `some item` by selecting `1`, `2`, `3`, or `4` from the combobox, respectively. To do this, you need to keep track of the current depth using a stack. The stack contains references to `Task`s corresponding to the depth. When you cancel a `Task`, you cancel all tasks above it first.
-
-All nested tasks will need to call some method on the `ProcessRunner` that runs a list of `Process`es and increments the depth counter. When the process list finished, the counter should be decremented. This counter could be automatic by using the length of the stack.
-
 ## Error Logging
 - Instead of showing the whole error in a dialog that can get cut off, record the error in a logging file, then show an error dialog that says something like "Quincy encountered a fatal error and needs to close".
 
 ## Consistency
-- Mark methods as "overridden" or "implementation".
 - "instrument" $\to$ "device"
 
 ## Protocols
 - Make a `Protocol` class for devices. This will make your life easier.
 
 ## External Items
-- Ignore below, use plugins.
-- Add support for user-added sequence items. It looks like the code for these has to reside within `src` for them to be able to access the rest of the codebase, but it could be in a folder like `user_items`.
+- Use plugins.
 
 ## Avoid Locks
 - See if you can use a build-in `Event` object to synchronize between `QThread`s.

@@ -10,7 +10,6 @@ from PyQt6.QtWidgets import QAbstractItemView, QTreeView
 
 from ...classes import Shortcut
 from ...utility.serde import Json
-from ..tree_items import TreeItem
 from ..tree_models.tree_model import TreeModel
 
 EXPANDED = "expanded"
@@ -18,7 +17,7 @@ SUBITEMS = "subitems"
 # TODO: move SUBITEMS to a constant
 
 
-class TreeView[Model: TreeModel](QTreeView):
+class TreeView[Model: TreeModel](QTreeView):  # type: ignore
     """Custom TreeView with support for copy, cut, paste, and delete (and drag and drop)."""
 
     def __init__(self, model: Model):
@@ -50,13 +49,13 @@ class TreeView[Model: TreeModel](QTreeView):
         # initialize the view states of all subitems of **index**
         def recursively_init_state(index: QModelIndex, view_states: Sequence[Mapping[str, Json]]):
             for i, subitem_view_state in enumerate(view_states):
-                subitem_index = model.index(i, index.column(), index)
+                subitem_index = model.index(i, 0, index)
                 if subitem_view_state[EXPANDED]:
                     self.expand(subitem_index)
-                    recursively_init_state(
-                        subitem_index,
-                        typing.cast(Sequence[Mapping[str, Json]], subitem_view_state[SUBITEMS]),
-                    )
+                recursively_init_state(
+                    subitem_index,
+                    typing.cast(Sequence[Mapping[str, Json]], subitem_view_state[SUBITEMS]),
+                )
 
         recursively_init_state(self.rootIndex(), view_states)
 
@@ -109,5 +108,5 @@ class TreeView[Model: TreeModel](QTreeView):
         for index in indexes:
             item = self.model().get_item(index)
             if item is not None:
-                if typing.cast(TreeItem, item).open_event(self.items_editable()):
+                if item.open_event(self.items_editable()):
                     self.setExpanded(index, not self.isExpanded(index))

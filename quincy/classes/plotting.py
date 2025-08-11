@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from pyqtgraph import PlotDataItem  # type: ignore
+from pyqtgraph import PlotDataItem
 
 
 @dataclass

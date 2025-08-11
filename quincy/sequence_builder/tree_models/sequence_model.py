@@ -2,7 +2,15 @@ import json
 import typing
 from typing import Any, Iterable, Mapping, Self, Sequence
 
-from PyQt6.QtCore import QDataStream, QMimeData, QModelIndex, QPersistentModelIndex, Qt, pyqtSignal
+from PyQt6.QtCore import (
+    QDataStream,
+    QMimeData,
+    QModelIndex,
+    QPersistentModelIndex,
+    QSize,
+    Qt,
+    pyqtSignal,
+)
 from PyQt6.QtWidgets import QApplication
 
 from ...utility.serde import Json
@@ -57,6 +65,9 @@ class SequenceModel(TreeModel[SequenceItem]):
                     return font
                 case Qt.ItemDataRole.DecorationRole:
                     return item.get_icon()
+                case Qt.ItemDataRole.SizeHintRole:
+                    return QSize(0, 23)
+
         return None
 
     # ----------------------------------------------------------------------------------------------
@@ -107,7 +118,7 @@ class SequenceModel(TreeModel[SequenceItem]):
         else:  # the drop didn't occur on an item, so insert at the end
             begin_row = self.rowCount(parent_index)
 
-        parent_item: TreeItem[SequenceItem] = self.get_item(parent_index) or self.get_root()
+        parent_item: TreeItem = self.get_item(parent_index) or self.get_root()
 
         items = []
         # NOTE: do not set the OpenModeFlag for this stream, it causes weird issues

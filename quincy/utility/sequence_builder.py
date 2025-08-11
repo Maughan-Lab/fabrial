@@ -1,12 +1,15 @@
+from __future__ import annotations
+
+import bisect
 import os
 import tomllib
-from os import PathLike
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Iterable
 
 from ..constants import paths
 from ..sequence_builder import DataItem
-from ..sequence_builder.tree_items import CategoryItem, SequenceItem
+from ..sequence_builder.tree_items import CategoryItem, SequenceItem, TreeItem
 from ..utility import serde
 
 FILE_EXTENSION = ".toml"
@@ -14,13 +17,26 @@ CATEGORY_FILENAME = "category" + FILE_EXTENSION
 NAME = "name"
 
 
+@dataclass
+class Category:
+    items: list[SequenceItem]
+    subcategories: dict[str, Category]
+
+
 def items_from_directories(
-    directories: Iterable[PathLike[str] | str],
-) -> Sequence[CategoryItem]:
+    directories: Iterable[Path],
+) -> tuple[list[CategoryItem], list[Path]]:
     """
     Helper function for `OptionsModel.from_directory()`.
 
     Creates an iterable of `CategoryItem`s from a group of properly formatted directories.
+
+    Returns
+    -------
+    A tuple of
+
+        (the created `CategoryItem`s, the `Path`s of any directories or files that could not be
+        parsed)
 
     Raises
     ------
@@ -45,53 +61,101 @@ def items_from_directories(
     An example structure is shown above. Folders containing a `category.toml` file are
     interpreted as categories. All item files in the folder are grouped under the same category
     defined by the `category.toml` file. Item files can be named anything other than
-    `category.toml`, for example `item.toml`. The file name is unimportant; only the contents
-    matter. Non-TOML files are ignored. Categories are flattened; you cannot nest categories.
+    `category.toml`, for example `item.toml`.
 
     Notes
     -----
-    The categories and their contained items are all sorted alphabetically by display name after
-    being loaded.
+    - Item files' names are unimportant; they only need to have the `.toml` extension and the right
+    file contents.
+
+    - Non-`TOML` files are ignored.
+
+    - Files in directories without a category file are ignored, but nested directories are checked
+    for categories.
+
+    - You can nest categories by putting category directories inside other category directories.
+
+    - Categories and their contained items are all sorted alphabetically by display name after
+    being loaded. Subcategories are first, followed by sequence items.
     """
-    category_map: dict[str, list[SequenceItem]] = {}
 
-    for directory in directories:
-        for dir, _, files in os.walk(directory):
-            dir_path = Path(dir)
-            category_file = dir_path.joinpath(CATEGORY_FILENAME)
-            # ignore directories that don't contain a category file
-            if not category_file.exists():
-                continue
-            # initialize the category (if it hasn't already been initialized)
-            with open(category_file, "rb") as f:
-                category_info = tomllib.load(f)
+    failure_paths: dict[Path, Exception] = {}
+
+    # helper function to read individual directories recursively
+    def parse_directory(directory: Path, category_map: dict[str, Category]):
+        _, subdirectories, files = next(os.walk(directory))
+
+        category_file = directory.joinpath(CATEGORY_FILENAME)
+        if category_file.exists():  # this folder is a category
+            # read the category file
             try:
-                category_name: str = category_info[NAME]
+                with open(category_file, "rb") as f:
+                    category_info = tomllib.load(f)
+                # get the category name
+                try:
+                    category_name: str = category_info[NAME]
+                    assert isinstance(category_name, str)  # it must be a `str`
+                except KeyError:
+                    raise KeyError(f"No `{NAME}` field in category file {category_file}")
+            except Exception as e:
+                failure_paths[directory] = e
+                return  # don't keep parsing
+            # get or create the category
+            try:
+                category = category_map[category_name]
             except KeyError:
-                raise ValueError(f"No `{NAME}` field in category file {str(category_file)}")
-            if category_name not in category_map:
-                category_map[category_name] = []  # initialize with empty list
-
+                category = Category([], {})
+                category_map[category_name] = category
+            # parse subdirectories
+            for subdirectory in subdirectories:
+                subdirectory_path = directory.joinpath(subdirectory)
+                parse_directory(subdirectory_path, category.subcategories)  # recurse
+            # parse item files
             for file in files:
-                file_path = dir_path.joinpath(file)
+                file_path = directory.joinpath(file)
                 # ignore non-item files and the category file
                 if file_path.suffix != FILE_EXTENSION or file_path.name == CATEGORY_FILENAME:
                     continue
-                # load the `DataItem` and build the `SequenceItem`, then append it to the category
-                data_item: DataItem = serde.load_toml(file_path)
+
+                # load the `DataItem` and build the `SequenceItem`
+                try:
+                    data_item: DataItem = serde.load_toml(file_path)
+                except Exception as e:
+                    failure_paths[file_path] = e
+                    continue  # stop parsing this file
                 sequence_item = SequenceItem(None, data_item)
-                category_map[category_name].append(sequence_item)
+                # insert the item so the list is sorted
+                bisect.insort_right(
+                    category.items, sequence_item, key=lambda item: item.get_display_name()
+                )
+        else:  # this folder is not a category; recurse into other directories
+            for subdirectory in subdirectories:
+                subdirectory_path = directory.joinpath(subdirectory)
+                parse_directory(subdirectory_path, category_map)  # use the current category map
 
-    # create the category items
-    category_items: list[CategoryItem] = []
-    # sort the categories alphabetically before iterating
-    for category_name, sequence_items in sorted(category_map.items()):
-        # sort all `SequenceItem`s by display name
-        sequence_items.sort(key=lambda item: item.get_display_name())
-        # create and append the `CategoryItem`
-        category_items.append(CategoryItem(None, category_name, sequence_items))
+    # helper function to parse the category map into actual `CategoryItem`s
+    def parse_into_items(category_map: dict[str, Category]) -> list[CategoryItem]:
+        category_items: list[CategoryItem] = []
+        for category_name, category in sorted(category_map.items()):
+            # get the subcategory items
+            sub_category_items = parse_into_items(category.subcategories)  # recurse
+            # combine the subcategory items and sequence items
+            items: list[TreeItem] = []
+            items.extend(sub_category_items)
+            items.extend(category.items)
+            # create and append the `CategoryItem`
+            category_items.append(CategoryItem(None, category_name, items))
 
-    return category_items
+        return category_items
+
+    # parse the directories
+    category_map: dict[str, Category] = {}
+    for directory in directories:
+        parse_directory(directory, category_map)
+
+    # create the `CategoryItem`s
+    # TODO: log the errors in the error log file
+    return (parse_into_items(category_map), list(failure_paths.keys()))
 
 
 def get_initialization_directories() -> Iterable[Path]:

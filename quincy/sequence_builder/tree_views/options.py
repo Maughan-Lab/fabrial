@@ -26,7 +26,7 @@ class OptionsTreeView(TreeView[OptionsModel]):
     def save_on_close(self):
         """Call this when the application closes to save the view state."""
         try:
-            with open(sequence_paths.OPTIONS_STATE_AUTOSAVE_FILE, "r") as f:
+            with open(sequence_paths.OPTIONS_STATE_AUTOSAVE_FILE, "w") as f:
                 # save the view state
                 json.dump(self.get_view_state(), f)
         except Exception:
