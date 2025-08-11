@@ -1,0 +1,3 @@
+"file1.txt" = """A description of what goes in this file."""
+# {{ FILE_SUBSTITUTION }} will be replaced by a user-defined string
+"{{ FILE_SUBSTITUTION }}" = """Another description."""

@@ -1,0 +1,3 @@
+Parameter1 = "Description of Parameter1."
+Parameter2 = "Description of Parameter2."
+"{{ PARAMETER3 }}" = "Description of {{ PARAMETER3 }}."

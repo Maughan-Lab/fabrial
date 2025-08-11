@@ -1,4 +1,5 @@
 from .data_item import DataItem
-from .tree_items.tree_item import TreeItem
+from .item_widget import ItemWidget
+from .tree_items import CategoryItem, SequenceItem, TreeItem
 from .tree_models import OptionsModel, SequenceModel
 from .tree_views import OptionsTreeWidget, SequenceTreeWidget

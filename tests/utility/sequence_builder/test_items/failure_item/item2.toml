@@ -1,0 +1,3 @@
+type = "tests.utility.sequence_builder.sequence_builder.MockDataItem"
+name = "failure_item2"
+number = 2

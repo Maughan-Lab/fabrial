@@ -1,5 +1,4 @@
 from .actions import Action, Shortcut
-from .descriptions import DescriptionInfo
 from .lock import DataMutex
 from .metaclasses import QABC, ABCQObjectMeta, QABCMeta, QProtocol, QProtocolMeta
 from .new_process import Process

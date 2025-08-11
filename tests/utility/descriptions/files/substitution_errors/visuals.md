@@ -1,0 +1,1 @@
+Visuals description. Here is a substitution: {{ SUBSTITUTION }}.

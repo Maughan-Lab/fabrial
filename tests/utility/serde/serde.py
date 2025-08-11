@@ -9,6 +9,9 @@ from pytest import fixture
 from quincy.utility import serde
 from quincy.utility.serde import TYPE, Deserialize, Json, Serialize
 
+TYPENAME = "tests.utility.serde.serde.MockSerde"
+FILES_DIRECTORY = Path(__file__).parent.joinpath("files")
+
 
 class MockSerde(Deserialize, Serialize):
     """Test class that implements `Deserialize` and `Serialize`."""
@@ -25,10 +28,6 @@ class MockSerde(Deserialize, Serialize):
 
     def __eq__(self, other: Self):  # type: ignore
         return self.number == other.number
-
-
-TYPENAME = "tests.utility.serde.serde.MockSerde"
-FILES_DIRECTORY = Path(__file__).parent.joinpath("files")
 
 
 def test_get_type():

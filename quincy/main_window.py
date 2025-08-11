@@ -4,7 +4,6 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
 
 from .constants import APP_NAME
 from .custom_widgets import YesCancelDialog, YesNoDialog
-from .custom_widgets.settings import ApplicationSettingsWindow
 from .menu import MenuBar
 from .secondary_window import SecondaryWindow
 from .tabs import TabWidget
@@ -18,7 +17,7 @@ class MainWindow(QMainWindow):
         self.relaunch = False
         QMainWindow.__init__(self)
         self.setWindowTitle(APP_NAME)
-        self.settings_window = ApplicationSettingsWindow(self)
+        # self.settings_window = ApplicationSettingsWindow(self)
         # create tabs
         self.tabs = TabWidget()
         self.setCentralWidget(self.tabs)
@@ -127,4 +126,5 @@ class MainWindow(QMainWindow):
     # settings
     def show_settings(self):
         """Show the application settings. These settings are saved when the window closes."""
-        self.settings_window.show()
+        return
+        # self.settings_window.show()

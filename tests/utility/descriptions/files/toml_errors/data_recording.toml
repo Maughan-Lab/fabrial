@@ -1,0 +1,2 @@
+# this is invalid TOML so it should yield error text
+filename = this needs to be in quotes

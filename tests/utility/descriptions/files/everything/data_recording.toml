@@ -1,0 +1,3 @@
+"file1.txt" = "Description of file1.txt."
+"file2.txt" = "Description of file2.txt."
+"{{ FILE3 }}" = "Description of {{ FILE3 }}."

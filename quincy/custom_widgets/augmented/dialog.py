@@ -158,7 +158,7 @@ class DontShowAgainDialog(Dialog):
 class YesCancelDontShowDialog(DontShowAgainDialog):
     """Yes and Cancel buttons."""
 
-    def __init__(self, title: str, message: str, dont_show_again_filepath: PathLike | str):
+    def __init__(self, title: str, message: str, dont_show_again_filepath: PathLike[str] | str):
         DontShowAgainDialog.__init__(
             self,
             title,

@@ -1,4 +1,4 @@
 """Common filenames for processes."""
 
-METADATA = "metadata.csv"
+METADATA_FILENAME = "metadata.json"
 TEMPERATURES = "temperature.csv"

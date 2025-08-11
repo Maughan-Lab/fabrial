@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWidgets import QFrame, QTextBrowser
 
 
@@ -13,7 +13,7 @@ class MarkdownView(QTextBrowser):
         )
         self.setOpenExternalLinks(True)
         self.setFrameShape(QFrame.Shape.NoFrame)
-        self.setViewportMargins(10, 10, 10, 10)  # this just looks better
+        self.setViewportMargins(20, 20, 20, 20)  # this just looks better
 
-    def sizeHint(self):
-        return QTextBrowser.sizeHint(self) * 2
+    def sizeHint(self) -> QSize:
+        return QTextBrowser.sizeHint(self) * 2  # looks better

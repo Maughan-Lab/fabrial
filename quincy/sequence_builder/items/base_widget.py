@@ -142,7 +142,7 @@ class AbstractBaseWidget(ParameterDescriptionWidget, AbstractWidget, metaclass=A
 
     def __init__(
         self,
-        layout: QLayout | None = None,
+        layout: QLayout,
         display_name: str = "",
         process_type: type[AbstractForegroundProcess | AbstractBackgroundProcess] | None = None,
         icon_filename: str = DEFAULT_ICON_FILENAME,
