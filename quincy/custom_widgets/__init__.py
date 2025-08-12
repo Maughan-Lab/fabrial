@@ -16,6 +16,7 @@ from .augmented import (
     SignalWidget,
     SpinBox,
     StabilityProgressBar,
+    TabWidget,
     TemperatureSpinBox,
     Widget,
     YesCancelDialog,

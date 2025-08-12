@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, Iterable, Self
 
 from PyQt6.QtCore import QModelIndex, QSize, Qt
@@ -21,7 +22,7 @@ class OptionsModel(TreeModel[CategoryItem]):
         TreeModel.__init__(self, "Options", items)
 
     @classmethod
-    def from_initialization_directories(cls) -> Self:
+    def from_initialization_directories(cls, initialization_directories: Iterable[Path]) -> Self:
         """
         Create the model from the application's item initialization directories.
 
@@ -33,9 +34,7 @@ class OptionsModel(TreeModel[CategoryItem]):
         directories
             The directories to load items from.
         """
-        items, failure_paths = sequence_builder.items_from_directories(
-            sequence_builder.get_initialization_directories()
-        )
+        items, failure_paths = sequence_builder.items_from_directories(initialization_directories)
         # TODO: show a dialog with the failure paths
         return cls(items)
 

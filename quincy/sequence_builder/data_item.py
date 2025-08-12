@@ -1,14 +1,22 @@
 from abc import abstractmethod
-from typing import Protocol
+from typing import Protocol, Self, runtime_checkable
 
 from PyQt6.QtGui import QIcon
 
 from ..classes import Process
 from ..utility.serde import Deserialize, Serialize
+from .item_widget import ItemWidget
 
 
+@runtime_checkable
 class DataItem(Deserialize, Serialize, Protocol):
     """An inner item used by a `TreeItem`."""
+
+    @classmethod
+    @abstractmethod
+    def default(cls) -> Self:
+        """Create the item with default parameters."""
+        ...
 
     # visuals
     @abstractmethod
@@ -50,3 +58,21 @@ class DataItem(Deserialize, Serialize, Protocol):
     def create_process(self) -> Process:
         """Create the `Process` this item represents."""
         ...
+
+
+class WidgetDataItem(DataItem, Protocol):
+    """A `DataItem` that uses an `ItemWidget` to display and modify data."""
+
+    @abstractmethod
+    def get_widget(self) -> ItemWidget:  # private
+        """Get the widget this item uses."""
+        ...
+
+    def get_display_name(self) -> str:  # implementation
+        return self.get_widget().windowTitle()
+
+    def get_icon(self) -> QIcon:  # implementation
+        return self.get_widget().windowIcon()
+
+    def open_event(self, editable: bool):  # implementation
+        self.get_widget().show_editable(editable)

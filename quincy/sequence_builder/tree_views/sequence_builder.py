@@ -105,6 +105,9 @@ class SequenceTreeView(TreeView[SequenceModel]):
         TreeView.connect_signals(self)
         self.model().itemAdded.connect(self.handle_new_item)
 
+    def items_editable(self) -> bool:  # overridden
+        return True  # TODO: make this depend on whether the widget is enabled
+
     def handle_new_item(self, index: QModelIndex):
         """Handle an item being added to the model."""
         self.expand(index)  # expand the new item

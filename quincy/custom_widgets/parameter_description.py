@@ -22,6 +22,7 @@ class ParameterDescriptionWidget(Widget):
         layout = QVBoxLayout()
         Widget.__init__(self, layout)
         self.parameter_widget = parameter_widget
+        self.parameter_widget.setContentsMargins(10, 10, 10, 10)  # looks better
         parameter_scroll_area = QScrollArea()
         parameter_scroll_area.setWidget(self.parameter_widget)
         parameter_scroll_area.setWidgetResizable(True)

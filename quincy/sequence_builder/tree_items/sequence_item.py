@@ -122,6 +122,10 @@ class TestDataItem(DataItem):
         self.icon = images.make_icon("battery-charge.png")
 
     @classmethod
+    def default(cls) -> Self:
+        return cls(0)
+
+    @classmethod
     def deserialize(cls, serialized_obj):
         return cls(serialized_obj["number"])
 
@@ -134,7 +138,7 @@ class TestDataItem(DataItem):
     def get_icon(self):
         return self.icon
 
-    def open_event(self, editable):
+    def open_event(self, editable: bool):
         return False
 
     def create_process(self):

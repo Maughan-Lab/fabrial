@@ -1,0 +1,1 @@
+The `category.toml` file should define the subitems. See [test.toml](./test.toml). All items need a `default()` class method for constructing via the category file.

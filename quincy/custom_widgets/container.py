@@ -5,7 +5,7 @@ from .augmented.widget import Widget
 
 class Container(Widget):
     """
-    Widget that automatically sets the layout and has no contents margins.
+    `Widget` with no contents margins.
 
     Parameters
     ----------

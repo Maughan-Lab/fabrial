@@ -1,31 +1,41 @@
+from types import ModuleType
+from typing import Iterable
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
 
 from .constants import APP_NAME
-from .custom_widgets import YesCancelDialog, YesNoDialog
+from .custom_widgets import TabWidget, YesCancelDialog, YesNoDialog
 from .menu import MenuBar
 from .secondary_window import SecondaryWindow
-from .tabs import TabWidget
-from .utility import events
+from .tabs import OvenControlTab, SequenceBuilderTab, SequenceDisplayTab
+from .utility import events, images, sequence_builder
 
 
 class MainWindow(QMainWindow):
     showError = pyqtSignal(str)
 
-    def __init__(self) -> None:
+    def __init__(self, plugin_modules: Iterable[ModuleType]):
         self.relaunch = False
         QMainWindow.__init__(self)
         self.setWindowTitle(APP_NAME)
         # self.settings_window = ApplicationSettingsWindow(self)
-        # create tabs
-        self.tabs = TabWidget()
-        self.setCentralWidget(self.tabs)
-        # shortcuts
-        self.oven_control_tab = self.tabs.oven_control_tab
-        self.sequence_tab = self.tabs.sequence_builder_tab
-        self.sequence_visuals_tab = self.tabs.sequence_visuals_tab
+        # tabs
+        self.oven_control_tab = OvenControlTab()
+        self.sequence_visuals_tab = SequenceDisplayTab()
+        self.sequence_tab = SequenceBuilderTab(
+            self.sequence_visuals_tab,
+            sequence_builder.get_initialization_directories(plugin_modules),
+        )
         self.connection_widget = self.oven_control_tab.instrument_connection_widget
+        self.tab_widget = TabWidget(
+            [
+                (self.sequence_tab, "Sequence Builder", images.make_icon("script-block.png")),
+                (self.sequence_visuals_tab, "Sequence Visuals", images.make_icon("chart.png")),
+            ]
+        )
+        self.setCentralWidget(self.tab_widget)
         # create menu bar
         self.menu_bar = MenuBar(self)
         self.setMenuBar(self.menu_bar)

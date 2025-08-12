@@ -13,6 +13,8 @@ from quincy.sequence_builder.tree_items import CategoryItem, SequenceItem, TreeI
 from quincy.utility import sequence_builder
 from quincy.utility.serde import Json
 
+# TODO: update this test suite
+
 
 class MockDataItem(DataItem):
     """A `DataItem` implementation for testing."""
@@ -22,13 +24,15 @@ class MockDataItem(DataItem):
         self.number = number
 
     @classmethod
+    def default(cls) -> Self:
+        return cls("", 0)
+
+    @classmethod
     def deserialize(cls, serialized_obj: Mapping[str, Json]) -> Self:  # implementation
-        return cls(
-            typing.cast(str, serialized_obj["name"]), typing.cast(int, serialized_obj["number"])
-        )
+        raise NotImplementedError("This shouldn't have been tested")
 
     def serialize(self) -> dict[str, Json]:  # implementation
-        return {"name": self.name, "number": self.number}
+        raise NotImplementedError("This shouldn't have been tested")
 
     def get_display_name(self) -> str:  # implementation
         return self.name
@@ -111,6 +115,8 @@ def expected_structure() -> list[CategoryItem]:
         ),
         # this category should only have one item because one of the files is invalid
         CategoryItem(None, "failure_item", [SequenceItem(None, MockDataItem("failure_item2", 2))]),
+        # this category should only have one item because one of the files doesn't have a typetag
+        CategoryItem(None, "no_typetag", [SequenceItem(None, MockDataItem("no_typetag2", 2))]),
     ]
 
 

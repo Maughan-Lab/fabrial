@@ -1,12 +1,16 @@
 from __future__ import annotations
 
-import bisect
+import importlib
 import os
+import pkgutil
 import tomllib
 from dataclasses import dataclass
+from importlib import metadata
 from pathlib import Path
+from types import ModuleType
 from typing import Iterable
 
+from .. import plugins
 from ..constants import paths
 from ..sequence_builder import DataItem
 from ..sequence_builder.tree_items import CategoryItem, SequenceItem, TreeItem
@@ -119,15 +123,17 @@ def items_from_directories(
 
                 # load the `DataItem` and build the `SequenceItem`
                 try:
-                    data_item: DataItem = serde.load_toml(file_path)
+                    data_item = serde.load_toml(file_path)
+                    if not isinstance(data_item, DataItem):
+                        raise TypeError(
+                            f"Loading the item file {file_path} yielded a non-`DataItem`"
+                        )
                 except Exception as e:
                     failure_paths[file_path] = e
                     continue  # stop parsing this file
                 sequence_item = SequenceItem(None, data_item)
                 # insert the item so the list is sorted
-                bisect.insort_right(
-                    category.items, sequence_item, key=lambda item: item.get_display_name()
-                )
+                category.items.append(sequence_item)
         else:  # this folder is not a category; recurse into other directories
             for subdirectory in subdirectories:
                 subdirectory_path = directory.joinpath(subdirectory)
@@ -137,8 +143,10 @@ def items_from_directories(
     def parse_into_items(category_map: dict[str, Category]) -> list[CategoryItem]:
         category_items: list[CategoryItem] = []
         for category_name, category in sorted(category_map.items()):
-            # get the subcategory items
+            # get the subcategory items (they will already be sorted)
             sub_category_items = parse_into_items(category.subcategories)  # recurse
+            # sort the sequence items
+            category.items.sort(key=lambda item: item.get_display_name())
             # combine the subcategory items and sequence items
             items: list[TreeItem] = []
             items.extend(sub_category_items)
@@ -158,8 +166,49 @@ def items_from_directories(
     return (parse_into_items(category_map), list(failure_paths.keys()))
 
 
-def get_initialization_directories() -> Iterable[Path]:
+def load_local_plugins() -> dict[str, ModuleType]:
+    """Load plugins from the `plugins` directory."""
+    plugin_modules: dict[str, ModuleType] = {}
+    # search for packages in the `plugins` directory
+    for _, name, is_package in pkgutil.iter_modules(plugins.__path__):
+        if not is_package:  # ignore non packages
+            continue
+        try:
+            module = importlib.import_module("." + name, plugins.__name__)
+            plugin_modules[name] = module
+        except Exception:
+            # TODO: log error
+            # TODO: add module to the list of packages that failed
+            continue
+    return plugin_modules
+
+
+def load_plugins() -> list[ModuleType]:
+    """Load plugins for the application."""
+    plugin_modules = load_local_plugins()
+
+    # TODO: load pip installed plugins
+
+    return list(plugin_modules.values())
+
+
+def get_initialization_directories(plugin_modules: Iterable[ModuleType]) -> list[Path]:
     """
     Get the application's item initialization directories. This includes items from any plugins.
     """
-    return [paths.sequence_builder.OPTIONS_INITIALIZERS]
+
+    initialization_directories: list[Path] = []
+
+    for plugin_module in plugin_modules:
+        try:
+            directories = plugin_module.get_item_directories()
+            assert isinstance(directories, list)
+            initialization_directories.extend(directories)
+        except AttributeError:  # the plugin doesn't have this entry point, skip
+            continue
+        except AssertionError:  # the entry point returned the wrong type, skip
+            continue
+
+    # TODO: figure out a scheme for communicating which plugins were bad
+
+    return [paths.sequence_builder.OPTIONS_INITIALIZERS] + initialization_directories

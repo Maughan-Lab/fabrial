@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import Iterable
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHBoxLayout, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
@@ -10,17 +13,23 @@ from .sequence_display import SequenceDisplayTab
 
 
 class SequenceBuilderTab(QWidget):
-    """Sequence tab."""
+    """
+    Sequence tab.
+    TODO: parameters
+    """
 
-    ICON_FILE = "script-block.png"
-
-    def __init__(self, visual_widget_container: SequenceDisplayTab):
-        # data members
-        self.options_tree: OptionsTreeWidget
-        self.sequence_tree: SequenceTreeWidget
+    def __init__(
+        self,
+        visual_widget_container: SequenceDisplayTab,
+        initialization_directories: Iterable[Path],
+    ):
+        QWidget.__init__(self)
+        self.options_tree = OptionsTreeWidget.from_initialization_directories(
+            initialization_directories
+        )
+        self.sequence_tree = SequenceTreeWidget.from_json(sequence_paths.SEQUENCE_AUTOSAVE_FILE)
         self.visual_widget_container = visual_widget_container  # another tab
 
-        QWidget.__init__(self)
         self.create_widgets()
         self.connect_signals()
 
@@ -30,8 +39,6 @@ class SequenceBuilderTab(QWidget):
 
         # tree views
         treeview_layout = layout_util.add_sublayout(layout, QHBoxLayout())
-        self.options_tree = OptionsTreeWidget.from_initialization_directories()
-        self.sequence_tree = SequenceTreeWidget.from_json(sequence_paths.SEQUENCE_AUTOSAVE_FILE)
         layout_util.add_to_layout(treeview_layout, self.options_tree, self.sequence_tree)
 
         runner_layout = QVBoxLayout()

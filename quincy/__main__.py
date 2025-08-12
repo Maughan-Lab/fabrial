@@ -1,5 +1,7 @@
 import os
 import sys
+from types import ModuleType
+from typing import Iterable
 
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
@@ -10,16 +12,7 @@ from .constants.paths import FOLDERS_TO_CREATE
 from .gamry_integration import GAMRY
 from .instruments import INSTRUMENTS
 from .main_window import MainWindow
-from .utility import errors
-
-# make the application icon show up in the task bar on Windows (does nothing on other platforms)
-try:
-    from ctypes import windll  # Only exists on Windows.
-
-    appid = "maughangroup.quincy.1"
-    windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
-except ImportError:
-    pass
+from .utility import errors, sequence_builder
 
 
 def make_application_folders():
@@ -28,27 +21,51 @@ def make_application_folders():
         os.makedirs(folder, exist_ok=True)
 
 
-def main(main_window_type: type[MainWindow] = MainWindow):
+def check_for_other_instances() -> SingleInstance:
+    """
+    Attempt to create a singleton so only once instance of the application can run. If an instance
+    is already running, this exits the application.
+    """
     try:
-        me = SingleInstance()  # noqa
+        return SingleInstance()
     except SingleInstanceException:
         sys.exit()
 
-    make_application_folders()
 
-    # suppress Qt warnings
-    errors.suppress_warnings()
+def fix_windows_sucking():
+    """Make the application show up in the taskbar on Windows (because Windows sucks)."""
+    try:
+        from ctypes import windll  # only exists on Windows
 
-    # create application
+        appid = "maughangroup.quincy.1"
+        windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
+    except ImportError:
+        pass
+
+
+def make_app(plugin_modules: Iterable[ModuleType]) -> tuple[QApplication, MainWindow]:
+    """Make the application."""
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(str(icons.MAIN_ICON)))
-    # create the main window using `main_window_type`
-    main_window = main_window_type()  # necessary for testing
+    main_window = MainWindow(plugin_modules)
     main_window.showMaximized()
+    return (app, main_window)
+
+
+def main():
+    me = check_for_other_instances()  # noqa
+    fix_windows_sucking()
+    make_application_folders()
+    # suppress Qt warnings (there is a bug that generates warnings when the window is resized)
+    errors.suppress_warnings()
+    # load plugins
+    plugin_modules = sequence_builder.load_plugins()
+    app, main_window = make_app(plugin_modules)
     # catch all exceptions
-    sys.excepthook = errors.generate_exception_handler(main_window)
-    # run Quincy
+    # sys.excepthook = errors.generate_exception_handler(main_window) # TODO: redo
+    # run the application
     app.exec()
+    # TODO: remove these
     # stop the oven's thread
     INSTRUMENTS.oven.stop()
     # close GamryCOM

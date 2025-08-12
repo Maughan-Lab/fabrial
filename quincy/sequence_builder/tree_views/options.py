@@ -1,5 +1,6 @@
 import json
-from typing import Self
+from pathlib import Path
+from typing import Iterable, Self
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QKeyEvent
@@ -16,9 +17,9 @@ class OptionsTreeView(TreeView[OptionsModel]):
     """Custom QTreeView containing the options for the sequence."""
 
     @classmethod
-    def from_initialization_directories(cls) -> Self:
+    def from_initialization_directories(cls, initialization_directories: Iterable[Path]) -> Self:
         """Create from the application's item initialization directories."""
-        view = cls(OptionsModel.from_initialization_directories())
+        view = cls(OptionsModel.from_initialization_directories(initialization_directories))
         if not view.init_view_state_from_json(sequence_paths.OPTIONS_STATE_AUTOSAVE_FILE):
             view.expandAll()
         return view
@@ -57,9 +58,9 @@ class OptionsTreeWidget(Container):
         self.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
 
     @classmethod
-    def from_initialization_directories(cls) -> Self:
+    def from_initialization_directories(cls, initialization_directories: Iterable[Path]) -> Self:
         """Create from the application's item initialization directories."""
-        return cls(OptionsTreeView.from_initialization_directories())
+        return cls(OptionsTreeView.from_initialization_directories(initialization_directories))
 
     def save_on_close(self):
         """Call this when closing the application to save settings."""
