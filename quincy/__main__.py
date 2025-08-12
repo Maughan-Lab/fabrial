@@ -12,7 +12,7 @@ from .constants.paths import FOLDERS_TO_CREATE
 from .gamry_integration import GAMRY
 from .instruments import INSTRUMENTS
 from .main_window import MainWindow
-from .utility import errors, sequence_builder
+from .utility import errors, plugins
 
 
 def make_application_folders():
@@ -59,7 +59,7 @@ def main():
     # suppress Qt warnings (there is a bug that generates warnings when the window is resized)
     errors.suppress_warnings()
     # load plugins
-    plugin_modules = sequence_builder.load_plugins()
+    plugin_modules, failure_plugins = plugins.load_all_plugins()
     app, main_window = make_app(plugin_modules)
     # catch all exceptions
     # sys.excepthook = errors.generate_exception_handler(main_window) # TODO: redo

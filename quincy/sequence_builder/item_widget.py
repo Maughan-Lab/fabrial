@@ -13,7 +13,7 @@ class ItemWidget(ParameterDescriptionWidget):
     Parameters
     ----------
     parameter_widget
-        The widget to use for the parameter tab. It can be accessed via `get_parameter_widget()`.
+        The widget to use for the parameter tab. It can be accessed via `parameter_widget()`.
     title
         The window's initial title. This can be changed via `setWindowTitle()` and accessed via
         `windowTitle()`.
@@ -40,5 +40,5 @@ class ItemWidget(ParameterDescriptionWidget):
 
     def show_editable(self, editable: bool):
         """Show the widget. If **editable** is `True`, the parameter tab can be edited."""
-        self.get_parameter_widget().setEnabled(editable)
+        self.parameter_widget().setEnabled(editable)
         self.show()

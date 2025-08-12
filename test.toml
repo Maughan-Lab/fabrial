@@ -1,18 +1,33 @@
 name = "Category"
 items = ["sdkf", "sdkljf"]
+subcategories = [
+    { name = "Subcategory1", items = [
+    ], subcategories = [
+        { name = "SubSubcategory1", items = [
+        ], subcategories = [
+        ] },
+    ] },
+    { name = "Subcategory2", items = [
+    ], subcategories = [
+        { name = "SubSubcategory1", items = [
+        ], subcategories = [
+        ] },
+    ] },
+]
 
-[[subcategories]]
-name = "Subcategory1"
-items = []
-[[subcategories.subcategories]]
-name = "SubSubcategory1"
-items = []
+# [[subcategories]]
+# name = "Subcategory1"
+# items = []
+
+# [[subcategories.subcategories]]
+# name = "SubSubcategory1"
+# items = []
 
 
-[[subcategories]]
-name = "Subcategory2"
-items = []
+# [[subcategories]]
+# name = "Subcategory2"
+# items = []
 
-[[subcategories.subcategories]]
-name = "SubSubcategory2"
-items = []
+# [[subcategories.subcategories]]
+# name = "SubSubcategory2"
+# items = []

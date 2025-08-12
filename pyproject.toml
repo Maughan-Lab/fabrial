@@ -50,5 +50,6 @@ extra_checks = false
 [tool.pytest.ini_options]
 addopts = "-q -s"
 testpaths = ["tests"]
-python_files = ["*.py"]
+# search in all python files except `__init__.py`
+python_files = ["[!__init__]*.py"]
 python_functions = ["test_*"]

@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import QFormLayout
 
 from quincy.custom_widgets import Container, SpinBox
 from quincy.sequence_builder import ItemWidget
-from quincy.utility import images, layout as layout_util
+from quincy.utility import layout as layout_util
 from quincy.utility.descriptions import DescriptionInfo, Substitutions
 
 BASE_DISPLAY_NAME = "Hold"

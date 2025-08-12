@@ -31,7 +31,7 @@ class InstrumentConnectionWidget(GroupBox):
 
         self.oven_combobox = ComboBox()
         # add all available COM ports to the list
-        self.oven_combobox.addItems(ports.get_ports_list())
+        self.oven_combobox.addItems(ports.list_ports())
         self.oven_connection_label = Label(self.NULL_TEXT)
 
         # this could probably be put in a for loop if more instruments are added
@@ -54,7 +54,7 @@ class InstrumentConnectionWidget(GroupBox):
         text = self.oven_combobox.currentText()
         self.oven_combobox.blockSignals(True)
         self.oven_combobox.clear()
-        self.oven_combobox.addItems(ports.get_ports_list())
+        self.oven_combobox.addItems(ports.list_ports())
         self.oven_combobox.setCurrentText(text)
         self.oven_combobox.blockSignals(False)
         # NOTE: when adding additional instruments, make sure they can never use the same port

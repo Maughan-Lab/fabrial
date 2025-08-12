@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Protocol, Self, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from PyQt6.QtGui import QIcon
 
@@ -12,20 +12,14 @@ from .item_widget import ItemWidget
 class DataItem(Deserialize, Serialize, Protocol):
     """An inner item used by a `TreeItem`."""
 
-    @classmethod
-    @abstractmethod
-    def default(cls) -> Self:
-        """Create the item with default parameters."""
-        ...
-
     # visuals
     @abstractmethod
-    def get_display_name(self) -> str:
+    def display_name(self) -> str:
         """Get the name displayed on the item."""
         ...
 
     @abstractmethod
-    def get_icon(self) -> QIcon:
+    def icon(self) -> QIcon:
         """Get the icon to display on the item."""
         ...
 
@@ -64,15 +58,15 @@ class WidgetDataItem(DataItem, Protocol):
     """A `DataItem` that uses an `ItemWidget` to display and modify data."""
 
     @abstractmethod
-    def get_widget(self) -> ItemWidget:  # private
+    def widget(self) -> ItemWidget:  # private
         """Get the widget this item uses."""
         ...
 
-    def get_display_name(self) -> str:  # implementation
-        return self.get_widget().windowTitle()
+    def display_name(self) -> str:  # implementation
+        return self.widget().windowTitle()
 
-    def get_icon(self) -> QIcon:  # implementation
-        return self.get_widget().windowIcon()
+    def icon(self) -> QIcon:  # implementation
+        return self.widget().windowIcon()
 
     def open_event(self, editable: bool):  # implementation
-        self.get_widget().show_editable(editable)
+        self.widget().show_editable(editable)

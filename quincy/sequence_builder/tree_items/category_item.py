@@ -23,14 +23,14 @@ class CategoryItem(TreeItem):
     """
 
     def __init__(self, parent: TreeItem | None, category_name: str, subitems: Sequence[TreeItem]):
-        self.parent = parent
-        self.display_name = category_name
+        self.parent_item = parent
+        self.name = category_name
         # these two need to be instance attributes instead of class attributes because you have to
         # construct a `QApplication` before a `QIcon`
         self.collapsed_icon = images.make_icon("folder-horizontal.png")
         self.expanded_icon = images.make_icon("folder-horizontal-open.png")
 
-        self.icon = self.collapsed_icon
+        self.item_icon = self.collapsed_icon
         for item in subitems:
             item.set_parent(self)
         self.subitems = subitems
@@ -38,19 +38,19 @@ class CategoryItem(TreeItem):
     def serialize(self):  # implementation
         raise NotImplementedError("`CategoryItem`s do not support serialization")
 
-    def get_parent(self) -> TreeItem | None:  # implementation
-        return self.parent
+    def parent(self) -> TreeItem | None:  # implementation
+        return self.parent_item
 
     def set_parent(self, parent: TreeItem | None):  # implementation
-        self.parent = parent
+        self.parent_item = parent
 
-    def get_display_name(self) -> str:  # overridden
-        return self.display_name
+    def display_name(self) -> str:  # overridden
+        return self.name
 
-    def get_icon(self) -> QIcon:  # overridden
-        return self.icon
+    def icon(self) -> QIcon:  # overridden
+        return self.item_icon
 
-    def get_count(self) -> int:  # implementation
+    def subitem_count(self) -> int:  # implementation
         return len(self.subitems)
 
     def index(self, item: TreeItem) -> int | None:  # implementation
@@ -60,15 +60,15 @@ class CategoryItem(TreeItem):
         return tree_item.get_subitem(self.subitems, index)
 
     def expand_event(self):  # overridden
-        self.icon = self.expanded_icon
+        self.item_icon = self.expanded_icon
 
     def collapse_event(self):  # overridden
-        self.icon = self.collapsed_icon
+        self.item_icon = self.collapsed_icon
 
     # debugging
     def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__} {{ "
-            f"display_name: {self.get_display_name()!r}, "
+            f"display_name: {self.display_name()!r}, "
             f"subitems: {self.subitems!r} }}"
         )

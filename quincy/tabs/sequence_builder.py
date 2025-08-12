@@ -1,4 +1,4 @@
-from pathlib import Path
+from types import ModuleType
 from typing import Iterable
 
 from PyQt6.QtCore import Qt
@@ -21,12 +21,10 @@ class SequenceBuilderTab(QWidget):
     def __init__(
         self,
         visual_widget_container: SequenceDisplayTab,
-        initialization_directories: Iterable[Path],
+        plugin_modules: Iterable[ModuleType],
     ):
         QWidget.__init__(self)
-        self.options_tree = OptionsTreeWidget.from_initialization_directories(
-            initialization_directories
-        )
+        self.options_tree = OptionsTreeWidget.from_plugins(plugin_modules)
         self.sequence_tree = SequenceTreeWidget.from_json(sequence_paths.SEQUENCE_AUTOSAVE_FILE)
         self.visual_widget_container = visual_widget_container  # another tab
 

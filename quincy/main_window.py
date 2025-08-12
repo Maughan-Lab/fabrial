@@ -10,7 +10,7 @@ from .custom_widgets import TabWidget, YesCancelDialog, YesNoDialog
 from .menu import MenuBar
 from .secondary_window import SecondaryWindow
 from .tabs import OvenControlTab, SequenceBuilderTab, SequenceDisplayTab
-from .utility import events, images, sequence_builder
+from .utility import events, images
 
 
 class MainWindow(QMainWindow):
@@ -24,10 +24,7 @@ class MainWindow(QMainWindow):
         # tabs
         self.oven_control_tab = OvenControlTab()
         self.sequence_visuals_tab = SequenceDisplayTab()
-        self.sequence_tab = SequenceBuilderTab(
-            self.sequence_visuals_tab,
-            sequence_builder.get_initialization_directories(plugin_modules),
-        )
+        self.sequence_tab = SequenceBuilderTab(self.sequence_visuals_tab, plugin_modules)
         self.connection_widget = self.oven_control_tab.instrument_connection_widget
         self.tab_widget = TabWidget(
             [

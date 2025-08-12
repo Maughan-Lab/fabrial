@@ -1,6 +1,8 @@
-from pathlib import Path
+from quincy.utility.sequence_builder import PluginCategory
+
+from .items import HoldItem
 
 
-def get_item_directories() -> list[Path]:
-    """Get the item initialization directories."""
-    return [Path(__file__).parent.joinpath("item_initialization")]
+def categories() -> list[PluginCategory]:
+    """Get the categories for this plugin."""
+    return [PluginCategory("Flow Control", [HoldItem(0, 0, 0)])]

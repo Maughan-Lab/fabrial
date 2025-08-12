@@ -20,7 +20,7 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
     """An item that represents a sequence step."""
 
     def __init__(self, parent: TreeItem | None, data_item: DataItem):
-        self.parent = parent
+        self.parent_item = parent
         self.item = data_item
         self.active = False
         self.subitems: list[SequenceItem] = []
@@ -47,17 +47,17 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
             SUBITEMS: [subitem.serialize() for subitem in self.subitems],
         }
 
-    def get_parent(self) -> TreeItem | None:  # implementation
-        return self.parent
+    def parent(self) -> TreeItem | None:  # implementation
+        return self.parent_item
 
     def set_parent(self, parent: TreeItem | None):
-        self.parent = parent
+        self.parent_item = parent
 
-    def get_display_name(self) -> str:  # overridden
-        return self.item.get_display_name()
+    def display_name(self) -> str:  # overridden
+        return self.item.display_name()
 
-    def get_icon(self) -> QIcon:  # overridden
-        return self.item.get_icon()
+    def icon(self) -> QIcon:  # overridden
+        return self.item.icon()
 
     def supports_subitems(self) -> bool:  # overridden
         return self.item.supports_subitems()
@@ -65,7 +65,7 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
     def supports_dragging(self) -> bool:  # overridden
         return True
 
-    def get_count(self) -> int:  # implementation
+    def subitem_count(self) -> int:  # implementation
         return len(self.subitems)
 
     def index(self, item: TreeItem) -> int | None:  # implementation
@@ -119,11 +119,7 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
 class TestDataItem(DataItem):
     def __init__(self, number: int):
         self.number = number
-        self.icon = images.make_icon("battery-charge.png")
-
-    @classmethod
-    def default(cls) -> Self:
-        return cls(0)
+        self.item_icon = images.make_icon("battery-charge.png")
 
     @classmethod
     def deserialize(cls, serialized_obj):
@@ -132,11 +128,11 @@ class TestDataItem(DataItem):
     def serialize(self):
         return {"number": self.number}
 
-    def get_display_name(self):
+    def display_name(self):
         return "dsfklds"
 
-    def get_icon(self):
-        return self.icon
+    def icon(self):
+        return self.item_icon
 
     def open_event(self, editable: bool):
         return False

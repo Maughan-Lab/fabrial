@@ -1,148 +1,29 @@
-import os
-import typing
-from pathlib import Path
-from typing import Mapping, Self, Sequence
+from typing import Iterable
 
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
-from pytest import fixture
+from pytest import FixtureRequest, fixture
 
-from quincy.classes import Process
-from quincy.sequence_builder.data_item import DataItem
 from quincy.sequence_builder.tree_items import CategoryItem, SequenceItem, TreeItem
 from quincy.utility import sequence_builder
-from quincy.utility.serde import Json
 
-# TODO: update this test suite
-
-
-class MockDataItem(DataItem):
-    """A `DataItem` implementation for testing."""
-
-    def __init__(self, name: str, number: int):
-        self.name = name
-        self.number = number
-
-    @classmethod
-    def default(cls) -> Self:
-        return cls("", 0)
-
-    @classmethod
-    def deserialize(cls, serialized_obj: Mapping[str, Json]) -> Self:  # implementation
-        raise NotImplementedError("This shouldn't have been tested")
-
-    def serialize(self) -> dict[str, Json]:  # implementation
-        raise NotImplementedError("This shouldn't have been tested")
-
-    def get_display_name(self) -> str:  # implementation
-        return self.name
-
-    def get_icon(self) -> QIcon:  # implementation
-        return QIcon()
-
-    def open_event(self, editable: bool):  # implementation
-        return  # do nothing
-
-    def create_process(self) -> Process:
-        raise NotImplementedError("`create_process()` called on `MockDataItem`")
-
-    # testing
-    def __eq__(self, other: Self):  # type: ignore
-        return self.name == other.name and self.number == other.number
-
-    # debugging
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__} {{ name: {self.name!r}, number: {self.number!r} }}"
+from .mock_item import MockDataItem
+from .test_plugins import (
+    empty_categories,
+    no_entry_point,
+    normal,
+    same_category1,
+    same_category2,
+    wrong_entry_point_type,
+    wrong_types,
+)
 
 
-@fixture
-def items_directory() -> Path:
-    """Provides the directory containing the test item directories."""
-    return Path(__file__).parent.joinpath("test_items")
-
-
-@fixture
-def expected_structure() -> list[CategoryItem]:
-    """Provides the expected structure for `test_items_from_directories()`."""
-    return [
-        CategoryItem(
-            None,
-            "category1",
-            [
-                SequenceItem(None, MockDataItem("dir1item1", 11)),
-                SequenceItem(None, MockDataItem("dir1item2", 12)),
-            ],
-        ),
-        CategoryItem(
-            None,
-            "category2",
-            [
-                SequenceItem(None, MockDataItem("dir2item1", 21)),
-                SequenceItem(None, MockDataItem("dir2item2", 22)),
-                # category2 should have extra items because of a duplicate category in `dir4`
-                SequenceItem(None, MockDataItem("dir4item1", 41)),
-                SequenceItem(None, MockDataItem("dir4item2", 42)),
-            ],
-        ),
-        CategoryItem(
-            None,
-            "category5",
-            [
-                # this category should be nested because of the file structure. It also appears
-                # first because of sorting
-                CategoryItem(
-                    None,
-                    "category6",
-                    [
-                        SequenceItem(None, MockDataItem("dir6item1", 61)),
-                        SequenceItem(None, MockDataItem("dir6item2", 62)),
-                    ],
-                ),
-                # these items appear after the category because of sorting
-                SequenceItem(None, MockDataItem("dir5item1", 51)),
-                SequenceItem(None, MockDataItem("dir5item2", 52)),
-            ],
-        ),
-        # even though this category is nested, it should appear here because the parent folder
-        # has no category file
-        CategoryItem(
-            None,
-            "category7",
-            [
-                SequenceItem(None, MockDataItem("dir7item1", 71)),
-                SequenceItem(None, MockDataItem("dir7item2", 72)),
-            ],
-        ),
-        # this category should only have one item because one of the files is invalid
-        CategoryItem(None, "failure_item", [SequenceItem(None, MockDataItem("failure_item2", 2))]),
-        # this category should only have one item because one of the files doesn't have a typetag
-        CategoryItem(None, "no_typetag", [SequenceItem(None, MockDataItem("no_typetag2", 2))]),
-    ]
-
-
-@fixture
-def expected_failures(items_directory: Path) -> list[Path]:
-    """Provides a list of the expected failure paths."""
-    return [
-        Path(items_directory.joinpath("failure_dir")),
-        Path(items_directory.joinpath("failure_item/item1.toml")),
-    ]
-
-
-# this uses the `qapp` fixture to automatically create a `QApplication` instance, which is needed
-# for the `QIcon`s in `CategoryItem`s
-def test_items_from_directories(
-    qapp: QApplication,
-    items_directory: Path,
-    expected_structure: Sequence[CategoryItem],
-    expected_failures: Sequence[Path],
-):
-    """Tests `utility.sequence_builder.items_from_directories()`."""
-
+def compare_items(actual: Iterable[CategoryItem], expected: Iterable[CategoryItem]):
+    # helper to compare just the items and their parents, not the subitems
     def compare(actual: TreeItem, expected: TreeItem):
         # check the parents
-        actual_parent = actual.get_parent()
-        expected_parent = expected.get_parent()
+        actual_parent = actual.parent()
+        expected_parent = expected.parent()
         if actual_parent is None or expected_parent is None:
             assert actual_parent is None and expected_parent is None
         else:
@@ -151,18 +32,19 @@ def test_items_from_directories(
         # if one is a `CategoryItem` they should both be `CategoryItem`s
         if isinstance(actual, CategoryItem) or isinstance(expected, CategoryItem):
             assert type(actual) is type(expected)
-            assert actual.get_display_name() == expected.get_display_name()
+            assert actual.display_name() == expected.display_name()
         else:  # otherwise they most both be `SequenceItem`s
             assert isinstance(actual, SequenceItem) and isinstance(expected, SequenceItem)
             # I don't love checking a "private" attribute here
             # TODO: find a better solution
             assert actual.item == expected.item
 
+    # helper to compare the items, their parents, and their subitems
     def recursive_compare(actual: TreeItem, expected: TreeItem):
         compare(actual, expected)
         # check the counts
-        actual_count = actual.get_count()
-        assert actual_count == expected.get_count()
+        actual_count = actual.subitem_count()
+        assert actual_count == expected.subitem_count()
         for i in range(actual_count):
             sub_actual = actual.get_subitem(i)
             sub_expected = expected.get_subitem(i)
@@ -171,17 +53,152 @@ def test_items_from_directories(
             compare(sub_actual, sub_expected)
             recursive_compare(sub_actual, sub_expected)
 
-    # get the list of directories to load
-    DIRECTORIES = [
-        items_directory.joinpath(directory_name)
-        for directory_name in next(os.walk(items_directory))[1]
+    for actual_item, expected_item in zip(actual, expected, strict=True):
+        recursive_compare(actual_item, expected_item)
+
+
+@fixture
+def expected(request: FixtureRequest):
+    """Provides the expected result on a per-test basis."""
+    normal = [
+        CategoryItem(
+            None,
+            "Normal1",
+            [
+                SequenceItem(None, MockDataItem("Normal11", 11)),
+                SequenceItem(None, MockDataItem("Normal12", 12)),
+            ],
+        ),
+        CategoryItem(
+            None,
+            "Normal2",
+            [
+                SequenceItem(None, MockDataItem("Normal21", 21)),
+                SequenceItem(None, MockDataItem("Normal22", 22)),
+            ],
+        ),
     ]
-    # run the function
-    items, failure_paths = sequence_builder.items_from_directories(DIRECTORIES)
-    # make sure the failure paths are correct
-    for expected_failure in expected_failures:
-        # make sure the expected failure is in the list and there is only one instance
-        assert failure_paths.count(expected_failure) == 1
-    # make sure the items we got are what we were expecting
-    for actual, expected in zip(items, expected_structure, strict=True):
-        recursive_compare(actual, expected)
+
+    wrong_types = [
+        CategoryItem(
+            None,
+            "Right Types",
+            [
+                SequenceItem(None, MockDataItem("RightTypes1", 1)),
+                SequenceItem(None, MockDataItem("RightTypes2", 2)),
+            ],
+        ),
+    ]
+
+    same_category = [
+        CategoryItem(
+            None,
+            "Outer Category",
+            [
+                CategoryItem(
+                    None,
+                    "Nested Category",
+                    [
+                        SequenceItem(None, MockDataItem("Category1Item1", 11)),
+                        SequenceItem(None, MockDataItem("Category1Item2", 12)),
+                        SequenceItem(None, MockDataItem("Category2Item1", 21)),
+                        SequenceItem(None, MockDataItem("Category2Item2", 22)),
+                    ],
+                ),
+                SequenceItem(None, MockDataItem("Category1Outer", 1)),
+                SequenceItem(None, MockDataItem("Category2Outer", 2)),
+            ],
+        )
+    ]
+
+    everything = normal + same_category + wrong_types
+
+    function = request.function
+    if function is test_normal:
+        return normal
+    elif function is test_wrong_types:
+        return wrong_types
+    elif function is test_same_category:
+        return same_category
+    elif function is test_everything:
+        return everything
+    raise ValueError("A test used the `expected()` fixture but is not registered for that fixture")
+
+
+# --------------------------------------------------------------------------------------------------
+# tests start here
+def test_normal(qapp: QApplication, expected: Iterable[CategoryItem]):
+    """Tests a normal, functioning plugin."""
+    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins([normal])
+    assert len(failure_plugins) == 0 and len(failure_categories) == 0  # no failures expected
+    compare_items(items, expected)
+
+
+def test_empty():
+    """Tests a plugin that returns an empty list of categories."""
+    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
+        [empty_categories]
+    )
+    assert len(failure_plugins) == 0 and len(failure_categories) == 0  # no failures expected
+    assert len(items) == 0  # should just be an empty list
+
+
+def test_no_entry_point():
+    """Tests a plugin that is missing the `categories()` entry point."""
+    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
+        [no_entry_point]
+    )
+    assert len(items) == 0 and len(failure_plugins) == 1 and len(failure_categories) == 0
+    assert no_entry_point.__name__ in failure_plugins
+
+
+def test_wrong_entry_point_type():
+    """Tests a plugin that returns the wrong type from its entry point."""
+    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
+        [wrong_entry_point_type]
+    )
+    assert len(items) == 0 and len(failure_plugins) == 1 and len(failure_categories) == 0
+    assert wrong_entry_point_type.__name__ in failure_plugins
+
+
+def test_wrong_types(qapp: QApplication, expected: Iterable[CategoryItem]):
+    """Tests a plugin that returns the correct entry point type, but an item has the wrong type."""
+    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins([wrong_types])
+    assert len(failure_plugins) == 0 and len(failure_categories) == 1
+    assert "Wrong Types" in failure_categories
+    compare_items(items, expected)
+
+
+def test_same_category(qapp: QApplication, expected: Iterable[CategoryItem]):
+    """
+    Tests a plugin with nested categories that share names (so they should all be grouped together).
+    """
+    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
+        [same_category1, same_category2]
+    )
+    assert len(failure_plugins) == 0 and len(failure_categories) == 0
+    compare_items(items, expected)
+
+
+def test_everything(qapp: QApplication, expected: Iterable[CategoryItem]):
+    """Tests EVERYTHING! (aka tests the combination of all prior modules)."""
+    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
+        [
+            # arbitrary order
+            empty_categories,
+            no_entry_point,
+            normal,
+            same_category1,
+            same_category2,
+            wrong_entry_point_type,
+            wrong_types,
+        ]
+    )
+
+    assert len(failure_plugins) == 2 and len(failure_categories) == 1
+    assert (
+        no_entry_point.__name__ in failure_plugins
+        and wrong_entry_point_type.__name__ in failure_plugins
+    )
+    assert "Wrong Types" in failure_categories
+    compare_items(items, expected)

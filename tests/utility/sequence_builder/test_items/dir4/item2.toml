@@ -1,3 +1,0 @@
-type = "tests.utility.sequence_builder.sequence_builder.MockDataItem"
-name = "dir4item2"
-number = 42

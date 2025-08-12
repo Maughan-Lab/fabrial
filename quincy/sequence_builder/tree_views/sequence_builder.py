@@ -317,8 +317,8 @@ class SequenceTreeWidget(Container):
 
     def run_sequence(self) -> Self:
         """Run the sequence. Creates the data directory if it doesn't exist."""
-        root_item = self.view.model().get_root()
-        if not root_item.get_count() > 0:  # return early if there are no items to run
+        root_item = self.view.model().root()
+        if not root_item.subitem_count() > 0:  # return early if there are no items to run
             return self
 
         directory = self.data_directory()

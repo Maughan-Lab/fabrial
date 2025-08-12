@@ -18,14 +18,14 @@ class RootItem[SubItem: TreeItem](MutableTreeItem[SubItem]):
     def serialize(self) -> list[Json]:  # implementation
         return [subitem.serialize() for subitem in self.subitems]
 
-    def get_parent(self) -> TreeItem | None:  # implementation
+    def parent(self) -> TreeItem | None:  # implementation
         return None
 
     def set_parent(self, parent: TreeItem | None):
         if parent is not None:
             raise ValueError("The parent of a `RootItem` must always be `None`")
 
-    def get_count(self) -> int:  # implementation
+    def subitem_count(self) -> int:  # implementation
         return len(self.subitems)
 
     def index(self, item: TreeItem) -> int | None:  # implementation

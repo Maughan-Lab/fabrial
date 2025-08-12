@@ -1,9 +1,10 @@
-from pathlib import Path
+from types import ModuleType
 from typing import Any, Iterable, Self
 
 from PyQt6.QtCore import QModelIndex, QSize, Qt
 
-from ...utility import sequence_builder
+from ...custom_widgets import OkDialog
+from ...utility import events, sequence_builder
 from ..tree_items import CategoryItem
 from .tree_model import TreeModel
 
@@ -22,21 +23,31 @@ class OptionsModel(TreeModel[CategoryItem]):
         TreeModel.__init__(self, "Options", items)
 
     @classmethod
-    def from_initialization_directories(cls, initialization_directories: Iterable[Path]) -> Self:
+    def from_plugins(cls, plugin_modules: Iterable[ModuleType]) -> Self:
         """
-        Create the model from the application's item initialization directories.
+        Create the model from the application's available plugins.
 
-        This calls `sequence_builder.items_from_directories()` and
-        `sequence_builder.get_initialization_directories()`.
+        This calls `plugins.items_from_plugins()`.
 
         Parameters
         ----------
-        directories
-            The directories to load items from.
+        plugin_modules
+            A list of modules that represent plugins for the application.
+
         """
-        items, failure_paths = sequence_builder.items_from_directories(initialization_directories)
-        # TODO: show a dialog with the failure paths
-        return cls(items)
+        items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
+            plugin_modules
+        )
+        # if anything failed to load, report it to the user
+        if len(failure_plugins) > 0 or len(failure_categories) > 0:
+            message = ""
+            if len(failure_plugins) > 0:
+                message += f"Failed to load items from plugins: {", ".join(failure_plugins)}\n"
+            if len(failure_categories) > 0:
+                message += f"Failed to load categories: {", ".join(failure_categories)}\n"
+            message += "See the error log for details"
+            events.delay_until_running(OkDialog("Plugin Error", message).exec)
+        return cls(items)  # return the new instance
 
     def data(self, index: QModelIndex, role: int | None = None) -> Any:  # implementation
         if not index.isValid():
@@ -45,9 +56,9 @@ class OptionsModel(TreeModel[CategoryItem]):
         if item is not None:
             match role:
                 case Qt.ItemDataRole.DisplayRole:
-                    return item.get_display_name()
+                    return item.display_name()
                 case Qt.ItemDataRole.DecorationRole:
-                    return item.get_icon()
+                    return item.icon()
                 case Qt.ItemDataRole.SizeHintRole:
                     return QSize(0, 23)
         return None

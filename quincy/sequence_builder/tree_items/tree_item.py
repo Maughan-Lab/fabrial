@@ -17,7 +17,7 @@ class TreeItem(Protocol):
         ...
 
     @abstractmethod
-    def get_parent(self) -> TreeItem | None:
+    def parent(self) -> TreeItem | None:
         """Get the item's parent, which is `None` if this is the root item."""
         ...
 
@@ -26,11 +26,11 @@ class TreeItem(Protocol):
         """Set the item's parent."""
         ...
 
-    def get_display_name(self) -> str:
+    def display_name(self) -> str:
         """Get the name displayed on the item."""
         return ""
 
-    def get_icon(self) -> QIcon:
+    def icon(self) -> QIcon:
         """Get the icon displayed on the item."""
         return QIcon()
 
@@ -43,13 +43,13 @@ class TreeItem(Protocol):
         return False
 
     @abstractmethod
-    def get_count(self) -> int:
+    def subitem_count(self) -> int:
         """Get the number of subitems."""
         ...
 
     def has_subitems(self) -> bool:
         """Whether this item contains subitems."""
-        return self.get_count() > 0
+        return self.subitem_count() > 0
 
     @abstractmethod
     def index(self, item: TreeItem) -> int | None:
@@ -65,7 +65,7 @@ class TreeItem(Protocol):
         subitem of its parent.
         """
         ...
-        parent = self.get_parent()
+        parent = self.parent()
         if parent is None:
             return None
         return parent.index(self)

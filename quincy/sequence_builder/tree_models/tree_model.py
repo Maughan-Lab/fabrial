@@ -34,17 +34,17 @@ class TreeModel[Item: TreeItem](QAbstractItemModel, QABC):
     def __init__(self, title: str, items: Iterable[Item]):
         QAbstractItemModel.__init__(self)
 
-        self.title = title
+        self.name = title
         self.root_item: RootItem[Item] = RootItem()
         self.root_item.append_subitems(items)
 
         self.base_flag = Qt.ItemFlag.ItemIsEnabled
 
-    def get_title(self) -> str:
+    def title(self) -> str:
         """Get the model's title."""
-        return self.title
+        return self.name
 
-    def get_root(self) -> RootItem[Item]:
+    def root(self) -> RootItem[Item]:
         """Get the root item."""
         return self.root_item
 
@@ -67,7 +67,7 @@ class TreeModel[Item: TreeItem](QAbstractItemModel, QABC):
         flags = self.base_flag
         item = self.get_item(index)
         if item is None:
-            if self.get_root().supports_subitems():
+            if self.root_item.supports_subitems():
                 flags |= Qt.ItemFlag.ItemIsDropEnabled
             return flags
 
@@ -82,9 +82,7 @@ class TreeModel[Item: TreeItem](QAbstractItemModel, QABC):
         ...
 
     def get_item(self, index: QModelIndex) -> Item | None:
-        """
-        Get the item at the provided **index**. Returns `None` if **index** is invalid.
-        """
+        """Get the item at the provided **index**. Returns `None` if **index** is invalid."""
         if index.isValid():
             # this uses C++ witchcraft to get the item at the index
             # look up the docs for QModelIndex
@@ -102,7 +100,7 @@ class TreeModel[Item: TreeItem](QAbstractItemModel, QABC):
         if item is None:
             return QModelIndex()
 
-        parent_item = item.get_parent()
+        parent_item = item.parent()
         if parent_item is None:
             return QModelIndex()
 
@@ -116,22 +114,22 @@ class TreeModel[Item: TreeItem](QAbstractItemModel, QABC):
         return 1
 
     def rowCount(self, index: QModelIndex = QModelIndex()) -> int:  # overridden
-        item: TreeItem = self.get_item(index) or self.get_root()
-        return item.get_count()
+        item: TreeItem = self.get_item(index) or self.root_item
+        return item.subitem_count()
 
     # overridden
     def headerData(
         self, section: int, orientation: Qt.Orientation, role: int | None = None
     ) -> str | None:
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
-            return self.get_title()
+            return self.title()
         return None
 
     # overridden
     def index(
         self, row: int, column: int, parent_index: QModelIndex = QModelIndex()
     ) -> QModelIndex:
-        parent_item: TreeItem = self.get_item(parent_index) or self.get_root()
+        parent_item: TreeItem = self.get_item(parent_index) or self.root_item
         item = parent_item.get_subitem(row)
         if item is None:
             return QModelIndex()

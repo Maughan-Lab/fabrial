@@ -1,2 +1,2 @@
-from .entry_points import get_item_directories
+from .entry_points import categories
 from .items import HoldItem

@@ -39,24 +39,24 @@ class SequenceModel(TreeModel[SequenceItem]):
     def init_from_jsonlike(self, items_as_json: Sequence[Mapping[str, Json]]) -> Self:
         """Initialize the model's data from a JSON-like structure."""
         # remove all items from the root
-        self.removeRows(0, self.get_root().get_count(), QModelIndex())
+        self.removeRows(0, self.root().subitem_count(), QModelIndex())
         # deserialize the items
         items = [
-            SequenceItem.from_dict(self.get_root(), item_as_json) for item_as_json in items_as_json
+            SequenceItem.from_dict(self.root(), item_as_json) for item_as_json in items_as_json
         ]
         self.insert_rows(0, QModelIndex(), items)
         return self
 
     def to_jsonlike(self) -> list[Json]:
         """Convert the model's data to a JSON-like structure."""
-        return self.get_root().serialize()
+        return self.root().serialize()
 
     def data(self, index: QModelIndex, role: int | None = None) -> Any:  # implementation
         item = self.get_item(index)
         if item is not None:
             match role:
                 case Qt.ItemDataRole.DisplayRole:
-                    return item.get_display_name()
+                    return item.display_name()
                 case Qt.ItemDataRole.FontRole:
                     font = QApplication.font()
                     # items that are running are shown in bold
@@ -64,7 +64,7 @@ class SequenceModel(TreeModel[SequenceItem]):
                         font.setBold(True)
                     return font
                 case Qt.ItemDataRole.DecorationRole:
-                    return item.get_icon()
+                    return item.icon()
                 case Qt.ItemDataRole.SizeHintRole:
                     return QSize(0, 23)
 
@@ -76,7 +76,7 @@ class SequenceModel(TreeModel[SequenceItem]):
         if not self.is_enabled():
             return False
 
-        parent_item: MutableTreeItem[SequenceItem] = self.get_item(parent_index) or self.get_root()
+        parent_item: MutableTreeItem[SequenceItem] = self.get_item(parent_index) or self.root()
         self.beginRemoveRows(parent_index, row, row + count - 1)
         try:
             parent_item.remove_subitems(row, count)
@@ -118,7 +118,7 @@ class SequenceModel(TreeModel[SequenceItem]):
         else:  # the drop didn't occur on an item, so insert at the end
             begin_row = self.rowCount(parent_index)
 
-        parent_item: TreeItem = self.get_item(parent_index) or self.get_root()
+        parent_item: TreeItem = self.get_item(parent_index) or self.root()
 
         items = []
         # NOTE: do not set the OpenModeFlag for this stream, it causes weird issues
@@ -146,7 +146,7 @@ class SequenceModel(TreeModel[SequenceItem]):
         if not self.is_enabled():
             return
 
-        parent_item: MutableTreeItem[SequenceItem] = self.get_item(parent_index) or self.get_root()
+        parent_item: MutableTreeItem[SequenceItem] = self.get_item(parent_index) or self.root()
 
         self.beginInsertRows(parent_index, row, row + len(items) - 1)
         parent_item.insert_subitems(row, items)

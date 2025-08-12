@@ -1,5 +1,0 @@
-# this file should be ignored because the category file is invalid
-
-type = "tests.utility.sequence_builder.sequence_builder.MockDataItem"
-name = "failure_dir2"
-number = 2

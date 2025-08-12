@@ -1,4 +1,0 @@
-# this file should fail to load because it is missing a typetag
-
-name = "no_typetag1"
-number = 1
