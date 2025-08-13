@@ -1,9 +1,9 @@
 from os import PathLike
 from pathlib import Path
 
-from quincy.utility.descriptions import FilesDescription, Substitutions, TextDescription
+from pytest import fixture
 
-FILES_DIRECTORY = Path(__file__).parent.joinpath("files")
+from quincy.utility.descriptions import FilesDescription, Substitutions, TextDescription
 
 
 # helper
@@ -24,11 +24,17 @@ def compare_lines_from_file(actual_text: str, expected_file: PathLike[str] | str
     compare_lines(actual_text, expected_text)
 
 
+@fixture
+def files_directory() -> Path:
+    """Provides the location of test files."""
+    return Path(__file__).parent.joinpath("files")
+
+
 # --------------------------------------------------------------------------------------------------
 # tests for `FilesDescription` class
-def test_everything():
+def test_everything(files_directory: Path):
     """Tests `descriptions.make_descriptions()` with substitutions in all files."""
-    everything_directory = FILES_DIRECTORY.joinpath("everything")
+    everything_directory = files_directory.joinpath("everything")
     text = FilesDescription(
         everything_directory,
         "everything",
@@ -42,9 +48,9 @@ def test_everything():
     compare_lines_from_file(text, everything_directory.joinpath("correct.md"))
 
 
-def test_substitution_errors():
+def test_substitution_errors(files_directory: Path):
     """Tests `descriptions.make_descriptions()` with missing substitutions."""
-    substitution_errors_directory = FILES_DIRECTORY.joinpath("substitution_errors")
+    substitution_errors_directory = files_directory.joinpath("substitution_errors")
     # the data directory name doesn't matter here
     # we provide no substitutions when there are substitutions in the files, which should yield the
     # error text
@@ -52,25 +58,32 @@ def test_substitution_errors():
     compare_lines_from_file(text, substitution_errors_directory.joinpath("correct.md"))
 
 
-def test_toml_errors():
+def test_toml_errors(files_directory: Path):
     """Tests `descriptions.make_descriptions()` with TOML errors."""
-    toml_errors_directory = FILES_DIRECTORY.joinpath("toml_errors")
+    toml_errors_directory = files_directory.joinpath("toml_errors")
     # the data directory name doesn't matter here
     text = FilesDescription(toml_errors_directory, "").render()
     compare_lines_from_file(text, toml_errors_directory.joinpath("correct.md"))
 
 
-def test_missing_files():
+def test_missing_files(files_directory: Path):
     """Tests `descriptions.make_descriptions()` with missing description files."""
-    missing_files_directory = FILES_DIRECTORY.joinpath("missing_files")
+    missing_files_directory = files_directory.joinpath("missing_files")
     # the data directory name doesn't matter here
     text = FilesDescription(missing_files_directory, "").render()
     compare_lines_from_file(text, missing_files_directory.joinpath("correct.md"))
 
 
+def test_empty_files(files_directory: Path):
+    """Tests `descriptions.make_descriptions()` with all empty files."""
+    empty_files_directory = files_directory.joinpath("empty_files")
+    text = FilesDescription(empty_files_directory, "Empty Files").render()
+    compare_lines_from_file(text, empty_files_directory.joinpath("correct.md"))
+
+
 # --------------------------------------------------------------------------------------------------
 # tests for `TextDescription` class
-def test_text():
+def test_text(files_directory: Path):
     """Tests `TextDescription.render()`."""
     description_provider = TextDescription(
         "Random Directory",
@@ -80,5 +93,5 @@ def test_text():
         "Visuals text.",
     )
     compare_lines_from_file(
-        description_provider.render(), FILES_DIRECTORY.joinpath("correct_for_text.md")
+        description_provider.render(), files_directory.joinpath("correct_for_text.md")
     )

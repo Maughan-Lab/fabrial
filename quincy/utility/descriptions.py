@@ -126,7 +126,8 @@ class FilesDescription(DescriptionProvider):
     ├── parameters.toml
     └── visuals.md
     ```
-     For an example, see the [example directory](TODO).
+     For an example, see the [example directory](TODO). All files are mandatory, but only the
+     overview file needs to have text (defaults will be used for the others).
 
     data_directory_name
         The name (i.e. not full path) of the directory that the item's process writes data to.
@@ -179,7 +180,7 @@ class FilesDescription(DescriptionProvider):
 
         # overview
         final_substitutions["OVERVIEW"] = render_markdown(
-            OVERVIEW_FILENAME, self.substitutions.overview, "n/a"
+            OVERVIEW_FILENAME, self.substitutions.overview, NO_DESCRIPTION_PROVIDED
         )
         # visuals
         final_substitutions["VISUALS"] = render_markdown(
