@@ -1,36 +1,53 @@
 [project]
-name = "quincy"
+name = "Quinc-E"
 version = "0.0.1"
 authors = [{ name = "Drew Whitney", email = "drewlwhitney@gmail.com" }]
 maintainers = [{ name = "Drew Whitney", email = "drewlwhitney@gmail.com" }]
 description = "Quincy lets you create sequences to automate lab experiments."
 readme = "README.md"
 license = { file = "LICENSE" }
-
+# dependencies
 requires-python = ">=3.13"
 dependencies = [
-    "comtypes==1.4.11",
-    "jinja2==3.1.6",
-    "minimalmodbus==2.1.1",
-    "polars==1.31.0",
-    "pyqt6==6.9.1",
-    "pyqtgraph==0.13.7",
-    "pyserial==3.5",
-    "tendo==0.3.0",
+    "comtypes>=1.4.11",
+    "jinja2>=3.1.6",
+    "minimalmodbus>=2.1.1",
+    "polars>=1.31.0",
+    "pyqt6>=6.9.1",
+    "pyqtgraph>=0.13.7",
+    "pyserial>=3.5",
+    "tendo>=0.3.0",
+    "Quinc-E-builtin-plugins",
 ]
-
-[project.optional-dependencies]
-testing = ["pytest==8.4.1", "pytest-qt==4.5.0"]
+[dependency-groups]
+test = ["pytest", "pytest-qt"]
 
 [project.urls]
 Repository = "https://github.com/Maughan-Lab/Quincy-New"
 
+# makes a `quince`/`quince.exe` script when installing
 [project.scripts]
-quincy = "quincy.__main__:main"
+quince = "QuincE.main:main"
 
+
+# hatch config
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build]
+packages = ["./QuincE"]
+
+
+# uv config
+[tool.uv]
+default-groups = ["test"]
+
+[tool.uv.workspace]
+members = ["builtin_plugins"]
+
+[tool.uv.sources]
+"Quinc-E-builtin-plugins" = { workspace = true }
 
 
 # mypy config
@@ -45,6 +62,7 @@ disallow_untyped_defs = false
 disallow_untyped_calls = false
 no_implicit_reexport = false
 extra_checks = false
+
 
 # pytest config
 [tool.pytest.ini_options]

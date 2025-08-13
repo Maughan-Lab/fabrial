@@ -3,10 +3,9 @@ from pathlib import Path
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QFormLayout
 
-from quincy.custom_widgets import SpinBox
-from quincy.sequence_builder import ItemWidget
-from quincy.utility import layout as layout_util
-from quincy.utility.descriptions import TextDescription
+from QuincE import ItemWidget, TextDescription
+from QuincE.custom_widgets import SpinBox
+from QuincE.utility import layout as layout_util
 
 BASE_DISPLAY_NAME = "Hold"
 HOURS_LABEL = "Hours"

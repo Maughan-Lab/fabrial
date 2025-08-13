@@ -2,9 +2,9 @@ from typing import Mapping, Self
 
 from PyQt6.QtGui import QIcon
 
-from quincy.classes import Process
-from quincy.sequence_builder.data_item import DataItem
-from quincy.utility.serde import Json
+from QuincE.classes import Process
+from QuincE.sequence_builder.data_item import DataItem
+from QuincE.utility.serde import Json
 
 
 class MockDataItem(DataItem):

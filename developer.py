@@ -4,11 +4,11 @@ import time
 
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QVBoxLayout
 
-from quincy import MainWindow
-from quincy.__main__ import main
-from quincy.custom_widgets import GroupBox, TemperatureSpinBox
-from quincy.instruments import INSTRUMENTS, ConnectionStatus, Oven
-from quincy.utility import layout as layout_util
+from QuincE import MainWindow
+from QuincE.main import main
+from QuincE.custom_widgets import GroupBox, TemperatureSpinBox
+from QuincE.instruments import INSTRUMENTS, ConnectionStatus, Oven
+from QuincE.utility import layout as layout_util
 
 
 class DeveloperOven(Oven):

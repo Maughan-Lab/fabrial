@@ -1,9 +1,7 @@
 import typing
 from typing import Mapping, Self
 
-from quincy.classes import Process
-from quincy.sequence_builder import WidgetDataItem
-from quincy.utility.serde import Json
+from QuincE import Json, Process, WidgetDataItem
 
 from .hold_widget import HoldWidget
 

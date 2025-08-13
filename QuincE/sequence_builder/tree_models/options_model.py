@@ -3,8 +3,7 @@ from typing import Any, Iterable, Self
 
 from PyQt6.QtCore import QModelIndex, QSize, Qt
 
-from ...custom_widgets import OkDialog
-from ...utility import events, sequence_builder
+from ...utility import errors, sequence_builder
 from ..tree_items import CategoryItem
 from .tree_model import TreeModel
 
@@ -42,18 +41,11 @@ class OptionsModel(TreeModel[CategoryItem]):
         if len(failure_plugins) > 0 or len(failure_categories) > 0:
             message = ""
             if len(failure_plugins) > 0:
-                message += (
-                    "Failed to load items from plugins the following plugins:\n\n"
-                    f"{", ".join(failure_plugins)}\n\n"
-                )
+                message += f"Failed to load items from plugins:\n\n{", ".join(failure_plugins)}\n\n"
             if len(failure_categories) > 0:
-                message += (
-                    f"Failed to load the following categories:\n\n"
-                    f"{", ".join(failure_categories)}\n\n"
-                )
+                message += f"Failed to load categories:\n\n{", ".join(failure_categories)}\n\n"
             message += "See the error log for details."
-
-            events.delay_until_running(lambda: OkDialog("Plugin Error", message).exec())
+            errors.show_error_delayed("Plugin Error", message)
         return cls(items)  # return the new instance
 
     def data(self, index: QModelIndex, role: int | None = None) -> Any:  # implementation

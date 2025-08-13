@@ -3,8 +3,8 @@ from typing import Iterable
 from PyQt6.QtWidgets import QApplication
 from pytest import FixtureRequest, fixture
 
-from quincy.sequence_builder.tree_items import CategoryItem, SequenceItem, TreeItem
-from quincy.utility import sequence_builder
+from QuincE.sequence_builder.tree_items import CategoryItem, SequenceItem, TreeItem
+from QuincE.utility import sequence_builder
 
 from .mock_item import MockDataItem
 from .test_plugins import (

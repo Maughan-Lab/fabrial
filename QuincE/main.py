@@ -43,6 +43,21 @@ def fix_windows_sucking():
         pass
 
 
+def load_plugins() -> list[ModuleType]:
+    """Load all plugins."""
+    plugin_modules, installed_failures, local_failures = plugins.load_all_plugins()
+    if len(installed_failures) > 0 or len(local_failures) > 0:
+        message = ""
+        if len(installed_failures) > 0:
+            message += f"Failed to load installed plugins:\n\n{", ".join(installed_failures)}\n\n"
+        if len(local_failures) > 0:
+            message += f"Failed to load local plugins:\n\n{", ".join(local_failures)}\n\n"
+        message += "See the error log for details."
+        errors.show_error_delayed("Plugin Error", message)
+
+    return plugin_modules
+
+
 def make_app(plugin_modules: Iterable[ModuleType]) -> tuple[QApplication, MainWindow]:
     """Make the application."""
     app = QApplication(sys.argv)
@@ -58,8 +73,7 @@ def main():
     make_application_folders()
     # suppress Qt warnings (there is a bug that generates warnings when the window is resized)
     errors.suppress_warnings()
-    # load plugins
-    plugin_modules, failure_plugins = plugins.load_all_plugins()
+    plugin_modules = load_plugins()
     app, main_window = make_app(plugin_modules)
     # catch all exceptions
     # sys.excepthook = errors.generate_exception_handler(main_window) # TODO: redo
@@ -76,7 +90,3 @@ def main():
         del me  # make sure the singleton is cleared
         # replace the current process with a new version of this one
         os.execl(sys.executable, sys.executable, *sys.argv)
-
-
-if __name__ == "__main__":
-    main()

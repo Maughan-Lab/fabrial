@@ -1,17 +1,21 @@
 import sys
 import traceback
 from types import TracebackType
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 from PyQt6 import QtCore
 from PyQt6.QtCore import QMessageLogContext, QtMsgType
 
 from ..constants import APP_NAME
-from ..main_window import MainWindow
+from ..custom_widgets import OkDialog
+from . import events
+
+if TYPE_CHECKING:
+    from ..main_window import MainWindow
 
 
 def generate_exception_handler(
-    main_window: MainWindow,
+    main_window: "MainWindow",
 ) -> Callable[[type[BaseException], BaseException, TracebackType | None], None]:
     """Generate an exception handler for the application."""
 
@@ -50,3 +54,16 @@ def suppress_warnings():
                 print(msg)
 
     QtCore.qInstallMessageHandler(warning_suppressor)
+
+
+def show_error(title: str, message: str):
+    """Show an error to the user (this is just an `OkDialog`)."""
+    OkDialog(title, message).exec()
+
+
+def show_error_delayed(title: str, message: str):
+    """
+    Wait until the application is running and the main window is shown, then show an error to the
+    user.
+    """
+    events.delay_until_running(lambda: show_error(title, message))
