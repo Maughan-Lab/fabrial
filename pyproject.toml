@@ -1,11 +1,10 @@
 [project]
 name = "Quinc-E"
-version = "0.0.1"
+dynamic = ["version"]
 authors = [{ name = "Drew Whitney", email = "drewlwhitney@gmail.com" }]
 maintainers = [{ name = "Drew Whitney", email = "drewlwhitney@gmail.com" }]
 description = "Quincy lets you create sequences to automate lab experiments."
 readme = "README.md"
-license = { file = "LICENSE" }
 # dependencies
 requires-python = ">=3.13"
 dependencies = [
@@ -32,12 +31,14 @@ quince = "QuincE.main:main"
 
 # hatch config
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
 packages = ["./QuincE"]
 
+[tool.hatch.version]
+source = "vcs"
 
 # uv config
 [tool.uv]

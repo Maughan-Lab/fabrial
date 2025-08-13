@@ -1,2 +1,0 @@
-[QuincE.plugins]
-test_plugin = test_plugin.main:main

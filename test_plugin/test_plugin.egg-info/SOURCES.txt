@@ -1,8 +1,0 @@
-README.md
-pyproject.toml
-test_plugin/main.py
-test_plugin.egg-info/PKG-INFO
-test_plugin.egg-info/SOURCES.txt
-test_plugin.egg-info/dependency_links.txt
-test_plugin.egg-info/entry_points.txt
-test_plugin.egg-info/top_level.txt

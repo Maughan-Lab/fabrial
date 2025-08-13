@@ -276,7 +276,6 @@ wheels = [
 
 [[package]]
 name = "quinc-e"
-version = "0.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "comtypes" },
