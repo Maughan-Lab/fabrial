@@ -3,12 +3,15 @@ from pathlib import Path
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QFormLayout
 
-from quincy.custom_widgets import Container, SpinBox
+from quincy.custom_widgets import SpinBox
 from quincy.sequence_builder import ItemWidget
 from quincy.utility import layout as layout_util
-from quincy.utility.descriptions import DescriptionInfo, Substitutions
+from quincy.utility.descriptions import TextDescription
 
 BASE_DISPLAY_NAME = "Hold"
+HOURS_LABEL = "Hours"
+MINUTES_LABEL = "Minutes"
+SECONDS_LABEL = "Seconds"
 
 
 class HoldWidget(ItemWidget):
@@ -16,14 +19,21 @@ class HoldWidget(ItemWidget):
 
     def __init__(self, hours: int, minutes: int, seconds: int):
         layout = QFormLayout()
-        parameter_widget = Container(layout)
 
         ItemWidget.__init__(
             self,
-            parameter_widget,
+            layout,
             BASE_DISPLAY_NAME,
             QIcon(str(Path(__file__).parent.joinpath("clock-select.png"))),
-            None,
+            TextDescription(
+                "Hold",
+                "Hold for the provided duration.",
+                {
+                    HOURS_LABEL: "The number of hours to hold for.",
+                    MINUTES_LABEL: "The number of minutes to hold for.",
+                    SECONDS_LABEL: "The number of seconds to hold for.",
+                },
+            ),
         )
 
         self.hours_spinbox = SpinBox(initial_value=hours)
@@ -44,9 +54,7 @@ class HoldWidget(ItemWidget):
 
     def handle_value_change(self):
         """Handle any of the duration spinboxes changing."""
-        hours = self.hours_spinbox.text()
-        minutes = self.minutes_spinbox.text()
-        seconds = self.seconds_spinbox.text()
         self.setWindowTitle(
-            f"{BASE_DISPLAY_NAME} ({hours} hours, {minutes} minutes, {seconds} seconds)"
+            f"{BASE_DISPLAY_NAME} ({self.hours_spinbox.text()} hours, "
+            f"{self.minutes_spinbox.text()} minutes, {self.seconds_spinbox.text()} seconds)"
         )

@@ -42,11 +42,18 @@ class OptionsModel(TreeModel[CategoryItem]):
         if len(failure_plugins) > 0 or len(failure_categories) > 0:
             message = ""
             if len(failure_plugins) > 0:
-                message += f"Failed to load items from plugins: {", ".join(failure_plugins)}\n"
+                message += (
+                    "Failed to load items from plugins the following plugins:\n\n"
+                    f"{", ".join(failure_plugins)}\n\n"
+                )
             if len(failure_categories) > 0:
-                message += f"Failed to load categories: {", ".join(failure_categories)}\n"
-            message += "See the error log for details"
-            events.delay_until_running(OkDialog("Plugin Error", message).exec)
+                message += (
+                    f"Failed to load the following categories:\n\n"
+                    f"{", ".join(failure_categories)}\n\n"
+                )
+            message += "See the error log for details."
+
+            events.delay_until_running(lambda: OkDialog("Plugin Error", message).exec())
         return cls(items)  # return the new instance
 
     def data(self, index: QModelIndex, role: int | None = None) -> Any:  # implementation

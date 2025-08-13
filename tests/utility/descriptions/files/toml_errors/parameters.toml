@@ -1,9 +1,2 @@
-# this is the completely wrong format so it should yield error text
-[[thing]]
-table_entry = 5
-
-[[thing]]
-table_entry = 6
-
-[[thing]]
-table_entry = 7
+# this is invalid TOML so it should yield error text
+Parameter1 = "sdfkjdsk\lf sdfkdksl"

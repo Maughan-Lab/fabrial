@@ -76,18 +76,20 @@ class SequenceTreeView(TreeView[SequenceModel]):
     @classmethod
     def from_json(cls, file: PathLike[str] | str) -> Self:
         model = SequenceModel([])
-        return cls(model).init_from_json(file)
+        view = cls(model)
+        view.init_from_json(file)
+        return view
 
-    def init_from_json(self, file: PathLike[str] | str) -> Self:
+    def init_from_json(self, file: PathLike[str] | str) -> bool:
         """Initialize the items from a JSON file."""
         try:
             with open(file, "r") as f:
                 data: Mapping[str, Sequence[Mapping[str, Json]]] = json.load(f)
             self.model().init_from_jsonlike(data[ITEM_DATA])
             self.init_view_state(data[VIEW_DATA])
+            return True
         except Exception:  # if we fail just don't load anything
-            pass
-        return self
+            return False
 
     def to_json(self, file: PathLike[str] | str) -> bool:
         """Save to a JSON file. Returns whether the operation succeeded."""
@@ -211,7 +213,7 @@ class SequenceTreeWidget(Container):
         button_layout.addWidget(self.delete_button)
 
         button_sublayout = QHBoxLayout()
-        self.save_button = FixedButton("Save", self.save_settings)
+        self.save_button = FixedButton("Save", self.save_to_file)
         self.save_button.setIcon(images.make_icon("script-export.png"))
         button_sublayout.addWidget(self.save_button)
         self.load_button = FixedButton("Load", self.load_settings)
@@ -286,7 +288,7 @@ class SequenceTreeWidget(Container):
         with open(sequence_paths.SEQUENCE_DIRECTORY_FILE, "w") as f:
             f.write(directory)
 
-    def save_settings(self):
+    def save_to_file(self):
         """Save the sequence to a file."""
         file = QFileDialog.getSaveFileName(
             self,
@@ -295,7 +297,12 @@ class SequenceTreeWidget(Container):
             "JSON files (*.json)",
         )[0]
         if file != "":
-            self.view.to_json(file)
+            if not self.view.to_json(file):
+                OkDialog(
+                    "Save Error",
+                    "Failed to save sequence. "
+                    "This could be caused by a faulty plugin or permission issues.",
+                ).exec()
 
     def load_settings(self):
         """Load a sequence from a file."""
@@ -303,7 +310,12 @@ class SequenceTreeWidget(Container):
             self, "Select sequence file", filter="JSON files (*.json)"
         )[0]
         if file != "":
-            self.view.init_from_json(file)
+            if not self.view.init_from_json(file):
+                OkDialog(
+                    "Load Error",
+                    "Failed to load the requested file. Ensure the file is correctly formatted and "
+                    "that all plugins the file references are installed.",
+                ).exec()
 
     def data_directory(self) -> str:
         """Get the current data directory."""

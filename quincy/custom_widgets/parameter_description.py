@@ -1,6 +1,7 @@
 from typing import Self
 
-from PyQt6.QtWidgets import QFrame, QScrollArea, QTabWidget, QVBoxLayout, QWidget
+from PyQt6.QtCore import QSize
+from PyQt6.QtWidgets import QFrame, QLayout, QScrollArea, QTabWidget, QVBoxLayout, QWidget
 
 from .augmented import Widget
 from .markdown_view import MarkdownView
@@ -18,11 +19,10 @@ class ParameterDescriptionWidget(Widget):
         The text used for the parameter tab name.
     """
 
-    def __init__(self, parameter_widget: QWidget, parameter_tab_name: str = "Parameters"):
+    def __init__(self, parameter_layout: QLayout, parameter_tab_name: str = "Parameters"):
         layout = QVBoxLayout()
         Widget.__init__(self, layout)
-        self.param_widget = parameter_widget
-        self.param_widget.setContentsMargins(10, 10, 10, 10)  # looks better
+        self.param_widget = Widget(parameter_layout)
         parameter_scroll_area = QScrollArea()
         parameter_scroll_area.setWidget(self.param_widget)
         parameter_scroll_area.setWidgetResizable(True)
@@ -43,3 +43,6 @@ class ParameterDescriptionWidget(Widget):
         """Set the text (interpreted as Markdown) displayed in the description tab."""
         self.description_widget.setMarkdown(text)
         return self
+
+    def sizeHint(self) -> QSize:
+        return Widget.sizeHint(self) * 1.5
