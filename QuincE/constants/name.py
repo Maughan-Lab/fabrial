@@ -1,1 +1,1 @@
-APP_NAME = "Quincy"
+APP_NAME = "QuincE"

@@ -16,7 +16,7 @@ dependencies = [
     "pyqtgraph>=0.13.7",
     "pyserial>=3.5",
     "tendo>=0.3.0",
-    "Quinc-E-builtin-plugins",
+    "quinc-E-core-plugins",
 ]
 [dependency-groups]
 test = ["pytest", "pytest-qt"]
@@ -24,9 +24,9 @@ test = ["pytest", "pytest-qt"]
 [project.urls]
 Repository = "https://github.com/Maughan-Lab/Quincy-New"
 
-# makes a `quince`/`quince.exe` script when installing
+# makes a `quincE`/`quincE.exe` script when installing
 [project.scripts]
-quince = "QuincE.main:main"
+quincE = "quincE.main:main"
 
 
 # hatch config
@@ -35,7 +35,7 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
-packages = ["./QuincE"]
+packages = ["./quincE"]
 
 [tool.hatch.version]
 source = "vcs"
@@ -45,10 +45,10 @@ source = "vcs"
 default-groups = ["test"]
 
 [tool.uv.workspace]
-members = ["builtin_plugins"]
+members = ["core_plugins"]
 
 [tool.uv.sources]
-"Quinc-E-builtin-plugins" = { workspace = true }
+Quinc-E-core-plugins = { workspace = true }
 
 
 # mypy config

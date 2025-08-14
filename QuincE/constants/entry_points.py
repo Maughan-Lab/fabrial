@@ -1,1 +1,1 @@
-PLUGIN_ENTRY_POINT = "QuincE.plugins"
+PLUGIN_ENTRY_POINT = "quincE.plugins"

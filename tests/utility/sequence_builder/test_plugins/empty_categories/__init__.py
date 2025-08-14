@@ -1,4 +1,4 @@
-from QuincE.utility.sequence_builder import PluginCategory
+from quincE.utility.sequence_builder import PluginCategory
 
 
 def categories() -> list[PluginCategory]:

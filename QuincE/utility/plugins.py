@@ -51,12 +51,13 @@ def load_installed_plugins() -> tuple[dict[str, ModuleType], list[str]]:
     failure_plugins: list[str] = []
     plugin_modules: dict[str, ModuleType] = {}
     for entry_point in metadata.entry_points(group=PLUGIN_ENTRY_POINT):
+        name = entry_point.module
         try:
-            plugin_modules[entry_point.name] = entry_point.load()
+            plugin_modules[name] = entry_point.load()
         except Exception as e:
             # TODO: log error
             e
-            failure_plugins.append(entry_point.name)
+            failure_plugins.append(name)
 
     return (plugin_modules, failure_plugins)
 

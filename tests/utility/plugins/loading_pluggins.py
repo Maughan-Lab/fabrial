@@ -1,4 +1,4 @@
-from QuincE.utility import plugins
+from quincE.utility import plugins
 
 from .test_modules import bad_module, good_module
 

@@ -1,4 +1,4 @@
-from QuincE import main as quincy
+from quincE import main
 
 if __name__ == "__main__":
-    quincy.main()
+    main.main()
