@@ -1,0 +1,1 @@
+The oven's temperature over time is shown graphically.
