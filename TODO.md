@@ -4,10 +4,6 @@
 
 # Fixing Quincy for Modularization
 
-## Items
-- *Items* should create the process, not the SequenceRunner. i.e., the SequenceRunner should call something like `make_process()` on the item, then use that process.
-    - With this, instead of passing the root item to the sequence runner, just pass a collection of `Process`s. For the loop, this may involve recursion.
-
 ## The Oven
 - The oven should not be a constant part of the application. My current idea is to put manual control of the oven in a separate application that shares source code with the rest of Quincy.
     - The oven should not be monitoring its own temperature, that should be the responsibility of some widget/task.
@@ -22,6 +18,7 @@
 - Implement a "simultaneous" step that uses `asyncio` to run two things concurrently.
 - Use exceptions to cancel and skip things.
     - Should we even support skipping?
+        - Nope, nobody needs it.
 - Debate whether the pause button is still necessary.
     - If you keep pause capabilities, remove the "error pause" state.
     - If you use `asyncio.sleep(0)`, you should call `time.sleep()` while paused so you don't switch back to the process.

@@ -19,7 +19,7 @@ def generate_exception_handler(
 ) -> Callable[[type[BaseException], BaseException, TracebackType | None], None]:
     """Generate an exception handler for the application."""
 
-    # nested function definition
+    # this is the exception handler we are going to return
     def handle_exception(
         exception_type: type[BaseException], exception: BaseException, trace: TracebackType | None
     ):
@@ -41,6 +41,23 @@ def generate_exception_handler(
             main_window.showError.emit(error_message)
 
     return handle_exception  # return the nested function
+
+
+def exception_handler(
+    exception_type: type[BaseException], exception: BaseException, trace: TracebackType | None
+):
+    """
+    This replaces `sys.excepthook`. It logs uncaught exceptions, then runs `sys.__excepthook__()`.
+    """
+    sys.__excepthook__(exception_type, exception, trace)  # run the default exception hook
+    if not issubclass(exception_type, KeyboardInterrupt):  # don't notify/log `KeyboardInterrupt`
+        log_error(exception)
+        show_error(
+            "Fatal Application Error",
+            f"{APP_NAME} encountered a fatal error. See the error log for details.\n\n"
+            "The application will now exit.",
+        )
+    sys.exit()  # exit
 
 
 def suppress_warnings():
@@ -71,6 +88,9 @@ def show_error_delayed(title: str, message: str):
 
 def log_error(exception: BaseException):
     """Write the **exception**'s traceback to the error log."""
+    print("".join(traceback.format_exception(exception)))  # TEMP
     # TODO
+    # TODO: see if the below statement is a good idea
     # if writing the error log fails, show a dialog then exit
+
     pass

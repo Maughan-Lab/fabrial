@@ -69,14 +69,13 @@ def make_app(plugin_modules: Iterable[ModuleType]) -> tuple[QApplication, MainWi
 
 def main():
     me = check_for_other_instances()  # noqa
+    sys.excepthook = errors.exception_handler  # log all uncaught exceptions
     fix_windows_sucking()
     make_application_folders()
     # suppress Qt warnings (there is a bug that generates warnings when the window is resized)
     errors.suppress_warnings()
     plugin_modules = load_plugins()
     app, main_window = make_app(plugin_modules)
-    # catch all exceptions
-    # sys.excepthook = errors.generate_exception_handler(main_window) # TODO: redo
     # run the application
     app.exec()
     # TODO: remove these

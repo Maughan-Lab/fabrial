@@ -1,7 +1,6 @@
 from types import ModuleType
 from typing import Iterable
 
-from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
 
@@ -14,8 +13,6 @@ from .utility import events, images
 
 
 class MainWindow(QMainWindow):
-    showError = pyqtSignal(str)
-
     def __init__(self, plugin_modules: Iterable[ModuleType]):
         self.relaunch = False
         QMainWindow.__init__(self)
@@ -38,12 +35,6 @@ class MainWindow(QMainWindow):
         self.setMenuBar(self.menu_bar)
         # secondary windows are stored here
         self.secondary_windows: list[QMainWindow] = []
-
-        self.connect_signals()
-
-    def connect_signals(self):
-        """Connect widget signals."""
-        self.showError.connect(self.show_error)
 
     # ----------------------------------------------------------------------------------------------
     # resizing
@@ -121,13 +112,6 @@ class MainWindow(QMainWindow):
     def set_relaunch(self, should_relaunch: bool):
         """Set whether the application should relaunch."""
         self.relaunch = should_relaunch
-
-    # ----------------------------------------------------------------------------------------------
-    # errors
-    def show_error(self, message: str):
-        """Show a (likely) fatal error and ask to close."""
-        if YesNoDialog("Application Error", message).run():
-            QApplication.exit()
 
     # ----------------------------------------------------------------------------------------------
     # settings
