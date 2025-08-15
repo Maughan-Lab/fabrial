@@ -67,7 +67,7 @@ extra_checks = false
 
 # pytest config
 [tool.pytest.ini_options]
-addopts = "-q -s"
+addopts = "-q -s --show-capture=no"
 testpaths = ["tests"]
 # search in all python files except `__init__.py`
 python_files = ["[!__init__]*.py"]

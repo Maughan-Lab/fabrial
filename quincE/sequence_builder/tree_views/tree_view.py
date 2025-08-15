@@ -10,7 +10,6 @@ from PyQt6.QtCore import QModelIndex, Qt
 from PyQt6.QtWidgets import QAbstractItemView, QTreeView
 
 from ...classes import Shortcut
-from ...utility import errors
 from ...utility.serde import Json
 from ..tree_models.tree_model import TreeModel
 

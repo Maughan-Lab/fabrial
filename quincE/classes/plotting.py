@@ -22,14 +22,16 @@ class LineSettings:
     symbol_size: int
 
 
-@dataclass
 class LineData:
-    line: PlotDataItem
-    x_data: list[float | int]
-    y_data: list[float | int]
+    """Container for a line and its data. This is similar to a `Line2D` in `matplotlib`."""
 
-    def add_point(self, x_value: float, y_value: float):
+    def __init__(self, line: PlotDataItem, x_data: list[float], y_data: list[float]):
+        self.line = line
+        self.x_data = x_data
+        self.y_data = y_data
+
+    def add_point(self, x: float, y: float):
         """Add a point to the line."""
-        self.x_data.append(x_value)
-        self.y_data.append(y_value)
+        self.x_data.append(x)
+        self.y_data.append(y)
         self.line.setData(self.x_data, self.y_data)

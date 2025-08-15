@@ -1,18 +1,16 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QTabWidget
 
-from ..classes import GraphSignals, LineSettings, Shortcut
+from ..classes import GraphSignals, LineData, LineSettings, Shortcut
 from ..custom_widgets import Button, PlotWidget
+from ..custom_widgets.plot import PlotItem
 from ..secondary_window import SecondaryWindow
 
 
 class SequenceDisplayTab(QTabWidget):
-    """
-    Tab for displaying widgets from the sequence runtime. This should only ever hold one widget at a
-    time.
-    """
+    """Tab for displaying graphing widgets during the sequence."""
 
-    def __init__(self) -> None:
+    def __init__(self):
         QTabWidget.__init__(self)
         self.plots: list[PlotWidget] = []
         self.popped_graphs: list[SecondaryWindow] = []
@@ -20,6 +18,8 @@ class SequenceDisplayTab(QTabWidget):
         self.setCornerWidget(Button("Pop Graph", self.pop_graph), Qt.Corner.TopRightCorner)
         self.setMovable(True)
         Shortcut(self, "Ctrl+G", self.pop_graph)
+
+        sequence_step_map: dict[int, dict[int, list[tuple[PlotWidget, LineData]]]] = {}
 
     def connect_graph_signals(self, signals: GraphSignals):
         """Connect to the provided graph signals."""

@@ -43,9 +43,6 @@ match response:
 ```
 You can use a custom `QPushButton` and `addButton(button, QMessageBox.ButtonRole.NoRole)` + `clickedButton()` to add buttons and associate a value.
 
-## Error Logging
-- Instead of showing the whole error in a dialog that can get cut off, record the error in a logging file, then show an error dialog that says something like "Quincy encountered a fatal error and needs to close".
-
 ## Consistency
 - "instrument" $\to$ "device"
 

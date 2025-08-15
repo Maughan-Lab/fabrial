@@ -8,9 +8,7 @@ import time
 from abc import abstractmethod
 from asyncio import CancelledError
 from datetime import datetime
-from os import PathLike
 from pathlib import Path
-from threading import Event
 from typing import Any, Iterable, Protocol
 
 from ..classes import FatalSequenceError
@@ -201,6 +199,15 @@ class SequenceStep(Protocol):
         """
         Run the sequence step. Ensure you call `self.sleep()` often enough that other tasks can be
         run.
+        """
+        ...
+
+    @abstractmethod
+    def reset(self):
+        """
+        Reset this step to its original state (i.e. before `run()` was called). This sequence step
+        might be re-used, so it must be resettable. An easy implementation is to call `__init__()`
+        to reinitialize with the original parameters.
         """
         ...
 
