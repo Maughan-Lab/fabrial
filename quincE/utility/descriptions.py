@@ -6,13 +6,14 @@ from typing import Protocol
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, TemplateNotFound, UndefinedError
 
-from ..constants.paths.process.filenames import METADATA_FILENAME
 from ..constants.paths.descriptions import (
     DATA_RECORDING_FILENAME,
     OVERVIEW_FILENAME,
     PARAMETERS_FILENAME,
     VISUALS_FILENAME,
 )
+from ..constants.paths.process.filenames import METADATA_FILENAME
+from . import errors
 
 NO_DESCRIPTION_PROVIDED = "No description provided."
 ERROR_TEXT = "Error loading description."
@@ -155,8 +156,7 @@ class FilesDescription(DescriptionProvider):
             except TemplateNotFound:
                 return NO_DESCRIPTION_PROVIDED
             except UndefinedError as e:
-                e
-                # TODO: log error
+                errors.log_error(e)
                 return ERROR_TEXT
 
         # helper function to render a TOML file into Markdown
@@ -174,8 +174,7 @@ class FilesDescription(DescriptionProvider):
                     return empty_default
                 return generate_list_description(name_description_map, markdown_format_string)
             except Exception as e:
-                # TODO: log error
-                e
+                errors.log_error(e)
                 raise
 
         # overview

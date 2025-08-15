@@ -1,7 +1,7 @@
+import os
 import sys
 import traceback
 from types import TracebackType
-from typing import TYPE_CHECKING, Callable
 
 from PyQt6 import QtCore
 from PyQt6.QtCore import QMessageLogContext, QtMsgType
@@ -9,38 +9,6 @@ from PyQt6.QtCore import QMessageLogContext, QtMsgType
 from ..constants import APP_NAME
 from ..custom_widgets import OkDialog
 from . import events
-
-if TYPE_CHECKING:
-    from ..main_window import MainWindow
-
-
-def generate_exception_handler(
-    main_window: "MainWindow",
-) -> Callable[[type[BaseException], BaseException, TracebackType | None], None]:
-    """Generate an exception handler for the application."""
-
-    # this is the exception handler we are going to return
-    def handle_exception(
-        exception_type: type[BaseException], exception: BaseException, trace: TracebackType | None
-    ):
-        """
-        This should get called when an uncaught exception occurs. It notifies the user of a possibly
-        fatal exception and asks them if they want to quit.
-        """
-        if issubclass(exception_type, KeyboardInterrupt):
-            sys.__excepthook__(exception_type, exception, trace)
-            sys.exit()
-        else:
-            error_message = (
-                f"{APP_NAME} encountered an application-level error. "
-                f"Unless the error is obviously unimportant, you should close {APP_NAME}. "
-                "If possible, please report this error."
-            )
-            exception_text = "".join(traceback.format_exception(exception_type, exception, trace))
-            error_message = f"{error_message}\n\n{exception_text}\nClose {APP_NAME}?"
-            main_window.showError.emit(error_message)
-
-    return handle_exception  # return the nested function
 
 
 def exception_handler(
@@ -88,6 +56,9 @@ def show_error_delayed(title: str, message: str):
 
 def log_error(exception: BaseException):
     """Write the **exception**'s traceback to the error log."""
+    if os.environ.get("PYTEST_VERSION") is not None:  # if running from pytest, don't log
+        return
+
     print("".join(traceback.format_exception(exception)))  # TEMP
     # TODO
     # TODO: see if the below statement is a good idea

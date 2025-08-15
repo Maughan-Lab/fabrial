@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING, Union
 import minimalmodbus as modbus
 from PyQt6.QtCore import QMutex, QMutexLocker, QObject, QThread, pyqtSignal
 
-from .classes import ABCQObjectMeta, DataMutex, Timer
+from .classes import ABCQObjectMeta, DataMutex
+from .classes.timer import Timer
 from .constants.paths import settings
 from .enums import ConnectionStatus
 

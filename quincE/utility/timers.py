@@ -2,7 +2,7 @@ from typing import Any, Callable
 
 from PyQt6.QtCore import QObject
 
-from ..classes.timer import Timer
+from ..classes import Timer
 
 
 def new_timer(parent: QObject | None, interval_ms: int, *slots: Callable[[], Any]) -> Timer:

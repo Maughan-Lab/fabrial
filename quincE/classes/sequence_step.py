@@ -14,6 +14,7 @@ from typing import Any, Iterable, Protocol
 
 from ..classes import FatalSequenceError
 from ..constants.paths.sequence import METADATA_FILENAME
+from ..utility import errors
 
 
 class StepRunner:
@@ -57,9 +58,9 @@ class StepRunner:
                 step_data_directory, step, start_datetime, cancelled, error_occurred
             )
             raise
-        except Exception:  # recoverable error; log and ask the user what to do
+        except Exception as e:  # recoverable error; log and ask the user what to do
             error_occurred = True
-            # TODO: log error
+            errors.log_error(e)
             if not (
                 await self.prompt_handle_error("The current step encountered an error.")
                 and await self.record_metadata(
@@ -183,8 +184,8 @@ class StepRunner:
             )
             with open(file, "w") as f:
                 json.dump(data, f)
-        except Exception:
-            # TODO: log error
+        except Exception as e:
+            errors.log_error(e)
             return await self.prompt_handle_error("Failed to record metadata for the current step.")
         return True
 

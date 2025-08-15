@@ -2,10 +2,10 @@ from types import ModuleType
 from typing import Iterable
 
 from PyQt6.QtGui import QCloseEvent
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
+from PyQt6.QtWidgets import QMainWindow, QWidget
 
 from .constants import APP_NAME
-from .custom_widgets import TabWidget, YesCancelDialog, YesNoDialog
+from .custom_widgets import TabWidget, YesCancelDialog
 from .menu import MenuBar
 from .secondary_window import SecondaryWindow
 from .tabs import OvenControlTab, SequenceBuilderTab, SequenceDisplayTab

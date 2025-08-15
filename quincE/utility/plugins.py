@@ -7,6 +7,7 @@ from types import ModuleType
 
 from .. import plugins
 from ..constants import PLUGIN_ENTRY_POINT
+from . import errors
 
 
 def load_plugins_from_module(module: ModuleType) -> tuple[dict[str, ModuleType], list[str]]:
@@ -27,8 +28,7 @@ def load_plugins_from_module(module: ModuleType) -> tuple[dict[str, ModuleType],
             plugin_module = importlib.import_module("." + name, module.__name__)
             plugin_modules[name] = plugin_module
         except Exception as e:
-            # TODO: log error
-            e
+            errors.log_error(e)
             failure_plugins.append(name)
 
     return (plugin_modules, failure_plugins)
@@ -55,8 +55,7 @@ def load_installed_plugins() -> tuple[dict[str, ModuleType], list[str]]:
         try:
             plugin_modules[name] = entry_point.load()
         except Exception as e:
-            # TODO: log error
-            e
+            errors.log_error(e)
             failure_plugins.append(name)
 
     return (plugin_modules, failure_plugins)
