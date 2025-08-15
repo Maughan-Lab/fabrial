@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import time
 from abc import abstractmethod
@@ -14,7 +15,6 @@ from typing import Any, Iterable, Protocol
 
 from ..classes import FatalSequenceError
 from ..constants.paths.sequence import METADATA_FILENAME
-from ..utility import errors
 
 
 class StepRunner:
@@ -58,9 +58,9 @@ class StepRunner:
                 step_data_directory, step, start_datetime, cancelled, error_occurred
             )
             raise
-        except Exception as e:  # recoverable error; log and ask the user what to do
+        except Exception:  # recoverable error; log and ask the user what to do
             error_occurred = True
-            errors.log_error(e)
+            logging.getLogger(__name__).exception("Sequence step error")
             if not (
                 await self.prompt_handle_error("The current step encountered an error.")
                 and await self.record_metadata(
@@ -184,8 +184,8 @@ class StepRunner:
             )
             with open(file, "w") as f:
                 json.dump(data, f)
-        except Exception as e:
-            errors.log_error(e)
+        except Exception:
+            logging.getLogger(__name__).exception("Failed to write metadata")
             return await self.prompt_handle_error("Failed to record metadata for the current step.")
         return True
 

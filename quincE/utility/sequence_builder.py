@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from types import ModuleType
 from typing import Iterable, MutableMapping
 
 from ..sequence_builder import CategoryItem, DataItem, SequenceItem, TreeItem
-from . import errors
 
 
 @dataclass
@@ -77,8 +77,10 @@ def items_from_plugins(
                 items.extend(category_info.items)
                 # create and append the `CategoryItem`
                 category_items.append(CategoryItem(None, category_name, items))
-            except Exception as e:
-                errors.log_error(e)
+            except Exception:
+                logging.getLogger(__name__).exception(
+                    "Exception while parsing `CategoryInfo`s into `CategoryItem`s"
+                )
                 failure_categories.append(category_name)
 
         return category_items
@@ -90,8 +92,10 @@ def items_from_plugins(
             # PLUGIN.categories() is a mandatory entry point for plugins
             plugin_categories: list[PluginCategory] = plugin_module.categories()
             parse_plugin_categories(plugin_categories, category_info_map)
-        except Exception as e:
-            errors.log_error(e)
+        except Exception:
+            logging.getLogger(__name__).exception(
+                "Exception while parsing plugin categories into `CategoryInfo`s"
+            )
             failure_plugins.append(name)
 
     return (parse_into_items(category_info_map), failure_plugins, failure_categories)

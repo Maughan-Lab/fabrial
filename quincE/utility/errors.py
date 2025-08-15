@@ -1,6 +1,5 @@
-import os
+import logging
 import sys
-import traceback
 from types import TracebackType
 
 from PyQt6 import QtCore
@@ -17,10 +16,12 @@ def exception_handler(
     """
     This replaces `sys.excepthook`. It logs uncaught exceptions, then runs `sys.__excepthook__()`.
     """
-    sys.__excepthook__(exception_type, exception, trace)  # run the default exception hook
     if not issubclass(exception_type, KeyboardInterrupt):  # don't notify/log `KeyboardInterrupt`
-        log_error(exception)
-        show_error(
+        # log the exception
+        logging.getLogger(__name__).critical(
+            "Uncaught exception", exc_info=(exception_type, exception, trace)
+        )
+        show_error(  # notify the user
             "Fatal Application Error",
             f"{APP_NAME} encountered a fatal error. See the error log for details.\n\n"
             "The application will now exit.",
@@ -54,14 +55,14 @@ def show_error_delayed(title: str, message: str):
     events.delay_until_running(lambda: show_error(title, message))
 
 
-def log_error(exception: BaseException):
-    """Write the **exception**'s traceback to the error log."""
-    if os.environ.get("PYTEST_VERSION") is not None:  # if running from pytest, don't log
-        return
-
-    print("".join(traceback.format_exception(exception)))  # TEMP
-    # TODO
-    # TODO: see if the below statement is a good idea
-    # if writing the error log fails, show a dialog then exit
-
-    pass
+def set_up_logging():
+    """Configure the root logger of the `logging` module."""
+    logging.basicConfig(
+        level=logging.INFO,  # log INFO and up
+        style="{",  # used for the format specifier
+        datefmt="%Y-%m-%d %H:%M:%S",  # datetime format
+        # show datetime, error level, logger name, the calling function's name, and the log message
+        format="{asctime}.{msecs:.0f} {levelname} {message} - {name}:{funcName}()",
+        # send to both `lastrun.log` (wiped between runs) and the console
+        handlers=[logging.FileHandler("lastrun.log", "w"), logging.StreamHandler()],
+    )

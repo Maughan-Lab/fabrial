@@ -1,3 +1,4 @@
+import logging
 import tomllib
 from abc import abstractmethod
 from dataclasses import dataclass, field
@@ -13,7 +14,6 @@ from ..constants.paths.descriptions import (
     VISUALS_FILENAME,
 )
 from ..constants.paths.process.filenames import METADATA_FILENAME
-from . import errors
 
 NO_DESCRIPTION_PROVIDED = "No description provided."
 ERROR_TEXT = "Error loading description."
@@ -155,8 +155,8 @@ class FilesDescription(DescriptionProvider):
                 return text
             except TemplateNotFound:
                 return NO_DESCRIPTION_PROVIDED
-            except UndefinedError as e:
-                errors.log_error(e)
+            except UndefinedError:
+                logging.getLogger(__name__).exception("Undefined jinja2 substitution")
                 return ERROR_TEXT
 
         # helper function to render a TOML file into Markdown
@@ -173,8 +173,8 @@ class FilesDescription(DescriptionProvider):
                 if len(name_description_map) == 0:
                     return empty_default
                 return generate_list_description(name_description_map, markdown_format_string)
-            except Exception as e:
-                errors.log_error(e)
+            except Exception:
+                logging.getLogger(__name__).exception("Failed to render TOML description file")
                 raise
 
         # overview

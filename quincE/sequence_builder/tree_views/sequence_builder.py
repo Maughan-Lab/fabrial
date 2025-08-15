@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import typing
 from dataclasses import dataclass
@@ -328,7 +329,7 @@ class SequenceRunner:
     """Initialize and run a sequence."""
 
     def run_sequence(self, model: SequenceModel, data_directory: Path):
-        """Run the sequence. Creates the data directory if it doesn't exist."""
+        """Run the sequence. Creates the data directory if it doesn't exist. Logs errors."""
         if not model.root().subitem_count() > 0:  # do nothing if there are no items
             return
         # make the data directory
@@ -337,8 +338,10 @@ class SequenceRunner:
         # create the `SequenceStep`s
         try:
             sequence_steps, step_item_map = self.create_sequence_steps(model)
-        except PluginError as e:
-            errors.log_error(e)
+        except PluginError:
+            logging.getLogger(__name__).exception(
+                "Item from plugin generated error during sequence construction"
+            )
             errors.show_error(
                 "Sequence Error",
                 "Unable to generate sequence steps, likely due to a faulty plugin. "
@@ -364,8 +367,8 @@ class SequenceRunner:
         # check if the directory is empty
         try:
             empty = len(list(os.scandir(data_directory))) > 0
-        except OSError as e:
-            errors.log_error(e)
+        except OSError:
+            logging.getLogger(__name__).exception("Failed to check if data directory is empty")
             errors.show_error(
                 "Sequence Error",
                 "Unable to start the sequence because of an operating system error. "
@@ -424,8 +427,7 @@ class SequenceRunner:
                     )
                 try:
                     sequence_step = subitem.create_sequence_step(substeps)
-                except Exception as e:
-                    errors.log_error(e)
+                except Exception:
                     raise PluginError(f"Error while creating sequence step from item {subitem!r}")
                 # we can use the step's ID because steps are not added to/removed from the sequence
                 step_item_map[id(sequence_step)] = subindex

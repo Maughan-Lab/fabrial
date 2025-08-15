@@ -40,6 +40,7 @@ class MainWindow(QMainWindow):
     # resizing
     def toggle_fullscreen(self):
         """Toggle fullscreen mode."""
+        raise ValueError("Foo")
         if self.isFullScreen():
             self.showNormal()
         else:

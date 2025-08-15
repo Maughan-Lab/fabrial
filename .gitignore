@@ -1,8 +1,8 @@
 # Quincy files
 __pycache__/
 .pytest_cache/
-Data Files/
 saved_settings/
+lastrun.log
 build/
 dist/
 QuincyInstaller.exe

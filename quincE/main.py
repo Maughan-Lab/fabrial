@@ -68,8 +68,8 @@ def make_app(plugin_modules: Iterable[ModuleType]) -> tuple[QApplication, MainWi
 
 
 def main():
-    print("HOOA")
     me = check_for_other_instances()  # noqa
+    errors.set_up_logging()
     sys.excepthook = errors.exception_handler  # log all uncaught exceptions
     fix_windows_sucking()
     make_application_folders()

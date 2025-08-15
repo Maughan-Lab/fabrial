@@ -1,4 +1,5 @@
 import json
+import logging
 import typing
 from os import PathLike
 from typing import Any, Iterable, Mapping, Sequence
@@ -14,7 +15,6 @@ from PyQt6.QtCore import (
 )
 from PyQt6.QtWidgets import QApplication
 
-from ...utility import errors
 from ...utility.serde import Json
 from ..tree_items import MutableTreeItem, SequenceItem, TreeItem
 from .tree_model import JSON, TreeModel
@@ -53,8 +53,8 @@ class SequenceModel(TreeModel[SequenceItem]):
             ]
             self.insert_rows(0, QModelIndex(), items)
             return True
-        except Exception as e:
-            errors.log_error(e)
+        except Exception:
+            logging.getLogger(__name__).warning("Failed to initialize from file", exc_info=True)
             return False
 
     def to_json(self, file: PathLike[str] | str) -> bool:
@@ -67,8 +67,8 @@ class SequenceModel(TreeModel[SequenceItem]):
             with open(file, "w") as f:
                 json.dump(item_data, f)
             return True
-        except Exception as e:
-            errors.log_error(e)
+        except Exception:
+            logging.getLogger(__name__).exception("Failed to save to file")
             return False
 
     def data(self, index: QModelIndex, role: int | None = None) -> Any:  # implementation

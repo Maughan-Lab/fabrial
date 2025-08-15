@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import typing
 from os import PathLike
 from typing import Iterable, Mapping, Self, Sequence
@@ -66,8 +67,11 @@ class TreeView[Model: TreeModel](QTreeView):  # type: ignore
                 view_states: Sequence[Mapping[str, Json]] = json.load(f)
             recursively_init_state(self.rootIndex(), view_states)
             return True
-        except Exception as e:
-            errors.log_error(e)
+        except Exception:
+            logging.getLogger(__name__).warning(
+                "Failed to initialize view state from file", exc_info=True
+            )
+            self.expandAll()  # just expand everything if we can't load from a file
             return False
 
     def save_view_state_to_json(self, file: PathLike[str] | str):
@@ -95,9 +99,8 @@ class TreeView[Model: TreeModel](QTreeView):  # type: ignore
             with open(file, "w") as f:
                 json.dump(state, f)
             return True
-        except Exception as e:
-            errors.log_error(e)
-            self.expandAll()  # just expand everything if we can't load from a file
+        except Exception:
+            logging.getLogger(__name__).exception("Failed to save view state to file")
             return False
 
     def connect_signals(self) -> Self:

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import importlib
+import logging
 import pkgutil
 from importlib import metadata
 from types import ModuleType
 
 from .. import plugins
 from ..constants import PLUGIN_ENTRY_POINT
-from . import errors
 
 
 def load_plugins_from_module(module: ModuleType) -> tuple[dict[str, ModuleType], list[str]]:
@@ -27,8 +27,8 @@ def load_plugins_from_module(module: ModuleType) -> tuple[dict[str, ModuleType],
         try:
             plugin_module = importlib.import_module("." + name, module.__name__)
             plugin_modules[name] = plugin_module
-        except Exception as e:
-            errors.log_error(e)
+        except Exception:
+            logging.getLogger(__name__).exception(f"Failed to load local plugin {name}")
             failure_plugins.append(name)
 
     return (plugin_modules, failure_plugins)
@@ -54,8 +54,8 @@ def load_installed_plugins() -> tuple[dict[str, ModuleType], list[str]]:
         name = entry_point.module
         try:
             plugin_modules[name] = entry_point.load()
-        except Exception as e:
-            errors.log_error(e)
+        except Exception:
+            logging.getLogger(__name__).exception(f"Failed to load installed plugin {name}")
             failure_plugins.append(name)
 
     return (plugin_modules, failure_plugins)
