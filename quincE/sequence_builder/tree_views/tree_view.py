@@ -9,6 +9,7 @@ from PyQt6.QtCore import QModelIndex, Qt
 from PyQt6.QtWidgets import QAbstractItemView, QTreeView
 
 from ...classes import Shortcut
+from ...utility import errors
 from ...utility.serde import Json
 from ..tree_models.tree_model import TreeModel
 
@@ -42,8 +43,11 @@ class TreeView[Model: TreeModel](QTreeView):  # type: ignore
         """Whether the items are editable."""
         return False
 
-    def init_view_state(self, view_states: Sequence[Mapping[str, Json]]):
-        """Recursively set the view state based on **view_states**."""
+    def init_view_state_from_json(self, file: PathLike[str] | str) -> bool:
+        """
+        Recursively set the view state based on the contents of **file**. Returns whether the
+        operation succeeded. Logs errors.
+        """
         model = self.model()
 
         # initialize the view states of all subitems of **index**
@@ -57,20 +61,20 @@ class TreeView[Model: TreeModel](QTreeView):  # type: ignore
                     typing.cast(Sequence[Mapping[str, Json]], subitem_view_state[SUBITEMS]),
                 )
 
-        recursively_init_state(self.rootIndex(), view_states)
-
-    def init_view_state_from_json(self, path: PathLike[str] | str) -> bool:
-        """Initialize the view state from a JSON file. Returns whether the operation succeeded."""
         try:
-            with open(path, "r") as f:
+            with open(file) as f:
                 view_states: Sequence[Mapping[str, Json]] = json.load(f)
-            self.init_view_state(view_states)
+            recursively_init_state(self.rootIndex(), view_states)
             return True
-        except Exception:
+        except Exception as e:
+            errors.log_error(e)
             return False
 
-    def get_view_state(self) -> list[dict[str, Json]]:
-        """Get the view state as a JSON-style dictionary."""
+    def save_view_state_to_json(self, file: PathLike[str] | str):
+        """
+        Save the view state to a JSON **file**. Returns whether the operation succeeded. Logs
+        errors.
+        """
         model = self.model()
 
         # gets the view state of all subitems
@@ -86,7 +90,15 @@ class TreeView[Model: TreeModel](QTreeView):  # type: ignore
                 )
             return subitem_states
 
-        return get_state(self.rootIndex())
+        state = get_state(self.rootIndex())
+        try:
+            with open(file, "w") as f:
+                json.dump(state, f)
+            return True
+        except Exception as e:
+            errors.log_error(e)
+            self.expandAll()  # just expand everything if we can't load from a file
+            return False
 
     def connect_signals(self) -> Self:
         """Connect signals at construction."""

@@ -24,7 +24,7 @@ class OptionsModel(TreeModel[CategoryItem]):
     @classmethod
     def from_plugins(cls, plugin_modules: Iterable[ModuleType]) -> Self:
         """
-        Create the model from the application's available plugins.
+        Create the model from the application's available plugins. Logs errors.
 
         This calls `plugins.items_from_plugins()`.
 

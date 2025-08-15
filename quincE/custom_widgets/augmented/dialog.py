@@ -1,3 +1,4 @@
+import json
 from os import PathLike
 
 from PyQt6.QtWidgets import QCheckBox, QMessageBox
@@ -105,8 +106,8 @@ class DontShowAgainDialog(Dialog):
         `StandardButton`s to show on the dialog.
     default_button
         Which `StandardButton` to have selected by default.
-    filepath
-        The filepath where the "don't show again" state is saved to and loaded from.
+    file
+        The JSON file where the "don't show again" state is saved to and loaded from.
     """
 
     def __init__(
@@ -115,19 +116,19 @@ class DontShowAgainDialog(Dialog):
         message: str,
         buttons: QMessageBox.StandardButton,
         default_button: QMessageBox.StandardButton,
-        filepath: PathLike[str] | str,
+        file: PathLike[str] | str,
     ):
 
         Dialog.__init__(self, title, message, buttons, default_button)
         self.check_box = QCheckBox("Don't show again", self)
         self.setCheckBox(self.check_box)
 
-        self.filepath = filepath
+        self.file = file
         try:
-            with open(self.filepath, "r") as f:
-                if f.read().strip() == str(False):
+            with open(self.file, "r") as f:
+                if json.load(f):
                     self.check_box.setChecked(True)
-        except Exception:
+        except OSError:
             pass
 
     def should_run(self) -> bool:
@@ -139,8 +140,11 @@ class DontShowAgainDialog(Dialog):
 
     def save_state(self):
         """Save the state of the "Don't show again" checkbox to a file."""
-        with open(self.filepath, "w") as f:
-            f.write(str(not self.check_box.isChecked()))
+        try:
+            with open(self.file, "w") as f:
+                json.dump(not self.check_box.isChecked(), f)
+        except OSError:
+            pass
 
     def run(self) -> bool:
         """

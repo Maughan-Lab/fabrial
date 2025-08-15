@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import json
 import os
+import typing
 from dataclasses import dataclass
-from os import PathLike
-from typing import Mapping, Self, Sequence
+from pathlib import Path
+from typing import Self
 
 from PyQt6.QtCore import (
     QItemSelection,
@@ -20,7 +23,8 @@ from ...classes import (
     AbstractProcess,
     CommandSignals,
     GraphSignals,
-    SequenceRunner,
+    PluginError,
+    SequenceStep,
     Shortcut,
     Timer,
 )
@@ -33,16 +37,13 @@ from ...custom_widgets import (
     IconLabel,
     OkDialog,
     YesCancelDontShowDialog,
+    YesNoDialog,
 )
 from ...enums import SequenceStatus
-from ...utility import images, layout as layout_util
-from ...utility.serde import Json
+from ...utility import errors, images, layout as layout_util
 from ..tree_items.tree_item import TreeItem
 from ..tree_models import SequenceModel
 from .tree_view import TreeView
-
-ITEM_DATA = "items"
-VIEW_DATA = "view_state"
 
 
 @dataclass
@@ -74,34 +75,47 @@ class SequenceTreeView(TreeView[SequenceModel]):
         self.drag_tracker = DragTracker(timer, point)
 
     @classmethod
-    def from_json(cls, file: PathLike[str] | str) -> Self:
+    def from_autosave(cls) -> Self:
+        """Create from the autosave files."""
         model = SequenceModel([])
+        model.init_from_json(sequence_paths.SEQUENCE_ITEMS_FILE)
         view = cls(model)
-        view.init_from_json(file)
+        view.init_view_state_from_json(sequence_paths.SEQUENCE_STATE_FILE)
         return view
 
-    def init_from_json(self, file: PathLike[str] | str) -> bool:
-        """Initialize the items from a JSON file."""
-        try:
-            with open(file, "r") as f:
-                data: Mapping[str, Sequence[Mapping[str, Json]]] = json.load(f)
-            self.model().init_from_jsonlike(data[ITEM_DATA])
-            self.init_view_state(data[VIEW_DATA])
-            return True
-        except Exception:  # if we fail just don't load anything
-            return False
+    def select_load(self):
+        """Load sequence items from a user-selected file."""
+        file, _ = QFileDialog.getOpenFileName(
+            self, "Select sequence file", filter="JSON files (*.json)"
+        )
+        if file != "":
+            if not self.model().init_from_json(file):
+                OkDialog(
+                    "Load Error",
+                    "Failed to load the requested file. Ensure the file is correctly formatted and "
+                    "that all plugins the file references are installed.",
+                ).exec()
+            else:
+                self.expandAll()
 
-    def to_json(self, file: PathLike[str] | str) -> bool:
-        """Save to a JSON file. Returns whether the operation succeeded."""
-        try:
-            data: dict[str, Sequence[Json]] = {}
-            data[ITEM_DATA] = self.model().to_jsonlike()
-            data[VIEW_DATA] = self.get_view_state()
-            with open(file, "w") as f:
-                json.dump(data, f)
-            return True
-        except Exception:
-            return False
+    def select_save(self):
+        """Save the sequence items to a user-selected file."""
+        file, _ = QFileDialog.getSaveFileName(
+            self, "Select save file", "untitled.json", "JSON files (*.json)"
+        )
+        if file != "":
+            if not self.model().to_json(file):
+                OkDialog(
+                    "Save Error",
+                    "Failed to save sequence. "
+                    "This could be caused by a faulty plugin or permission issues. "
+                    "See the error log for details.",
+                ).exec()
+
+    def save_on_close(self):
+        """Call this when closing the application to save the item and view state."""
+        self.model().to_json(sequence_paths.SEQUENCE_ITEMS_FILE)
+        self.save_view_state_to_json(sequence_paths.SEQUENCE_STATE_FILE)
 
     def connect_signals(self):  # overridden
         TreeView.connect_signals(self)
@@ -200,11 +214,13 @@ class SequenceTreeWidget(Container):
         self.cancelCommand = self.command_signals.cancelCommand  # shortcut for external users
 
     @classmethod
-    def from_json(cls, file: PathLike[str] | str) -> Self:
-        view = SequenceTreeView.from_json(file)
+    def from_autosave(cls) -> Self:
+        """Create from the autosave files."""
+        view = SequenceTreeView.from_autosave()
         return cls(view)
 
-    def create_widgets(self, layout: QVBoxLayout) -> Self:
+    def create_widgets(self, layout: QVBoxLayout):
+        """Create widgets at construction."""
         button_layout = QHBoxLayout()
         button_container = Container(button_layout)
 
@@ -213,10 +229,10 @@ class SequenceTreeWidget(Container):
         button_layout.addWidget(self.delete_button)
 
         button_sublayout = QHBoxLayout()
-        self.save_button = FixedButton("Save", self.save_to_file)
+        self.save_button = FixedButton("Save", self.view.select_save)
         self.save_button.setIcon(images.make_icon("script-export.png"))
         button_sublayout.addWidget(self.save_button)
-        self.load_button = FixedButton("Load", self.load_settings)
+        self.load_button = FixedButton("Load", self.view.select_load)
         self.load_button.setIcon(images.make_icon("script-import.png"))
         button_sublayout.addWidget(self.load_button)
 
@@ -232,21 +248,21 @@ class SequenceTreeWidget(Container):
         )
         self.directory_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.directory_label = IconLabel(
-            images.make_pixmap("folder--arrow.png"), self.read_previous_directory()
+            images.make_pixmap("folder--arrow.png"), self.load_previous_directory()
         )
         self.directory_label.label().setWordWrap(True)
         directory_layout.addWidget(self.directory_button)
         directory_layout.addWidget(self.directory_label, alignment=Qt.AlignmentFlag.AlignVCenter)
 
-        return self
+    def connect_signals(self):
+        """Connect signals at construction."""
 
-    def connect_signals(self) -> Self:
         self.view.selectionModel().selectionChanged.connect(  # type: ignore
             self.handle_selection_change
         )
-        return self
 
     def handle_selection_change(self, selected: QItemSelection, *args):
+        """Handle the item selection changing."""
         enabled = True
         if selected.isEmpty():
             enabled = False
@@ -256,7 +272,7 @@ class SequenceTreeWidget(Container):
                     enabled = False
         self.delete_button.setEnabled(enabled)
 
-    def choose_directory(self) -> Self:
+    def choose_directory(self):
         """Open a dialog to choose the data-storage directory."""
         directory = QFileDialog.getExistingDirectory(
             self,
@@ -266,56 +282,30 @@ class SequenceTreeWidget(Container):
         )
         self.directory_label.label().setText(directory)
         self.directoryChanged.emit(self.directory_is_valid())
-        return self
 
     def directory_is_valid(self):
         """Whether the selected directory is valid."""
         return self.directory_label.label().text() != ""
 
-    def read_previous_directory(self) -> str:
+    def load_previous_directory(self) -> str:
         """Try to load the previously used directory."""
         try:
             with open(sequence_paths.SEQUENCE_DIRECTORY_FILE, "r") as f:
-                directory = f.read()
+                directory = typing.cast(str, json.load(f))
                 return directory
         except Exception:
             return ""
 
     def save_on_close(self):
         """Call this when closing the application to save settings."""
-        self.view.to_json(sequence_paths.SEQUENCE_AUTOSAVE_FILE)
+        self.view.save_on_close()
+        # try to save the data directory
         directory = self.data_directory()
-        with open(sequence_paths.SEQUENCE_DIRECTORY_FILE, "w") as f:
-            f.write(directory)
-
-    def save_to_file(self):
-        """Save the sequence to a file."""
-        file = QFileDialog.getSaveFileName(
-            self,
-            "Select save file",
-            os.path.join(os.path.expanduser("~"), "untitled.json"),
-            "JSON files (*.json)",
-        )[0]
-        if file != "":
-            if not self.view.to_json(file):
-                OkDialog(
-                    "Save Error",
-                    "Failed to save sequence. "
-                    "This could be caused by a faulty plugin or permission issues.",
-                ).exec()
-
-    def load_settings(self):
-        """Load a sequence from a file."""
-        file = QFileDialog.getOpenFileName(
-            self, "Select sequence file", filter="JSON files (*.json)"
-        )[0]
-        if file != "":
-            if not self.view.init_from_json(file):
-                OkDialog(
-                    "Load Error",
-                    "Failed to load the requested file. Ensure the file is correctly formatted and "
-                    "that all plugins the file references are installed.",
-                ).exec()
+        try:
+            with open(sequence_paths.SEQUENCE_DIRECTORY_FILE, "w") as f:
+                json.dump(directory, f)
+        except OSError:
+            pass
 
     def data_directory(self) -> str:
         """Get the current data directory."""
@@ -327,26 +317,34 @@ class SequenceTreeWidget(Container):
         """Whether the sequence is currently running."""
         return len(self.threads) > 0
 
-    def run_sequence(self) -> Self:
+    def run_sequence(self):
+        """Run the sequence."""
+        # TODO
+        pass
+
+
+# TODO: see if these functions should even be in a class
+class SequenceRunner:
+    """Initialize and run a sequence."""
+
+    def run_sequence(self, model: SequenceModel, data_directory: Path):
         """Run the sequence. Creates the data directory if it doesn't exist."""
-        root_item = self.view.model().root()
-        if not root_item.subitem_count() > 0:  # return early if there are no items to run
-            return self
-
-        directory = self.data_directory()
-        os.makedirs(directory, exist_ok=True)
-
-        if len(os.listdir(directory)) > 0:  # the directory isn't empty
-            # ask the user if they are okay with writing to a non-empty directory
-            if not YesCancelDontShowDialog(
-                "Note",
-                "Data directory is not empty, proceed?",
-                sequence_paths.NON_EMPTY_DIRECTORY_WARNING_FILE,
-            ).run():
-                return self
-
-        # save the sequence settings automatically
-        self.view.to_json(os.path.join(directory, "autosave.json"))
+        if not model.root().subitem_count() > 0:  # do nothing if there are no items
+            return
+        # make the data directory
+        if not self.create_files(model, data_directory):
+            return
+        # create the `SequenceStep`s
+        try:
+            sequence_steps, step_item_map = self.create_sequence_steps(model)
+        except PluginError as e:
+            errors.log_error(e)
+            errors.show_error(
+                "Sequence Error",
+                "Unable to generate sequence steps, likely due to a faulty plugin. "
+                "See the error log for details.",
+            )
+            return
 
         thread = QThread(self)
         # TODO: change SequenceRunner to accept Path
@@ -359,6 +357,84 @@ class SequenceTreeWidget(Container):
         thread.start()
         return self
 
+    def create_files(self, model: SequenceModel, data_directory: Path) -> bool:
+        """Create the sequence's root data directory and generate a sequence autosave."""
+        # make the directory (does nothing if the directory exists)
+        os.makedirs(data_directory, exist_ok=True)
+        # check if the directory is empty
+        try:
+            empty = len(list(os.scandir(data_directory))) > 0
+        except OSError as e:
+            errors.log_error(e)
+            errors.show_error(
+                "Sequence Error",
+                "Unable to start the sequence because of an operating system error. "
+                "See the error log for details.",
+            )
+            return False
+        if not empty:
+            # ask the user if they are okay with writing to a non-empty directory
+            if not YesCancelDontShowDialog(
+                "Note",
+                "Data directory is not empty. Proceed?",
+                sequence_paths.NON_EMPTY_DIRECTORY_WARNING_FILE,
+            ).run():
+                return False
+        # try to generate an autosave of the sequence
+        if not model.to_json(data_directory.joinpath("autosave.json")):
+            return YesNoDialog(
+                "Minor Error",
+                "Failed to generate sequence autosave. "
+                "See the error log for details. Continue sequence?",
+            ).run()
+        return True
+
+    def create_sequence_steps(
+        self, model: SequenceModel
+    ) -> tuple[list[SequenceStep], dict[int, QModelIndex]]:
+        """
+        Create `SequenceStep`s from the items in **model**. Logs errors.
+
+        Returns
+        -------
+        A tuple of (the created steps, a mapping of memory addresses of sequence steps to the
+        `QModelIndex` of the corresponding model item).
+
+        Raises
+        ------
+        ValueError
+            The model returned `None` for a subitem. This indicates an error with the codebase and
+            is fatal.
+        PluginError
+            There was an error while creating a `SequenceStep`, which indicates a faulty plugin. The
+            sequence cannot start.
+        """
+        step_item_map: dict[int, QModelIndex] = {}
+
+        # helper function to create all substeps of an item by index
+        def create_substeps(index: QModelIndex) -> list[SequenceStep]:
+            sequence_steps: list[SequenceStep] = []
+            for i in range(model.rowCount(index)):
+                subindex = model.index(i, 0, index)
+                substeps = create_substeps(subindex)
+                subitem = model.get_item(subindex)
+                if subitem is None:  # this should never happen
+                    raise ValueError(
+                        "A subitem was `None` when it should have been a `SequenceItem`"
+                    )
+                try:
+                    sequence_step = subitem.create_sequence_step(substeps)
+                except Exception as e:
+                    errors.log_error(e)
+                    raise PluginError(f"Error while creating sequence step from item {subitem!r}")
+                # we can use the step's ID because steps are not added to/removed from the sequence
+                step_item_map[id(sequence_step)] = subindex
+                sequence_steps.append(sequence_step)
+            return sequence_steps
+
+        return (create_substeps(QModelIndex()), step_item_map)
+
+    # TODO: fix
     def connect_sequence_signals(self, runner: SequenceRunner, thread: QThread) -> Self:
         """Connect signals before starting the sequence."""
 

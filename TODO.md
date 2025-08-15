@@ -20,9 +20,6 @@
 
 ## The Sequence
 - Implement a "simultaneous" step that uses `asyncio` to run two things concurrently.
-    - To support this, all `run()` methods must be declared as `async`. Also, `wait()` must be `async` and it should call `asynchio.sleep(0)`.
-- Add a `wait_until()` method.
-    - Maybe use `asyncio.sleep(0)` instead.
 - Use exceptions to cancel and skip things.
     - Should we even support skipping?
 - Debate whether the pause button is still necessary.
@@ -57,12 +54,6 @@ You can use a custom `QPushButton` and `addButton(button, QMessageBox.ButtonRole
 
 ## Protocols
 - Make a `Protocol` class for devices. This will make your life easier.
-
-## Plugins
-- Load plugins from `pip` installed modules too.
-
-## Avoid Locks
-- See if you can use a build-in `Event` object to synchronize between `QThread`s.
 
 ### Avoid pyqtSignals(?)
 - See if it would be better to use `Queue`s instead of signals to send data across the thread boundary.

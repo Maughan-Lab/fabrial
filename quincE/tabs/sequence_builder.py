@@ -4,7 +4,6 @@ from typing import Iterable
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHBoxLayout, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
-from ..constants.paths.settings import sequence as sequence_paths
 from ..custom_widgets import BiggerButton, Container, HSeparator, Label
 from ..enums import SequenceStatus
 from ..sequence_builder import OptionsTreeWidget, SequenceTreeWidget
@@ -25,7 +24,7 @@ class SequenceBuilderTab(QWidget):
     ):
         QWidget.__init__(self)
         self.options_tree = OptionsTreeWidget.from_plugins(plugin_modules)
-        self.sequence_tree = SequenceTreeWidget.from_json(sequence_paths.SEQUENCE_AUTOSAVE_FILE)
+        self.sequence_tree = SequenceTreeWidget.from_autosave()
         self.visual_widget_container = visual_widget_container  # another tab
 
         self.create_widgets()

@@ -1,4 +1,3 @@
-import json
 from types import ModuleType
 from typing import Iterable, Self
 
@@ -14,24 +13,18 @@ from .tree_view import TreeView
 
 
 class OptionsTreeView(TreeView[OptionsModel]):
-    """Custom QTreeView containing the options for the sequence."""
+    """`TreeView` containing item options for the sequence."""
 
     @classmethod
     def from_plugins(cls, plugin_modules: Iterable[ModuleType]) -> Self:
         """Create from the application's available plugins."""
         view = cls(OptionsModel.from_plugins(plugin_modules))
-        if not view.init_view_state_from_json(sequence_paths.OPTIONS_STATE_AUTOSAVE_FILE):
-            view.expandAll()
+        view.init_view_state_from_json(sequence_paths.OPTIONS_STATE_FILE)
         return view
 
     def save_on_close(self):
         """Call this when the application closes to save the view state."""
-        try:
-            with open(sequence_paths.OPTIONS_STATE_AUTOSAVE_FILE, "w") as f:
-                # save the view state
-                json.dump(self.get_view_state(), f)
-        except Exception:
-            pass
+        self.save_view_state_to_json(sequence_paths.OPTIONS_STATE_FILE)
 
     def keyPressEvent(self, event: QKeyEvent | None):  # overridden
         if event is not None:

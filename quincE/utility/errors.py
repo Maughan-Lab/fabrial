@@ -67,3 +67,10 @@ def show_error_delayed(title: str, message: str):
     user.
     """
     events.delay_until_running(lambda: show_error(title, message))
+
+
+def log_error(exception: BaseException):
+    """Write the **exception**'s traceback to the error log."""
+    # TODO
+    # if writing the error log fails, show a dialog then exit
+    pass

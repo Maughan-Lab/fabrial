@@ -1,10 +1,8 @@
-from typing import Mapping, Self
+from typing import Iterable, Mapping, Self
 
 from PyQt6.QtGui import QIcon
 
-from quincE.classes import Process
-from quincE.sequence_builder.data_item import DataItem
-from quincE.utility.serde import Json
+from quincE import DataItem, Json, SequenceStep
 
 
 class MockDataItem(DataItem):
@@ -30,8 +28,8 @@ class MockDataItem(DataItem):
     def open_event(self, editable: bool):  # implementation
         raise NotImplementedError("This shouldn't have been tested")
 
-    def create_process(self) -> Process:
-        raise NotImplementedError("`create_process()` called on `MockDataItem`")
+    def create_sequence_step(self, substeps: Iterable[SequenceStep]) -> SequenceStep:
+        raise NotImplementedError("`create_sequence_step()` called on `MockDataItem`")
 
     # testing
     def __eq__(self, other: Self):  # type: ignore

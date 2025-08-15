@@ -5,7 +5,7 @@ from typing import Iterable, Mapping, Self
 
 from PyQt6.QtGui import QIcon
 
-from ...classes import Process
+from ...classes import SequenceStep
 from ...utility import images, serde
 from ...utility.serde import Json
 from ..data_item import DataItem
@@ -22,7 +22,7 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
     def __init__(self, parent: TreeItem | None, data_item: DataItem):
         self.parent_item = parent
         self.item = data_item
-        self.active = False
+        self.bold = False
         self.subitems: list[SequenceItem] = []
 
     @classmethod
@@ -93,23 +93,23 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
     def collapse_event(self):
         self.item.collapse_event()
 
-    def set_active(self, active: bool):
-        """Set whether the item is active."""
-        self.active = active
+    def set_bold(self, bold: bool):
+        """Set whether the item is bolded."""
+        self.bold = bold
 
-    def is_active(self) -> bool:
-        """Whether the item is currently being run."""
-        return self.active
+    def is_bold(self) -> bool:
+        """Whether the item is bolded."""
+        return self.bold
 
-    def create_process(self) -> Process:
-        """Create the process this item represents."""
-        return self.item.create_process()
+    def create_sequence_step(self, substeps: Iterable[SequenceStep]) -> SequenceStep:
+        """Create the `SequenceStep` this item represents."""
+        return self.item.create_sequence_step(substeps)
 
     # debugging
     def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__} {{ "
-            f"active: {self.is_active()!r}, "
+            f"bold: {self.is_bold()!r}, "
             f"item: {self.item!r}, "
             f"subitems: {self.subitems!r} }}"
         )
@@ -137,5 +137,5 @@ class TestDataItem(DataItem):
     def open_event(self, editable: bool):
         return False
 
-    def create_process(self):
+    def create_sequence_step(self, substeps: Iterable[SequenceStep]):
         raise NotImplementedError()

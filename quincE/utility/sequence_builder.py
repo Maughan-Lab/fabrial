@@ -4,8 +4,8 @@ from dataclasses import dataclass, field
 from types import ModuleType
 from typing import Iterable, MutableMapping
 
-from ..sequence_builder import DataItem
-from ..sequence_builder.tree_items import CategoryItem, SequenceItem, TreeItem
+from ..sequence_builder import CategoryItem, DataItem, SequenceItem, TreeItem
+from . import errors
 
 
 @dataclass
@@ -29,10 +29,9 @@ def items_from_plugins(
     plugin_modules: Iterable[ModuleType],
 ) -> tuple[list[CategoryItem], list[str], list[str]]:
     """
-    TODO: update docs
     Helper function for `OptionsModel.from_plugins()`.
 
-    Creates a list of `CategoryItem`s from a group of plugins.
+    Creates a list of `CategoryItem`s from a group of plugins. Logs errors.
 
     Returns
     -------
@@ -79,8 +78,7 @@ def items_from_plugins(
                 # create and append the `CategoryItem`
                 category_items.append(CategoryItem(None, category_name, items))
             except Exception as e:
-                # TODO: log error
-                e
+                errors.log_error(e)
                 failure_categories.append(category_name)
 
         return category_items
@@ -93,8 +91,7 @@ def items_from_plugins(
             plugin_categories: list[PluginCategory] = plugin_module.categories()
             parse_plugin_categories(plugin_categories, category_info_map)
         except Exception as e:
-            # TODO: log error
-            e
+            errors.log_error(e)
             failure_plugins.append(name)
 
     return (parse_into_items(category_info_map), failure_plugins, failure_categories)

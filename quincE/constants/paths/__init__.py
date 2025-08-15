@@ -1,6 +1,6 @@
 """File paths for the application."""
 
-from . import icons, sequence_builder, settings
+from . import descriptions, icons, settings
 from .base import ASSETS, PLUGINS
 
 FOLDERS_TO_CREATE = [

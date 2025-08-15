@@ -7,7 +7,7 @@ from typing import Protocol
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, TemplateNotFound, UndefinedError
 
 from ..constants.paths.process.filenames import METADATA_FILENAME
-from ..constants.paths.sequence_builder.descriptions import (
+from ..constants.paths.descriptions import (
     DATA_RECORDING_FILENAME,
     OVERVIEW_FILENAME,
     PARAMETERS_FILENAME,

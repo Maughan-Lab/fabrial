@@ -1,6 +1,7 @@
 import json
 import typing
-from typing import Any, Iterable, Mapping, Self, Sequence
+from os import PathLike
+from typing import Any, Iterable, Mapping, Sequence
 
 from PyQt6.QtCore import (
     QDataStream,
@@ -13,6 +14,7 @@ from PyQt6.QtCore import (
 )
 from PyQt6.QtWidgets import QApplication
 
+from ...utility import errors
 from ...utility.serde import Json
 from ..tree_items import MutableTreeItem, SequenceItem, TreeItem
 from .tree_model import JSON, TreeModel
@@ -36,20 +38,38 @@ class SequenceModel(TreeModel[SequenceItem]):
     def __init__(self, items: Iterable[SequenceItem]):
         TreeModel.__init__(self, "Sequence", items)
 
-    def init_from_jsonlike(self, items_as_json: Sequence[Mapping[str, Json]]) -> Self:
-        """Initialize the model's data from a JSON-like structure."""
-        # remove all items from the root
-        self.removeRows(0, self.root().subitem_count(), QModelIndex())
-        # deserialize the items
-        items = [
-            SequenceItem.from_dict(self.root(), item_as_json) for item_as_json in items_as_json
-        ]
-        self.insert_rows(0, QModelIndex(), items)
-        return self
+    def init_from_json(self, file: PathLike[str] | str) -> bool:
+        """
+        Initialize the items from a JSON file. Returns whether the operation succeeded. Logs errors.
+        """
+        try:
+            with open(file, "r") as f:
+                items_as_json: Sequence[Mapping[str, Json]] = json.load(f)
+            # remove all items from the root
+            self.removeRows(0, self.root().subitem_count(), QModelIndex())
+            # deserialize the items
+            items = [
+                SequenceItem.from_dict(self.root(), item_as_json) for item_as_json in items_as_json
+            ]
+            self.insert_rows(0, QModelIndex(), items)
+            return True
+        except Exception as e:
+            errors.log_error(e)
+            return False
 
-    def to_jsonlike(self) -> list[Json]:
-        """Convert the model's data to a JSON-like structure."""
-        return self.root().serialize()
+    def to_json(self, file: PathLike[str] | str) -> bool:
+        """
+        Save the item state to a JSON **file**. Returns whether the operation succeeded.
+        Logs errors.
+        """
+        try:
+            item_data = self.root().serialize()
+            with open(file, "w") as f:
+                json.dump(item_data, f)
+            return True
+        except Exception as e:
+            errors.log_error(e)
+            return False
 
     def data(self, index: QModelIndex, role: int | None = None) -> Any:  # implementation
         item = self.get_item(index)
@@ -60,7 +80,7 @@ class SequenceModel(TreeModel[SequenceItem]):
                 case Qt.ItemDataRole.FontRole:
                     font = QApplication.font()
                     # items that are running are shown in bold
-                    if item.is_active():
+                    if item.is_bold():
                         font.setBold(True)
                     return font
                 case Qt.ItemDataRole.DecorationRole:

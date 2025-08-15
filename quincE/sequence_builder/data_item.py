@@ -1,14 +1,13 @@
 from abc import abstractmethod
-from typing import Protocol, runtime_checkable
+from typing import Iterable, Protocol
 
 from PyQt6.QtGui import QIcon
 
-from ..classes import Process
+from ..classes import SequenceStep
 from ..utility.serde import Deserialize, Serialize
 from .item_widget import ItemWidget
 
 
-@runtime_checkable
 class DataItem(Deserialize, Serialize, Protocol):
     """An inner item used by a `TreeItem`."""
 
@@ -49,8 +48,19 @@ class DataItem(Deserialize, Serialize, Protocol):
 
     # sequence
     @abstractmethod
-    def create_process(self) -> Process:
-        """Create the `Process` this item represents."""
+    def create_sequence_step(self, substeps: Iterable[SequenceStep]) -> SequenceStep:
+        """
+        Create the `SequenceStep` this item represents.
+
+        Parameters
+        ----------
+        substeps
+            The `SequenceStep`s created from this item's subitems.
+
+        Returns
+        -------
+        This item's `SequenceStep`.
+        """
         ...
 
 
