@@ -349,6 +349,7 @@ class SequenceRunner:
             )
             return
 
+        # TODO: fix
         thread = QThread(self)
         # TODO: change SequenceRunner to accept Path
         runner = SequenceRunner(str(directory), root_item)

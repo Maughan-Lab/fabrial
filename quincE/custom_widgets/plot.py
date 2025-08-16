@@ -1,4 +1,3 @@
-import typing
 from typing import Literal
 
 import pyqtgraph as pg
@@ -68,19 +67,23 @@ class PlotItem(pg.PlotItem):
         self.set_title(None)
         self.setLogMode(False, False)
 
+    def line_count(self) -> int:
+        """Get the number of lines on this item."""
+        return len(self.lines)
+
     def plot(
         self,
         x_data: list[float],
         y_data: list[float],
         legend_label: str,
-        line_color: QColor | None,
+        line_color: str | None,
         line_width: float | None,
         symbol: str,
-        symbol_color: QColor,
+        symbol_color: str,
         symbol_size: int,
     ) -> LineData:
         """
-        Plot a new line on top of the current lines.
+        Plot a new line on top of the current lines. Stores the plotted item internally.
 
         Parameters
         ----------
@@ -160,12 +163,11 @@ class PlotWidget(Widget):
         layout.addWidget(self.view)
 
         autoscale_button = Button("Autoscale", self.autoscale)
+        Shortcut(self, "Ctrl+S", self.save_as_image)
         save_button = Button("Save", self.save_as_image)
         layout_util.add_to_layout(
             layout_util.add_sublayout(layout, QHBoxLayout()), autoscale_button, save_button
         )
-
-        Shortcut(self, "Ctrl+S", self.save_as_image)
 
     def save_as_image(self):
         file, _ = QFileDialog.getSaveFileName(

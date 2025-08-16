@@ -10,6 +10,8 @@ from ..sequence_builder import OptionsTreeWidget, SequenceTreeWidget
 from ..utility import layout as layout_util
 from .sequence_display import SequenceDisplayTab
 
+# TODO: start the sequence from here (if it makes sense)
+
 
 class SequenceBuilderTab(QWidget):
     """
@@ -82,9 +84,6 @@ class SequenceBuilderTab(QWidget):
 
     def connect_signals(self):
         self.sequence_tree.directoryChanged.connect(self.start_button.setEnabled)
-        self.sequence_tree.graphSignalsChanged.connect(  # type: ignore
-            self.visual_widget_container.connect_graph_signals, Qt.ConnectionType.DirectConnection
-        )
         self.sequence_tree.sequenceStatusChanged.connect(self.handle_status_change)
 
     def handle_status_change(self, status: SequenceStatus):

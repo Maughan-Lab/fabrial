@@ -23,8 +23,9 @@ def exception_handler(
         )
         show_error(  # notify the user
             "Fatal Application Error",
-            f"{APP_NAME} encountered a fatal error. See the error log for details.\n\n"
-            "The application will now exit.",
+            f"{APP_NAME} encountered a fatal error. "
+            "Please save the contents of the error log and report the issue.\n\n"
+            f"{APP_NAME} will now exit.",
         )
     sys.exit()  # exit
 

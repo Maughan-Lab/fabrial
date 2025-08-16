@@ -30,7 +30,7 @@ class SecondaryWindow(QMainWindow):
         QMainWindow.__init__(self, parent)
         self.setWindowTitle(title)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        self.setCentralWidget(central_widget)
+        self.setCentralWidget(central_widget)  # takes ownership
         if central_widget is not None:
             central_widget.setVisible(True)
 

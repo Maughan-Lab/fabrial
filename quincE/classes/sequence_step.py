@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable, Protocol
 
-from ..classes import FatalSequenceError
+from ..classes import FatalSequenceError, PlotHandle, PlotSettings
 from ..constants.paths.sequence import METADATA_FILENAME
 
 
@@ -187,6 +187,28 @@ class StepRunner:
             return await self.prompt_handle_error("Failed to record metadata for the current step.")
         return True
 
+    def create_plot(
+        self, step: SequenceStep, tab_text: str, plot_settings: PlotSettings
+    ) -> PlotHandle:
+        """
+        Create a new plot on the visuals tab and return a handle to it.
+
+        Parameters
+        ----------
+        step
+            The step creating the plot (generally just pass `self`).
+        tab_text
+            The text of the plot's tab.
+        plot_settings
+            The `PlotSettings` to configure the new plot with.
+
+        Returns
+        -------
+        A thread-safe handle for the plot that can be used to modify it from your `SequenceStep`.
+        """
+        # TODO
+        pass
+
     # TODO: cancellation
     # TODO: status
 
@@ -209,6 +231,11 @@ class SequenceStep(Protocol):
         might be re-used, so it must be resettable. An easy implementation is to call `__init__()`
         to reinitialize with the original parameters.
         """
+        ...
+
+    @abstractmethod
+    def name(self) -> str:
+        """A name used to represent this step. For example, "Hold" or "Increment Temperature"."""
         ...
 
     @abstractmethod
