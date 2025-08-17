@@ -40,7 +40,7 @@ def load_local_plugins() -> tuple[dict[str, ModuleType], list[str]]:
     return load_plugins_from_module(plugins)
 
 
-def load_installed_plugins() -> tuple[dict[str, ModuleType], list[str]]:
+def load_global_plugins() -> tuple[dict[str, ModuleType], list[str]]:
     """
     Load plugins installed in the current Python environment (i.e. plugins installed with `pip`).
 
@@ -55,7 +55,7 @@ def load_installed_plugins() -> tuple[dict[str, ModuleType], list[str]]:
         try:
             plugin_modules[name] = entry_point.load()
         except Exception:
-            logging.getLogger(__name__).exception(f"Failed to load installed plugin {name}")
+            logging.getLogger(__name__).exception(f"Failed to load global plugin {name}")
             failure_plugins.append(name)
 
     return (plugin_modules, failure_plugins)
@@ -67,19 +67,19 @@ def load_all_plugins() -> tuple[list[ModuleType], list[str], list[str]]:
 
     Returns
     -------
-    A tuple of (the successfully loaded plugin modules, the installed modules that failed, the
-    local modules that failed).
+    A tuple of (the successfully loaded plugin modules, the global plugins that failed, the local
+    plugins that failed).
 
     Notes
     -----
-    If any duplicate plugin names are found, the environment-installed plugin is used.
+    If any duplicate plugin names are found, the environment-installed (global) plugin is used.
     """
     local_plugin_modules, local_failure_plugins = load_local_plugins()
-    installed_plugin_modules, installed_failure_plugins = load_installed_plugins()
+    global_plugin_modules, global_failure_plugins = load_global_plugins()
 
     plugin_modules = local_plugin_modules
     # fuse the plugin lists. If there are any duplicate plugin names, environment-installed plugin
     # is used
-    plugin_modules.update(installed_plugin_modules)
+    plugin_modules.update(global_plugin_modules)
 
-    return (list(plugin_modules.values()), installed_failure_plugins, local_failure_plugins)
+    return (list(plugin_modules.values()), global_failure_plugins, local_failure_plugins)

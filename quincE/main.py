@@ -45,11 +45,11 @@ def fix_windows_sucking():
 
 def load_plugins() -> list[ModuleType]:
     """Load all plugins."""
-    plugin_modules, installed_failures, local_failures = plugins.load_all_plugins()
-    if len(installed_failures) > 0 or len(local_failures) > 0:
+    plugin_modules, global_failures, local_failures = plugins.load_all_plugins()
+    if len(global_failures) > 0 or len(local_failures) > 0:
         message = ""
-        if len(installed_failures) > 0:
-            message += f"Failed to load installed plugins:\n\n{", ".join(installed_failures)}\n\n"
+        if len(global_failures) > 0:
+            message += f"Failed to load global plugins:\n\n{", ".join(global_failures)}\n\n"
         if len(local_failures) > 0:
             message += f"Failed to load local plugins:\n\n{", ".join(local_failures)}\n\n"
         message += "See the error log for details."

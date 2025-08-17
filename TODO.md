@@ -56,6 +56,8 @@ You can use a custom `QPushButton` and `addButton(button, QMessageBox.ButtonRole
 - A lot of application-level settings will need to be removed (looking at you oven settings). Most of these can be put into sequence items.
 - You should use TOML files instead of JSON files for default settings.
 - Add an optional entry point, `settings_widget() -> QWidget` for plugins. Add the result to the settings menu as a new tab.
+- You should have a general `Plugins` tab.
+    - It will have a section for `Global Plugins` and `Local Plugins`. The user can enable/disable items for a plugin. In the `Local Plugins` section, they can also remove the plugin (which just deletes the folder).
 
 ## Documentation
 - It needs to be easier for newbies to add items to the sequence. You need a fully documented walkthrough. You should show the user how to implement a custom external item , step by step, explaining everything. You'll need links to outside sources to explain things like `PyQt` and `asynchio`, but you also need to be hand-wavy enough that the user doesn't get stuck in the details and can just follow what you are telling them to do. You can assume some `PyQt` experience.
