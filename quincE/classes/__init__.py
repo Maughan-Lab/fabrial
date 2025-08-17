@@ -1,6 +1,6 @@
 from .actions import Action, Shortcut
 from .exceptions import FatalSequenceError, PluginError
-from .lock import DataMutex
+from .lock import DataLock, DataMutex
 from .metaclasses import QABC, ABCQObjectMeta, QABCMeta, QProtocol, QProtocolMeta
 from .plotting import (
     LineData,

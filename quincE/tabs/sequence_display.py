@@ -4,7 +4,7 @@ from os import PathLike
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QTabWidget
 
-from ..classes import LineIndex, LineSettings, PlotIndex, PlotSettings, Shortcut
+from ..classes import DataLock, LineIndex, LineSettings, PlotIndex, PlotSettings, Shortcut
 from ..custom_widgets import Button, PlotWidget
 from ..secondary_window import SecondaryWindow
 
@@ -40,8 +40,13 @@ class SequenceDisplayTab(QTabWidget):
         return self.sequence_step_map[plot_index.step_address][1][plot_index.plot_number]
 
     def add_plot(
-        self, step_address: int, step_name: str, tab_text: str, plot_settings: PlotSettings
-    ) -> PlotIndex:
+        self,
+        step_address: int,
+        step_name: str,
+        tab_text: str,
+        plot_settings: PlotSettings,
+        receiver: DataLock[PlotIndex | None],
+    ):
         """
         Create a new tab for the step at **step_address** (if there isn't one already), then create
         a plot in that tab. Returns a `PlotIndex` to refer to the new plot later.
@@ -71,7 +76,7 @@ class SequenceDisplayTab(QTabWidget):
         # TODO: find a cool icon for all the plot tabs
         step_tab_widget.addTab(plot_widget, tab_text)
 
-        return PlotIndex(step_address, plot_number)
+        receiver.set(PlotIndex(step_address, plot_number))  # send the index to the receiver
 
     def remove_plot(self, plot_index: PlotIndex):
         """Remove and delete the plot at **plot_index**."""
@@ -79,11 +84,10 @@ class SequenceDisplayTab(QTabWidget):
         plot_widget.setParent(None)
         plot_widget.deleteLater()
 
-    def add_line(self, plot_index: PlotIndex, line_settings: LineSettings) -> LineIndex:
-        """
-        Add a new line to the plot at **plot_index** configured using **line_settings**. Returns a
-        `LineIndex` to refer to the new line later.
-        """
+    def add_line(self, plot_index: PlotIndex, line_settings: LineSettings):
+        """Add a new line to the plot at **plot_index** configured using **line_settings**."""
+        # TODO: should this also use a receiver?
+
         # create a new empty line
         plot_item = self.get_plot(plot_index).view.plot_item
         # we can use the line count as an index because you can't remove lines
@@ -132,7 +136,7 @@ class SequenceDisplayTab(QTabWidget):
         self.popped_graphs.clear()
 
     def pop_graph(self):
-        """Pop the graph into a secondary window."""
+        """Pop the current graph into a secondary window."""
         # this cast is safe because we only ever add `QTabWidget`s to this widget
         step_tab_widget = typing.cast(QTabWidget, self.currentWidget())
         if step_tab_widget is not None:

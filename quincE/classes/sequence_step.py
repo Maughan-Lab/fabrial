@@ -1,28 +1,177 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import json
 import logging
 import os
 import time
 from abc import abstractmethod
 from asyncio import CancelledError
+from collections import deque
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Iterable, Protocol
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Protocol
 
-from ..classes import FatalSequenceError, PlotHandle, PlotSettings
+from ..classes import FatalSequenceError, PlotHandle, PlotIndex, PlotSettings
 from ..constants.paths.sequence import METADATA_FILENAME
+
+if TYPE_CHECKING:
+    from ..tabs import SequenceDisplayTab
+
+
+# don't sort
+import asyncio
+from asyncio import CancelledError, Task, TaskGroup
+from enum import Enum, auto
+from queue import Empty, Queue
+
+from PyQt6.QtCore import QThread, pyqtSignal
+
+from ..classes import DataLock
+
+
+class SequenceStatus(Enum):
+    """Statuses for the sequence."""
+
+    Active = auto()
+    Paused = auto()
+    Completed = auto()
+    Cancelled = auto()
+    FatalError = auto()
+
+
+class SequenceCommand(Enum):
+    """Commands that can be send to the sequence thread."""
+
+    Pause = auto()
+    Unpause = auto()
+    Cancel = auto()
+
+
+class SequenceThread(QThread):
+    """A `QThread` where the sequence runs."""
+
+    statusChanged = pyqtSignal(SequenceStatus)
+    promptRequested = pyqtSignal(tuple)  # ((title, message, options), response receiver)
+    # ((step address, tab name, plot settings), index receiver)
+    newPlotRequested = pyqtSignal(tuple)
+
+    # overridden
+    def __init__(
+        self,
+        steps: Iterable[SequenceStep],
+        data_directory: Path,
+        command_queue: Queue[SequenceCommand],
+        prompt_response: DataLock[int | None],
+        plot_index: DataLock[PlotIndex | None],
+    ):
+        QThread.__init__(self)
+        self.steps = steps
+        self.data_directory = data_directory
+        self.command_queue = command_queue
+        self.prompt_response = prompt_response
+        self.plot_index = plot_index
+
+    def run(self):  # overridden
+        try:
+            self.statusChanged.emit(SequenceStatus.Active)
+            runner = StepRunner()
+            cancelled = asyncio.run(self.run_actual(runner))
+            self.statusChanged.emit(
+                SequenceStatus.Cancelled if cancelled else SequenceStatus.Completed
+            )
+        except (FatalSequenceError, Exception):
+            logging.getLogger(__name__).exception("Sequence raised a fatal exception")
+            self.statusChanged.emit(SequenceStatus.FatalError)
+
+    async def run_actual(self, runner: StepRunner) -> bool:
+        """
+        The actual run function (required so we can do `asyncio.run()`). Returns whether the
+        sequence ended normally. This can raise exceptions.
+        """
+        async with TaskGroup() as task_group:
+            sequence_task = task_group.create_task(
+                runner.run_steps(self.steps, self.data_directory)
+            )
+            monitor_task = task_group.create_task(self.monitor(runner))
+            # if either task ends, cancel the other
+            monitor_task.add_done_callback(lambda _: sequence_task.cancel())
+            sequence_task.add_done_callback(lambda _: monitor_task.cancel())
+        return not sequence_task.cancelled()
+
+    async def monitor(self, runner: StepRunner) -> None:
+        """Monitor for messages and commands."""
+        while True:
+            self.check_commands()
+            self.check_runner(runner)
+            await asyncio.sleep(0)
+
+    def check_commands(self):
+        """Check for commands and process them."""
+        try:
+            while True:
+                command = self.command_queue.get_nowait()
+                match command:
+                    case SequenceCommand.Pause:
+                        self.pause()
+                    case SequenceCommand.Cancel:
+                        raise CancelledError
+                    case SequenceCommand.Unpause:  # this should never run
+                        raise ValueError(
+                            "Received `SequenceStep.Unpause`, which should be impossible"
+                        )
+        except Empty:
+            pass
+
+    def pause(self):
+        """Pause the sequence."""
+        while True:
+            try:
+                command = self.command_queue.get_nowait()
+                match command:
+                    case SequenceCommand.Cancel:
+                        raise CancelledError
+                    case SequenceCommand.Unpause:
+                        return
+                    case SequenceCommand.Pause:  # ignore additional pauses
+                        pass
+            except Empty:
+                pass
+            time.sleep(0)  # this is not `asyncio.sleep()`
+
+    def check_runner(self, runner: StepRunner):
+        """Check the `StepRunner` for any messages to pass on."""
+        # TODO: change terminology "response" to "receiver"
+        
+        # forward any prompt requests
+        if runner.prompt_request is not None:
+            self.promptRequested.emit((runner.prompt_request, runner.prompt_response))
+        # forward any plot creation requests
+        if runner.plot_creation_request is not None:
+            self.newPlotRequested.emit(
+                (runner.plot_creation_request, runner.plot_creation_response)
+            )
+        # TODO: runner.plot_commands
 
 
 class StepRunner:
-    """Runs `SequenceStep`s and provides utilities ."""
+    """Runs `SequenceStep`s and provides utility functions that steps can call."""
 
     def __init__(self):
-        pass
+        # send and receive messages
+        self.prompt_request: tuple[str, str, dict[int, str]] | None = None
+        self.prompt_response: DataLock[int | None] = DataLock(None)
+
+        # used to signal that a plot should be created
+        self.plot_creation_request: tuple[int, str, PlotSettings] | None = None
+        # used to receiver the plot index of a newly created plot
+        self.plot_creation_response: DataLock[PlotIndex | None] = DataLock(None)
+        # holds commands to send the the visuals tab
+        self.plot_commands: deque[Callable[[SequenceDisplayTab], None]] = deque()
 
     async def run_steps(self, steps: Iterable[SequenceStep], data_directory: Path):
-        """Run the provided **steps** sequentially."""
+        """Run the provided **steps** sequentially. This can be called by `SequenceStep`s."""
         for i, step in enumerate(steps):
             # create the data directory first
             step_data_directory = await self.make_step_directory(data_directory, i, step)
@@ -60,7 +209,9 @@ class StepRunner:
             error_occurred = True
             logging.getLogger(__name__).exception("Sequence step error")
             if not (
-                await self.prompt_handle_error("The current step encountered an error.")
+                await self.prompt_handle_error(
+                    step, f"The current step, {step.name()}, encountered an error."
+                )
                 and await self.record_metadata(
                     step_data_directory, step, start_datetime, cancelled, error_occurred
                 )
@@ -85,12 +236,33 @@ class StepRunner:
             os.makedirs(step_data_directory, exist_ok=True)
         except OSError:
             if not await self.prompt_handle_error(
-                f"Failed to create data directory {step_data_directory}"
+                step, f"Failed to create data directory {step_data_directory}"
             ):
                 raise CancelledError
         return step_data_directory
 
-    async def prompt_handle_error(self, error_message: str) -> bool:
+    async def prompt_user(self, step: SequenceStep, message: str, options: dict[int, str]) -> int:
+        """
+        Show a popup prompt to the user and wait for a response. This can be called by
+        `SequenceStep`s.
+
+        Parameters
+        ----------
+        step
+            The `SequenceStep` requesting the prompt.
+        message
+            The prompt's text.
+        options
+            A mapping of values to options in the prompt. For example,
+            `{1: "First Option", 2: "Second Option}` will show a prompt with options "First Option"
+            and "Second Option". If the user selects "First Option", this function will return `1`.
+            If the user selects "Second Option", this function will return `2`.
+        """
+        return await self.send_prompt_and_wait(
+            f"Sequence: Message From {step.name()}", message, options
+        )
+
+    async def prompt_handle_error(self, step: SequenceStep, error_message: str) -> bool:
         """
         Ask the user how to handle a sequence step encountering an error.
 
@@ -103,8 +275,9 @@ class StepRunner:
         FatalSequenceError
             An invalid response was sent (this indicates an issue with the core codebase).
         """
-        response = await self.prompt_user(
-            f"{error_message}\nSkip current step or cancel the sequence?",
+        response = await self.send_prompt_and_wait(
+            f"Sequence: Error in {step.name()}",
+            f"{error_message}\n\nnSkip current step or cancel the sequence?",
             {0: "Skip Current", 1: "Cancel"},
         )
         match response:
@@ -115,36 +288,17 @@ class StepRunner:
             case _:  # this should never run
                 raise FatalSequenceError(f"Reponse was {response} when it should have been 0 or 1")
 
-    async def prompt_user(self, message: str, options: dict[int, str]) -> int:
-        """
-        Show a popup prompt to the user and wait for a response.
-
-        Parameters
-        ----------
-        message
-            The prompt's text.
-        options
-            A mapping of values to options in the prompt. For example,
-            `{1: "First Option", 2: "Second Option}` will show a prompt with options "First Option"
-            and "Second Option". If the user selects "First Option", this function will return `1`.
-            If the user selects "Second Option", this function will return `2`.
-        """
-        # TODO
-        return 0
-
-    # TODO: should this function kill the sequence step? You could rename it `exit_with_error()` in
-    # that case
-    def notify_error(self, error_message: str):
-        """
-        Notify the user that can error has occurred. In general, the sequence step should exit after
-        calling this function.
-        """
-        # TODO
-        pass
-
-    def exit_with_error(self, error_message: str):
-        """Kill the entire sequence and notify the user that a fatal error occurred."""
-        pass
+    async def send_prompt_and_wait(self, title: str, message: str, options: dict[int, str]) -> int:
+        """Private helper function to send a message the the user and wait for a response."""
+        self.prompt_request = (title, message, options)  # request a prompt
+        # wait for the response
+        while True:
+            await asyncio.sleep(0)
+            response = self.prompt_response.get()
+            if response is not None:
+                self.prompt_request = None
+                self.prompt_response.set(None)
+                return response
 
     async def record_metadata(
         self,
@@ -184,14 +338,17 @@ class StepRunner:
                 json.dump(data, f)
         except Exception:
             logging.getLogger(__name__).exception("Failed to write metadata")
-            return await self.prompt_handle_error("Failed to record metadata for the current step.")
+            return await self.prompt_handle_error(
+                step, "Failed to record metadata for the current step."
+            )
         return True
 
-    def create_plot(
+    async def create_plot(
         self, step: SequenceStep, tab_text: str, plot_settings: PlotSettings
     ) -> PlotHandle:
         """
-        Create a new plot on the visuals tab and return a handle to it.
+        Create a new plot on the visuals tab and return a handle to it. This waits until the plot
+        is created. This can be called by `SequenceStep`s.
 
         Parameters
         ----------
@@ -206,11 +363,23 @@ class StepRunner:
         -------
         A thread-safe handle for the plot that can be used to modify it from your `SequenceStep`.
         """
-        # TODO
-        pass
+        # notify that we want to create a new plot
+        self.plot_creation_request = (id(step), tab_text, plot_settings)
+        # wait for a response
+        while True:
+            await asyncio.sleep(0)
+            plot_index = self.plot_creation_response.get()
+            if plot_index is not None:
+                self.plot_creation_request = None
+                self.plot_creation_response.set(None)
+                return PlotHandle(self, plot_index)  # return the plot handle
 
-    # TODO: cancellation
-    # TODO: status
+    def submit_plot_command(self, command: Callable[[SequenceDisplayTab], None]):
+        """
+        Submit a **command** to the plot command queue. This is not for direct use by
+        `SequenceStep`s.
+        """
+        self.plot_commands.appendleft(command)
 
 
 class SequenceStep(Protocol):
@@ -227,9 +396,9 @@ class SequenceStep(Protocol):
     @abstractmethod
     def reset(self):
         """
-        Reset this step to its original state (i.e. before `run()` was called). This sequence step
-        might be re-used, so it must be resettable. An easy implementation is to call `__init__()`
-        to reinitialize with the original parameters.
+        Reset this step to its original state (i.e. before `run()` was called). Sequence steps might
+        be re-used, so they must be resettable. An easy implementation is to call `__init__()` to
+        reinitialize with the original parameters.
         """
         ...
 
@@ -255,7 +424,7 @@ class SequenceStep(Protocol):
         await asyncio.sleep(delay)
 
     async def sleep_until(self, when: float):
-        """Sleep until **when**, which is a number as returned by `time.time()`."""
+        """Sleep until **when**, which is a `float` as returned by `time.time()`."""
         await self.sleep(0)
         while time.time() < when:
             await self.sleep(0)

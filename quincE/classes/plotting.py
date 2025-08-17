@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 from os import PathLike
 from typing import TYPE_CHECKING
@@ -44,6 +45,9 @@ class PlotSettings:
     x_label: str
     y_label: str
 
+    def __copy__(self) -> PlotSettings:
+        return PlotSettings(self.title, self.x_label, self.y_label)
+
 
 @dataclass
 class LineSettings:
@@ -74,6 +78,16 @@ class LineSettings:
     symbol_color: str
     symbol_size: int
 
+    def __copy__(self) -> LineSettings:
+        return LineSettings(
+            self.legend_label,
+            self.line_color,
+            self.line_width,
+            self.symbol,
+            self.symbol_color,
+            self.symbol_size,
+        )
+
 
 @dataclass
 class PlotIndex:
@@ -90,6 +104,9 @@ class PlotIndex:
 
     step_address: int
     plot_number: int
+
+    def __copy__(self) -> PlotIndex:
+        return PlotIndex(self.step_address, self.plot_number)
 
 
 @dataclass
@@ -108,6 +125,9 @@ class LineIndex:
     plot_index: PlotIndex
     line_number: int
 
+    def __copy__(self) -> LineIndex:
+        return LineIndex(copy.copy(self.plot_index), self.line_number)
+
 
 class PlotHandle:
     """
@@ -124,32 +144,45 @@ class PlotHandle:
     def __init__(self, runner: StepRunner, plot_index: PlotIndex):
         self.runner = runner
         self.plot_index = plot_index
+        self.line_count = 0
 
     def clear_lines(self):
         """Clear all lines from the plot. This does not affect the labels."""
-        # TODO (make sure it adheres to the docstring)
-        pass
+        self.runner.submit_plot_command(
+            lambda plot_tab: plot_tab.clear_lines(copy.copy(self.plot_index))
+        )
 
     def set_log_scale(self, x_log: bool | None, y_log: bool | None):
         """
         Set whether the x- and/or y-axis use a logarithmic scale. A value of `None` for **x_log** or
         **y_log** will leave the corresponding axis unchanged.
         """
-        # TODO
-        pass
+        self.runner.submit_plot_command(
+            lambda plot_tab: plot_tab.set_log_scale(copy.copy(self.plot_index), x_log, y_log)
+        )
 
     def save_plot(self, file: PathLike[str] | str):
         """Save the plot to **file**."""
-        # TODO: figure out if failure to save the file is fatal, silently ignored, or shown to the
-        # user
-        pass
+        self.runner.submit_plot_command(
+            lambda plot_tab: plot_tab.save_plot(copy.copy(self.plot_index), file)
+        )
 
     def add_line(self, line_settings: LineSettings) -> LineHandle:
         """Add an empty line to the plot."""
-        line_number = ...
+        line_index = LineIndex(self.plot_index, self.line_count)
+        self.line_count += 1  # adding a new line increments the count
+        # we make copies of the plot index and line settings because sending the originals is not
+        # thread-safe
+        self.runner.submit_plot_command(
+            lambda plot_tab: plot_tab.add_line(copy.copy(self.plot_index), copy.copy(line_settings))
+        )
+        return LineHandle(self, line_index)
 
-        # TODO: do some magic to get the number
-        return LineHandle(self, LineIndex(self.plot_index, line_number))
+    def __del__(self):
+        # remove the plot from the visuals tab when this handle goes out of scope
+        self.runner.submit_plot_command(
+            lambda plot_tab: plot_tab.remove_plot(copy.copy(self.plot_index))
+        )
 
 
 class LineHandle:
@@ -170,5 +203,6 @@ class LineHandle:
 
     def add_point(self, x: float, y: float):
         """Add a point to the line."""
-        # TODO
-        pass
+        self.parent.runner.submit_plot_command(
+            lambda plot_tab: plot_tab.add_point(copy.copy(self.line_index), x, y)
+        )
