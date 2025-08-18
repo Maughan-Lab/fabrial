@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import asyncio
 import copy
 from dataclasses import dataclass
 from os import PathLike
 from typing import TYPE_CHECKING
 
 from pyqtgraph import PlotDataItem
+
+from .lock import DataLock
 
 if TYPE_CHECKING:
     from .sequence_step import StepRunner
@@ -144,7 +147,6 @@ class PlotHandle:
     def __init__(self, runner: StepRunner, plot_index: PlotIndex):
         self.runner = runner
         self.plot_index = plot_index
-        self.line_count = 0
 
     def clear_lines(self):
         """Clear all lines from the plot. This does not affect the labels."""
@@ -167,16 +169,20 @@ class PlotHandle:
             lambda plot_tab: plot_tab.save_plot(copy.copy(self.plot_index), file)
         )
 
-    def add_line(self, line_settings: LineSettings) -> LineHandle:
+    async def add_line(self, line_settings: LineSettings) -> LineHandle:
         """Add an empty line to the plot."""
-        line_index = LineIndex(self.plot_index, self.line_count)
-        self.line_count += 1  # adding a new line increments the count
+        receiver: DataLock[LineIndex | None] = DataLock(None)
         # we make copies of the plot index and line settings because sending the originals is not
         # thread-safe
         self.runner.submit_plot_command(
-            lambda plot_tab: plot_tab.add_line(copy.copy(self.plot_index), copy.copy(line_settings))
+            lambda plot_tab: plot_tab.add_line(
+                copy.copy(self.plot_index), copy.copy(line_settings), receiver
+            )
         )
-        return LineHandle(self, line_index)
+        while True:
+            await asyncio.sleep(0)
+            if (line_index := receiver.get()) is not None:
+                return LineHandle(self, line_index)
 
     def __del__(self):
         # remove the plot from the visuals tab when this handle goes out of scope

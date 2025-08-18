@@ -49,7 +49,8 @@ class SequenceDisplayTab(QTabWidget):
     ):
         """
         Create a new tab for the step at **step_address** (if there isn't one already), then create
-        a plot in that tab. Returns a `PlotIndex` to refer to the new plot later.
+        a plot in that tab. Sends a `PlotIndex` to the **receiver** that can be used to index the
+        new plot later.
         """
         # get the plots map if it exists, otherwise create and add it
         try:
@@ -84,10 +85,16 @@ class SequenceDisplayTab(QTabWidget):
         plot_widget.setParent(None)
         plot_widget.deleteLater()
 
-    def add_line(self, plot_index: PlotIndex, line_settings: LineSettings):
-        """Add a new line to the plot at **plot_index** configured using **line_settings**."""
-        # TODO: should this also use a receiver?
-
+    def add_line(
+        self,
+        plot_index: PlotIndex,
+        line_settings: LineSettings,
+        receiver: DataLock[LineIndex | None],
+    ):
+        """
+        Add a new line to the plot at **plot_index** configured using **line_settings**. Sends a
+        `LineIndex` to the **receiver** that can be used to index the new line later.
+        """
         # create a new empty line
         plot_item = self.get_plot(plot_index).view.plot_item
         # we can use the line count as an index because you can't remove lines
@@ -102,7 +109,7 @@ class SequenceDisplayTab(QTabWidget):
             line_settings.symbol_color,
             line_settings.symbol_size,
         )
-        return LineIndex(plot_index, line_number)
+        receiver.set(LineIndex(plot_index, line_number))  # send the index to the receiver
 
     def add_point(self, line_index: LineIndex, x: float, y: float):
         """Add a point to the line at **line_index**."""

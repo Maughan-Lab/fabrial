@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import copy
 import json
 import logging
 import os
@@ -22,6 +21,7 @@ if TYPE_CHECKING:
 
 # don't sort
 import asyncio
+import copy
 from asyncio import CancelledError, Task, TaskGroup
 from enum import Enum, auto
 from queue import Empty, Queue
@@ -53,9 +53,10 @@ class SequenceThread(QThread):
     """A `QThread` where the sequence runs."""
 
     statusChanged = pyqtSignal(SequenceStatus)
-    promptRequested = pyqtSignal(tuple)  # ((title, message, options), response receiver)
-    # ((step address, tab name, plot settings), index receiver)
-    newPlotRequested = pyqtSignal(tuple)
+    # title, message, options, response receiver
+    promptRequested = pyqtSignal(str, str, dict, DataLock)
+    plotCommandRequested = pyqtSignal(object)  # the plot command (a function)
+    stepStateChanged = pyqtSignal(int, bool)  # step address, whether the step is being run
 
     # overridden
     def __init__(
@@ -63,15 +64,11 @@ class SequenceThread(QThread):
         steps: Iterable[SequenceStep],
         data_directory: Path,
         command_queue: Queue[SequenceCommand],
-        prompt_response: DataLock[int | None],
-        plot_index: DataLock[PlotIndex | None],
     ):
         QThread.__init__(self)
         self.steps = steps
         self.data_directory = data_directory
         self.command_queue = command_queue
-        self.prompt_response = prompt_response
-        self.plot_index = plot_index
 
     def run(self):  # overridden
         try:
@@ -142,42 +139,40 @@ class SequenceThread(QThread):
 
     def check_runner(self, runner: StepRunner):
         """Check the `StepRunner` for any messages to pass on."""
-        # TODO: change terminology "response" to "receiver"
-        
         # forward any prompt requests
-        if runner.prompt_request is not None:
-            self.promptRequested.emit((runner.prompt_request, runner.prompt_response))
-        # forward any plot creation requests
-        if runner.plot_creation_request is not None:
-            self.newPlotRequested.emit(
-                (runner.plot_creation_request, runner.plot_creation_response)
-            )
-        # TODO: runner.plot_commands
+        for _ in range(len(runner.prompt_requests)):
+            self.promptRequested.emit(*runner.prompt_requests.pop())
+        # forward any plot commands
+        for _ in range(len(runner.plot_commands)):
+            self.plotCommandRequested.emit(runner.plot_commands.pop())
+        # notify of any steps starting or stopping
+        for _ in range(len(runner.step_info)):
+            self.stepStateChanged.emit(*runner.step_info.pop())
 
 
 class StepRunner:
     """Runs `SequenceStep`s and provides utility functions that steps can call."""
 
     def __init__(self):
-        # send and receive messages
-        self.prompt_request: tuple[str, str, dict[int, str]] | None = None
-        self.prompt_response: DataLock[int | None] = DataLock(None)
-
-        # used to signal that a plot should be created
-        self.plot_creation_request: tuple[int, str, PlotSettings] | None = None
-        # used to receiver the plot index of a newly created plot
-        self.plot_creation_response: DataLock[PlotIndex | None] = DataLock(None)
+        # send prompts to the user
+        self.prompt_requests: deque[tuple[str, str, dict[int, str], DataLock[int | None]]] = deque()
         # holds commands to send the the visuals tab
         self.plot_commands: deque[Callable[[SequenceDisplayTab], None]] = deque()
+        # holds information about steps starting and finishing
+        self.step_info: deque[tuple[int, bool]] = deque()
 
     async def run_steps(self, steps: Iterable[SequenceStep], data_directory: Path):
         """Run the provided **steps** sequentially. This can be called by `SequenceStep`s."""
         for i, step in enumerate(steps):
+            step_address = id(step)
             # create the data directory first
             step_data_directory = await self.make_step_directory(data_directory, i, step)
-            # TODO: figure out a way to make the step bold in the model
             # run the step
-            await self.run_single_step(step, step_data_directory)
+            self.step_info.appendleft((step_address, True))  # notify start
+            try:
+                await self.run_single_step(step, step_data_directory)
+            finally:
+                self.step_info.appendleft((step_address, False))  # notify finish
 
     async def run_single_step(self, step: SequenceStep, step_data_directory: Path):
         """
@@ -206,17 +201,17 @@ class StepRunner:
             )
             raise
         except Exception:  # recoverable error; log and ask the user what to do
-            error_occurred = True
             logging.getLogger(__name__).exception("Sequence step error")
-            if not (
-                await self.prompt_handle_error(
-                    step, f"The current step, {step.name()}, encountered an error."
-                )
-                and await self.record_metadata(
-                    step_data_directory, step, start_datetime, cancelled, error_occurred
-                )
+
+            error_occurred = True
+            # update the cancelled variable
+            cancelled = not await self.prompt_handle_error(
+                step, f"The current step, {step.name()}, encountered an error."
+            )
+            if cancelled or not await self.record_metadata(
+                step_data_directory, step, start_datetime, cancelled, error_occurred
             ):
-                raise CancelledError
+                raise CancelledError  # actually cancel
 
     async def make_step_directory(
         self, data_directory: Path, number: int, step: SequenceStep
@@ -290,14 +285,12 @@ class StepRunner:
 
     async def send_prompt_and_wait(self, title: str, message: str, options: dict[int, str]) -> int:
         """Private helper function to send a message the the user and wait for a response."""
-        self.prompt_request = (title, message, options)  # request a prompt
+        receiver: DataLock[int | None] = DataLock(None)
+        self.prompt_requests.appendleft((title, message, options, receiver))  # request a prompt
         # wait for the response
         while True:
             await asyncio.sleep(0)
-            response = self.prompt_response.get()
-            if response is not None:
-                self.prompt_request = None
-                self.prompt_response.set(None)
+            if (response := receiver.get()) is not None:
                 return response
 
     async def record_metadata(
@@ -363,17 +356,22 @@ class StepRunner:
         -------
         A thread-safe handle for the plot that can be used to modify it from your `SequenceStep`.
         """
+        receiver: DataLock[PlotIndex | None] = DataLock(None)
+        step_address = id(step)  # copy
+        step_name = step.name()  # copy
         # notify that we want to create a new plot
-        self.plot_creation_request = (id(step), tab_text, plot_settings)
+        self.submit_plot_command(
+            lambda plot_tab: plot_tab.add_plot(
+                step_address, step_name, tab_text, plot_settings, receiver
+            )
+        )
         # wait for a response
         while True:
             await asyncio.sleep(0)
-            plot_index = self.plot_creation_response.get()
-            if plot_index is not None:
-                self.plot_creation_request = None
-                self.plot_creation_response.set(None)
+            if (plot_index := receiver.get()) is not None:
                 return PlotHandle(self, plot_index)  # return the plot handle
 
+    # used externally
     def submit_plot_command(self, command: Callable[[SequenceDisplayTab], None]):
         """
         Submit a **command** to the plot command queue. This is not for direct use by
@@ -425,6 +423,5 @@ class SequenceStep(Protocol):
 
     async def sleep_until(self, when: float):
         """Sleep until **when**, which is a `float` as returned by `time.time()`."""
-        await self.sleep(0)
-        while time.time() < when:
-            await self.sleep(0)
+        await self.sleep(0)  # make sure we sleep at all
+        await self.sleep(when - time.time())
