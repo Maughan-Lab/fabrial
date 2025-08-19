@@ -129,7 +129,9 @@ def expected(request: FixtureRequest):
 # tests start here
 def test_normal(qapp: QApplication, expected: Iterable[CategoryItem]):
     """Tests a normal, functioning plugin."""
-    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins([normal])
+    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
+        {normal.__name__: normal}
+    )
     assert len(failure_plugins) == 0 and len(failure_categories) == 0  # no failures expected
     compare_items(items, expected)
 
@@ -137,7 +139,7 @@ def test_normal(qapp: QApplication, expected: Iterable[CategoryItem]):
 def test_empty():
     """Tests a plugin that returns an empty list of categories."""
     items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
-        [empty_categories]
+        {empty_categories.__name__: empty_categories}
     )
     assert len(failure_plugins) == 0 and len(failure_categories) == 0  # no failures expected
     assert len(items) == 0  # should just be an empty list
@@ -146,7 +148,7 @@ def test_empty():
 def test_no_entry_point():
     """Tests a plugin that is missing the `categories()` entry point."""
     items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
-        [no_entry_point]
+        {no_entry_point.__name__: no_entry_point}
     )
     assert len(items) == 0 and len(failure_plugins) == 1 and len(failure_categories) == 0
     assert no_entry_point.__name__ in failure_plugins
@@ -155,7 +157,7 @@ def test_no_entry_point():
 def test_wrong_entry_point_type():
     """Tests a plugin that returns the wrong type from its entry point."""
     items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
-        [wrong_entry_point_type]
+        {wrong_entry_point_type.__name__: wrong_entry_point_type}
     )
     assert len(items) == 0 and len(failure_plugins) == 1 and len(failure_categories) == 0
     assert wrong_entry_point_type.__name__ in failure_plugins
@@ -163,7 +165,9 @@ def test_wrong_entry_point_type():
 
 def test_wrong_types(qapp: QApplication, expected: Iterable[CategoryItem]):
     """Tests a plugin that returns the correct entry point type, but an item has the wrong type."""
-    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins([wrong_types])
+    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
+        {wrong_types.__name__: wrong_types}
+    )
     assert len(failure_plugins) == 0 and len(failure_categories) == 1
     assert "Wrong Types" in failure_categories
     compare_items(items, expected)
@@ -174,7 +178,7 @@ def test_same_category(qapp: QApplication, expected: Iterable[CategoryItem]):
     Tests a plugin with nested categories that share names (so they should all be grouped together).
     """
     items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
-        [same_category1, same_category2]
+        {same_category1.__name__: same_category1, same_category2.__name__: same_category2}
     )
     assert len(failure_plugins) == 0 and len(failure_categories) == 0
     compare_items(items, expected)
@@ -183,16 +187,19 @@ def test_same_category(qapp: QApplication, expected: Iterable[CategoryItem]):
 def test_everything(qapp: QApplication, expected: Iterable[CategoryItem]):
     """Tests EVERYTHING! (aka tests the combination of all prior modules)."""
     items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
-        [
-            # arbitrary order
-            empty_categories,
-            no_entry_point,
-            normal,
-            same_category1,
-            same_category2,
-            wrong_entry_point_type,
-            wrong_types,
-        ]
+        {
+            module.__name__: module
+            for module in [
+                # arbitrary order
+                empty_categories,
+                no_entry_point,
+                normal,
+                same_category1,
+                same_category2,
+                wrong_entry_point_type,
+                wrong_types,
+            ]
+        }
     )
 
     assert len(failure_plugins) == 2 and len(failure_categories) == 1

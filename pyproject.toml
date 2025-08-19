@@ -3,7 +3,7 @@ name = "fabrial"
 dynamic = ["version"]
 authors = [{ name = "Drew Whitney", email = "drewlwhitney@gmail.com" }]
 maintainers = [{ name = "Drew Whitney", email = "drewlwhitney@gmail.com" }]
-description = "Quincy lets you create sequences to automate lab experiments."
+description = "Fabrial lets you create sequences to automate lab experiments."
 readme = "README.md"
 # dependencies
 requires-python = ">=3.13"
@@ -22,7 +22,7 @@ dependencies = [
 test = ["pytest", "pytest-qt"]
 
 [project.urls]
-Repository = "https://github.com/Maughan-Lab/Quincy-New"
+Repository = "https://github.com/Maughan-Lab/fabrial"
 
 # makes a `fabrial`/`fabrial.exe` script when installing
 [project.scripts]
@@ -46,20 +46,6 @@ members = ["core_plugins"]
 
 [tool.uv.sources]
 fabrial-core-plugins = { workspace = true }
-
-
-# mypy config
-[tool.mypy]
-explicit_package_bases = true
-check_untyped_defs = true
-follow_untyped_imports = true
-enable_error_code = ["possibly-undefined"]
-strict = true
-disallow_incomplete_defs = false
-disallow_untyped_defs = false
-disallow_untyped_calls = false
-no_implicit_reexport = false
-extra_checks = false
 
 
 # pytest config

@@ -1,11 +1,11 @@
-# Quincy files
+# Fabrial files
 __pycache__/
 .pytest_cache/
 saved_settings/
 lastrun.log
 build/
 dist/
-QuincyInstaller.exe
+FabrialInstaller.exe
 
 # random folder I saw once
 /share/

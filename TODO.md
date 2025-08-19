@@ -1,11 +1,11 @@
-# Fix Quincy (GAHHH)
+# Fix Fabrial (GAHHH)
 - Update Gamry software on the laptop and run tests.
 - When that doesn't work, email support again and ask for help.
 
-# Fixing Quincy for Modularization
+# Fixing Fabrial for Modularization
 
 ## The Oven
-- The oven should not be a constant part of the application. My current idea is to put manual control of the oven in a separate application that shares source code with the rest of Quincy.
+- The oven should not be a constant part of the application. My current idea is to put manual control of the oven in a separate application that shares source code with the rest of Fabrial.
     - The oven should not be monitoring its own temperature, that should be the responsibility of some widget/task.
     - The oven shouldn't have signals. If you want to monitor its connection, just check it when you read the temperature and setpoint.
     - The oven should not be stabilizing itself. That is the responsibility of the sequence.

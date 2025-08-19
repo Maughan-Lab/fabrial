@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-APP_NAME = "Quincy"
-BASE_DIR = Path("../quincy")
+APP_NAME = "Fabrial"
+BASE_DIR = Path("../fabrial")
 ASSETS = BASE_DIR.joinpath("assets")
 ICONS = ASSETS.joinpath("icons")
 

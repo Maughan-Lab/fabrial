@@ -100,7 +100,7 @@ def test_load_json(expected_load: dict[str, int | MockSerde]):
 @fixture
 def save_json_file() -> Generator[Path, None, None]:
     """
-    Fixture to provide the path for `serde.save_json()` and remove the file after the test
+    Fixture to provide the path for `serde.test_save_json()` and remove the file after the test
     completes.
     """
     file = FILES_DIRECTORY.joinpath("temp.json")

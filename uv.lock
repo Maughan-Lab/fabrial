@@ -4,8 +4,8 @@ requires-python = ">=3.13"
 
 [manifest]
 members = [
-    "quinc-e",
-    "quinc-e-core-plugins",
+    "fabrial",
+    "fabrial-core-plugins",
 ]
 
 [[package]]
@@ -25,6 +25,50 @@ sdist = { url = "https://files.pythonhosted.org/packages/3c/b9/4431119a640f56819
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f1/f4/7b7fdbb613992013c4518a0bf8fee2915f79ec07bcfa6180569bca7fa8ef/comtypes-1.4.11-py3-none-any.whl", hash = "sha256:1760d5059ca7ca1d61b574c998378d879c271a86c41f88926619ea97497592bb", size = 246365, upload-time = "2025-05-14T23:32:10.427Z" },
 ]
+
+[[package]]
+name = "fabrial"
+source = { editable = "." }
+dependencies = [
+    { name = "comtypes" },
+    { name = "fabrial-core-plugins" },
+    { name = "jinja2" },
+    { name = "minimalmodbus" },
+    { name = "polars" },
+    { name = "pyqt6" },
+    { name = "pyqtgraph" },
+    { name = "pyserial" },
+    { name = "tendo" },
+]
+
+[package.dev-dependencies]
+test = [
+    { name = "pytest" },
+    { name = "pytest-qt" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "comtypes", specifier = ">=1.4.11" },
+    { name = "fabrial-core-plugins", editable = "core_plugins" },
+    { name = "jinja2", specifier = ">=3.1.6" },
+    { name = "minimalmodbus", specifier = ">=2.1.1" },
+    { name = "polars", specifier = ">=1.31.0" },
+    { name = "pyqt6", specifier = ">=6.9.1" },
+    { name = "pyqtgraph", specifier = ">=0.13.7" },
+    { name = "pyserial", specifier = ">=3.5" },
+    { name = "tendo", specifier = ">=0.3.0" },
+]
+
+[package.metadata.requires-dev]
+test = [
+    { name = "pytest" },
+    { name = "pytest-qt" },
+]
+
+[[package]]
+name = "fabrial-core-plugins"
+source = { editable = "core_plugins" }
 
 [[package]]
 name = "iniconfig"
@@ -273,50 +317,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/d3/61/8bdec02663c18bf50
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cc/d0/8339b888ad64a3d4e508fed8245a402b503846e1972c10ad60955883dcbb/pytest_qt-4.5.0-py3-none-any.whl", hash = "sha256:ed21ea9b861247f7d18090a26bfbda8fb51d7a8a7b6f776157426ff2ccf26eff", size = 37214, upload-time = "2025-07-01T17:24:38.226Z" },
 ]
-
-[[package]]
-name = "quinc-e"
-source = { editable = "." }
-dependencies = [
-    { name = "comtypes" },
-    { name = "jinja2" },
-    { name = "minimalmodbus" },
-    { name = "polars" },
-    { name = "pyqt6" },
-    { name = "pyqtgraph" },
-    { name = "pyserial" },
-    { name = "quinc-e-core-plugins" },
-    { name = "tendo" },
-]
-
-[package.dev-dependencies]
-test = [
-    { name = "pytest" },
-    { name = "pytest-qt" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "comtypes", specifier = ">=1.4.11" },
-    { name = "jinja2", specifier = ">=3.1.6" },
-    { name = "minimalmodbus", specifier = ">=2.1.1" },
-    { name = "polars", specifier = ">=1.31.0" },
-    { name = "pyqt6", specifier = ">=6.9.1" },
-    { name = "pyqtgraph", specifier = ">=0.13.7" },
-    { name = "pyserial", specifier = ">=3.5" },
-    { name = "quinc-e-core-plugins", editable = "core_plugins" },
-    { name = "tendo", specifier = ">=0.3.0" },
-]
-
-[package.metadata.requires-dev]
-test = [
-    { name = "pytest" },
-    { name = "pytest-qt" },
-]
-
-[[package]]
-name = "quinc-e-core-plugins"
-source = { editable = "core_plugins" }
 
 [[package]]
 name = "six"

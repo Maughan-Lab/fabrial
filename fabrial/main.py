@@ -6,7 +6,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 from tendo.singleton import SingleInstance, SingleInstanceException
 
-from .constants import icons
+from .constants import PACKAGE_NAME, icons
 from .constants.paths import FOLDERS_TO_CREATE
 from .gamry_integration import GAMRY
 from .main_window import MainWindow
@@ -35,7 +35,7 @@ def fix_windows_sucking():
     try:
         from ctypes import windll  # only exists on Windows
 
-        appid = "maughangroup.quincy.1"
+        appid = f"maughangroup.{PACKAGE_NAME}"
         windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
     except ImportError:
         pass

@@ -1,1 +1,1 @@
-"""Tests functions from `quincy.utility`."""
+"""Tests functions from `fabrial.utility`."""
