@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from types import ModuleType
-from typing import Iterable, MutableMapping
+from typing import Iterable, Mapping, MutableMapping
 
 from ..sequence_builder import CategoryItem, DataItem, SequenceItem, TreeItem
 
@@ -26,7 +26,7 @@ class PluginCategory:
 
 
 def items_from_plugins(
-    plugin_modules: Iterable[ModuleType],
+    plugin_modules: Mapping[str, ModuleType],
 ) -> tuple[list[CategoryItem], list[str], list[str]]:
     """
     Helper function for `OptionsModel.from_plugins()`.
@@ -86,8 +86,7 @@ def items_from_plugins(
         return category_items
 
     category_info_map: dict[str, CategoryInfo] = {}
-    for plugin_module in plugin_modules:
-        name = plugin_module.__name__
+    for name, plugin_module in plugin_modules.items():
         try:
             # PLUGIN.categories() is a mandatory entry point for plugins
             plugin_categories: list[PluginCategory] = plugin_module.categories()

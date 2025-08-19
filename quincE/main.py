@@ -41,7 +41,7 @@ def fix_windows_sucking():
         pass
 
 
-def load_plugins() -> list[ModuleType]:
+def load_plugins() -> dict[str, ModuleType]:
     """Load all plugins."""
     plugin_modules, global_failures, local_failures = plugins.load_all_plugins()
     if len(global_failures) > 0 or len(local_failures) > 0:

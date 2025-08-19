@@ -25,7 +25,7 @@ def load_plugins_from_module(module: ModuleType) -> tuple[dict[str, ModuleType],
         if not is_package:  # ignore non packages
             continue
         try:
-            plugin_module = importlib.import_module("." + name, module.__name__)
+            plugin_module = importlib.import_module(module.__name__ + "." + name)
             plugin_modules[name] = plugin_module
         except Exception:
             logging.getLogger(__name__).exception(f"Failed to load local plugin {name}")
@@ -61,7 +61,7 @@ def load_global_plugins() -> tuple[dict[str, ModuleType], list[str]]:
     return (plugin_modules, failure_plugins)
 
 
-def load_all_plugins() -> tuple[list[ModuleType], list[str], list[str]]:
+def load_all_plugins() -> tuple[dict[str, ModuleType], list[str], list[str]]:
     """
     Load plugins for the application.
 
@@ -82,4 +82,4 @@ def load_all_plugins() -> tuple[list[ModuleType], list[str], list[str]]:
     # is used
     plugin_modules.update(global_plugin_modules)
 
-    return (list(plugin_modules.values()), global_failure_plugins, local_failure_plugins)
+    return (plugin_modules, global_failure_plugins, local_failure_plugins)

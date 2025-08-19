@@ -3,7 +3,7 @@ import os
 import typing
 from pathlib import Path
 from types import ModuleType
-from typing import Iterable
+from typing import Mapping
 
 from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import QFileDialog, QGridLayout, QHBoxLayout, QSizePolicy, QStackedWidget
@@ -36,7 +36,7 @@ class SequenceBuilderTab(Widget):
         self,
         visuals_tab: SequenceDisplayTab,
         menu: SequenceMenu,
-        plugin_modules: Iterable[ModuleType],
+        plugin_modules: Mapping[str, ModuleType],
     ):
         layout = QGridLayout()
         Widget.__init__(self, layout)

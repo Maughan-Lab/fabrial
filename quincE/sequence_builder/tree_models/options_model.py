@@ -1,5 +1,5 @@
 from types import ModuleType
-from typing import Any, Iterable, Self
+from typing import Any, Iterable, Mapping, Self
 
 from PyQt6.QtCore import QModelIndex, QSize, Qt
 
@@ -22,7 +22,7 @@ class OptionsModel(TreeModel[CategoryItem]):
         TreeModel.__init__(self, "Options", items)
 
     @classmethod
-    def from_plugins(cls, plugin_modules: Iterable[ModuleType]) -> Self:
+    def from_plugins(cls, plugin_modules: Mapping[str, ModuleType]) -> Self:
         """
         Create the model from the application's available plugins. Logs errors.
 

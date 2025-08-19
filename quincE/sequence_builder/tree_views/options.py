@@ -1,5 +1,5 @@
 from types import ModuleType
-from typing import Iterable, Self
+from typing import Mapping, Self
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QKeyEvent
@@ -16,7 +16,7 @@ class OptionsTreeView(TreeView[OptionsModel]):
     """`TreeView` containing item options for the sequence."""
 
     @classmethod
-    def from_plugins(cls, plugin_modules: Iterable[ModuleType]) -> Self:
+    def from_plugins(cls, plugin_modules: Mapping[str, ModuleType]) -> Self:
         """Create from the application's available plugins."""
         view = cls(OptionsModel.from_plugins(plugin_modules))
         view.init_view_state_from_json(sequence_paths.OPTIONS_STATE_FILE)
@@ -51,7 +51,7 @@ class OptionsTreeWidget(Container):
         self.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
 
     @classmethod
-    def from_plugins(cls, plugin_modules: Iterable[ModuleType]) -> Self:
+    def from_plugins(cls, plugin_modules: Mapping[str, ModuleType]) -> Self:
         """Create from the application's available plugins."""
         return cls(OptionsTreeView.from_plugins(plugin_modules))
 

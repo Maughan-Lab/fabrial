@@ -1,5 +1,5 @@
 from types import ModuleType
-from typing import Iterable
+from typing import Mapping
 
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QMainWindow, QWidget
@@ -13,7 +13,7 @@ from .utility import events, images
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, plugin_modules: Iterable[ModuleType]):
+    def __init__(self, plugin_modules: Mapping[str, ModuleType]):
         self.relaunch = False
         QMainWindow.__init__(self)
         self.setWindowTitle(APP_NAME)
