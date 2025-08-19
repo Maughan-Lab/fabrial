@@ -9,5 +9,5 @@ def PROCESS_EVENTS():
 
 
 def delay_until_running(callback: Callable[[], Any]):
-    """Queue a callback to run just after the application starts and the main window is shown."""
+    """Queue a callback for the next run of the event loop."""
     QTimer.singleShot(0, callback)

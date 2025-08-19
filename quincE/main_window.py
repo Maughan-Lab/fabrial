@@ -8,7 +8,7 @@ from .constants import APP_NAME
 from .custom_widgets import TabWidget, YesCancelDialog
 from .menu import MenuBar
 from .secondary_window import SecondaryWindow
-from .tabs import OvenControlTab, SequenceBuilderTab, SequenceDisplayTab
+from .tabs import SequenceBuilderTab, SequenceDisplayTab
 from .utility import events, images
 
 
@@ -17,12 +17,15 @@ class MainWindow(QMainWindow):
         self.relaunch = False
         QMainWindow.__init__(self)
         self.setWindowTitle(APP_NAME)
-        # self.settings_window = ApplicationSettingsWindow(self)
+        # create menu bar
+        self.menu_bar = MenuBar(self)
+        self.setMenuBar(self.menu_bar)
+        # self.settings_window = ApplicationSettingsWindow(self) # TODO: fix
         # tabs
-        self.oven_control_tab = OvenControlTab()
         self.sequence_visuals_tab = SequenceDisplayTab()
-        self.sequence_tab = SequenceBuilderTab(self.sequence_visuals_tab, plugin_modules)
-        self.connection_widget = self.oven_control_tab.instrument_connection_widget
+        self.sequence_tab = SequenceBuilderTab(
+            self.sequence_visuals_tab, self.menu_bar.sequence, plugin_modules
+        )
         self.tab_widget = TabWidget(
             [
                 (self.sequence_tab, "Sequence Builder", images.make_icon("script-block.png")),
@@ -30,9 +33,7 @@ class MainWindow(QMainWindow):
             ]
         )
         self.setCentralWidget(self.tab_widget)
-        # create menu bar
-        self.menu_bar = MenuBar(self)
-        self.setMenuBar(self.menu_bar)
+
         # secondary windows are stored here
         self.secondary_windows: list[QMainWindow] = []
 
@@ -88,6 +89,7 @@ class MainWindow(QMainWindow):
     def allowed_to_close(self) -> bool:
         """Determine if the window should close."""
         # only close if a sequence is not running
+        return True  # TODO
         process_widget = self.sequence_tab.sequence_tree
         if process_widget.is_running():
             if YesCancelDialog(
@@ -103,7 +105,6 @@ class MainWindow(QMainWindow):
     def save_on_close(self):
         """Save all data that gets saved on closing. Call this when closing the application."""
         self.sequence_tab.save_on_close()
-        self.connection_widget.save_on_close()
 
     def should_relaunch(self) -> bool:
         """Whether the application should relaunch."""

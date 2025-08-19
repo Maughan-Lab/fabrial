@@ -27,7 +27,7 @@ class ItemWidget(ParameterDescriptionWidget):
 
     def __init__(
         self,
-        parameter_layout: QLayout,
+        parameter_layout: QLayout | None,
         title: str,
         icon: QIcon,
         description_provider: DescriptionProvider | None,

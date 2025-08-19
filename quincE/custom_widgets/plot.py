@@ -1,3 +1,4 @@
+import typing
 from typing import Literal
 
 import pyqtgraph as pg
@@ -37,7 +38,7 @@ class PlotItem(pg.PlotItem):
         """Initialize the plot during construction."""
         self.getViewBox().setBackgroundColor(get_background_color())
         self.addLegend()
-        self.legend.setLabelTextColor(self.text_color)  # type: ignore
+        typing.cast(pg.LegendItem, self.legend).setLabelTextColor(get_text_color())
         self.recolor_axis("left")
         self.recolor_axis("bottom")
 

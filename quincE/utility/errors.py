@@ -49,10 +49,7 @@ def show_error(title: str, message: str):
 
 
 def show_error_delayed(title: str, message: str):
-    """
-    Wait until the application is running and the main window is shown, then show an error to the
-    user.
-    """
+    """Wait until the event loop is running, then show an error to the user."""
     events.delay_until_running(lambda: show_error(title, message))
 
 

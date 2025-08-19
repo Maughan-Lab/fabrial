@@ -2,7 +2,7 @@ from typing import Self
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QFormLayout, QLabel
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QSizePolicy
 
 from ..container import Container
 
@@ -30,14 +30,17 @@ class IconLabel(Container):
     """Label with an icon on the left. Both are contained in a `Container` (this widget)."""
 
     def __init__(self, icon: QPixmap, text: str = ""):
-        layout = QFormLayout()
+        layout = QHBoxLayout()
         Container.__init__(self, layout)
 
         self.icon_label = QLabel()
         self.icon_label.setPixmap(icon)
         self.text_label = Label(text)
 
-        layout.addRow(self.icon_label, self.text_label)
+        layout.addWidget(self.icon_label)
+        layout.addWidget(self.text_label)
+
+        self.icon_label.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
     def label(self) -> Label:
         """Get the text label."""

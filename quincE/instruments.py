@@ -382,4 +382,4 @@ class InstrumentSet:
 
 
 global INSTRUMENTS
-INSTRUMENTS = InstrumentSet(Oven())
+# INSTRUMENTS = InstrumentSet(Oven())

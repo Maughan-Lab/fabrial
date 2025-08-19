@@ -11,7 +11,7 @@ from pyqtgraph import PlotDataItem
 from .lock import DataLock
 
 if TYPE_CHECKING:
-    from .sequence_step import StepRunner
+    from .step_runner import StepRunner
 
 
 class LineData:

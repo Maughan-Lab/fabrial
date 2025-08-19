@@ -16,32 +16,8 @@
 
 ## The Sequence
 - Implement a "simultaneous" step that uses `asyncio` to run two things concurrently.
-- Use exceptions to cancel and skip things.
-    - Should we even support skipping?
-        - Nope, nobody needs it.
-- Debate whether the pause button is still necessary.
-    - If you keep pause capabilities, remove the "error pause" state.
-    - If you use `asyncio.sleep(0)`, you should call `time.sleep()` while paused so you don't switch back to the process.
-- Stop calling `process_events()`. You can probably block the `QThread`'s event loop—you'll still be able to send signals, just not receive them.
 - Figure out how to record the oven setpoint in every process, even without a global oven instance.
     - The solution to this is just to add a `Record Temperature` sequence step. Users will have to manage the rest.
-
-## Communication with the Sequence
-- Make the dialog system better. Try to still use `QMessageBox`. You should be able to do something like this:
-```python
-response = self.wait_for_response("Message text", {0: "First Button Text", 1: "Second Button Text"})
-# we have to use integers so that it's a single type
-# no, it can't be a list because then it's not obvious what corresponds to what
-# no, it shouldn't be {text: value} because the values need to be unique. It doesn't matter if the button text is unique; if it isn't, that's a user error
-match response:
-    case 0:
-        # do something
-    case 1:
-        # do something else
-    case _:
-        # this is probably an error
-```
-You can use a custom `QPushButton` and `addButton(button, QMessageBox.ButtonRole.NoRole)` + `clickedButton()` to add buttons and associate a value.
 
 ## Consistency
 - "instrument" $\to$ "device"
@@ -49,8 +25,8 @@ You can use a custom `QPushButton` and `addButton(button, QMessageBox.ButtonRole
 ## Protocols
 - Make a `Protocol` class for devices. This will make your life easier.
 
-### Avoid pyqtSignals(?)
-- See if it would be better to use `Queue`s instead of signals to send data across the thread boundary.
+## Sequence
+- Disable the sequence view when the sequence is running.
 
 ## Application Settings
 - A lot of application-level settings will need to be removed (looking at you oven settings). Most of these can be put into sequence items.

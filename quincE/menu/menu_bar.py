@@ -21,7 +21,7 @@ class MenuBar(QMenuBar):
 
     def create_submenus(self, main_window: "MainWindow"):
         # need to store these because they have signals
-        self.sequence = SequenceMenu(self, main_window.sequence_tab.sequence_tree)
+        self.sequence = SequenceMenu(self)
         self.view = ViewMenu(self, main_window)
         self.addMenu(FileMenu(self, main_window))
         self.addMenu(self.view)

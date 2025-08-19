@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from PyQt6.QtWidgets import QMenu, QMenuBar
@@ -11,7 +13,7 @@ if TYPE_CHECKING:
 class ViewMenu(QMenu):
     """View menu."""
 
-    def __init__(self, parent: QMenuBar, main_window: "MainWindow"):
+    def __init__(self, parent: QMenuBar, main_window: MainWindow):
         self.pop_graph: Action
 
         QMenu.__init__(self, "&View", parent)

@@ -14,8 +14,8 @@ class Action(QAction):
         The QObject to tie this action to.
     name
         The displayed name of this action in a QMenuBar.
-    action
-        The function this action calls.
+    actions
+        The function(s) this action calls.
     status_tip
         Optional text that is shown when a user hovers over the action.
     shortcut
@@ -28,13 +28,13 @@ class Action(QAction):
         self,
         parent: QObject,
         name: str,
-        action: Callable[..., Any] | pyqtBoundSignal | None = None,
+        *actions: Callable[..., Any] | pyqtBoundSignal,
         status_tip: str | None = None,
         shortcut: str | None = None,
         shortcut_context: Qt.ShortcutContext = Qt.ShortcutContext.WindowShortcut,
     ):
         QAction.__init__(self, name, parent)
-        if action is not None:
+        for action in actions:
             self.triggered.connect(action)
         self.setStatusTip(status_tip)
         if shortcut is not None:

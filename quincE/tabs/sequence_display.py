@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QTabWidget
 from ..classes import DataLock, LineIndex, LineSettings, PlotIndex, PlotSettings, Shortcut
 from ..custom_widgets import Button, PlotWidget
 from ..secondary_window import SecondaryWindow
+from ..utility import images
 
 
 class SequenceDisplayTab(QTabWidget):
@@ -15,13 +16,16 @@ class SequenceDisplayTab(QTabWidget):
     def __init__(self):
         QTabWidget.__init__(self)
         self.plots: list[PlotWidget] = []
-        self.popped_graphs: list[SecondaryWindow] = []
+        self.popped_graphs: dict[int, SecondaryWindow] = {}
 
         self.setCornerWidget(Button("Pop Graph", self.pop_graph), Qt.Corner.TopRightCorner)
         self.setMovable(True)  # allow moving tabs around
         Shortcut(self, "Ctrl+G", self.pop_graph)
 
         self.sequence_step_map: dict[int, tuple[QTabWidget, dict[int, PlotWidget]]] = {}
+
+        self.step_tab_icon = images.make_icon("category.png")
+        self.plot_tab_icon = images.make_icon("chart-up.png")
 
     def get_plot(self, plot_index: PlotIndex) -> PlotWidget:
         """
@@ -55,12 +59,11 @@ class SequenceDisplayTab(QTabWidget):
         # get the plots map if it exists, otherwise create and add it
         try:
             step_tab_widget, plots = self.sequence_step_map[step_address]
-        except IndexError:
+        except KeyError:
             plots = {}
             step_tab_widget = QTabWidget()  # create a new tab widget for the plot
             step_tab_widget.setMovable(True)  # allow moving plot tabs around
-            # TODO: find a cool icon to add to all the step tabs
-            self.addTab(step_tab_widget, step_name)
+            self.addTab(step_tab_widget, self.step_tab_icon, step_name)
             self.sequence_step_map[step_address] = (step_tab_widget, plots)
 
         # create and initialize the plot
@@ -74,16 +77,26 @@ class SequenceDisplayTab(QTabWidget):
         plot_number = id(plot_widget)
         plots[plot_number] = plot_widget
         # add the plot to the step's tab widget
-        # TODO: find a cool icon for all the plot tabs
-        step_tab_widget.addTab(plot_widget, tab_text)
+        step_tab_widget.addTab(plot_widget, self.plot_tab_icon, tab_text)
 
         receiver.set(PlotIndex(step_address, plot_number))  # send the index to the receiver
 
     def remove_plot(self, plot_index: PlotIndex):
         """Remove and delete the plot at **plot_index**."""
-        plot_widget = self.get_plot(plot_index)
+        # remove the plot from the map
+        plot_tab_widget, plot_map = self.sequence_step_map[plot_index.step_address]
+        # remove the plot
+        plot_widget = plot_map.pop(plot_index.plot_number)
+        # un-pop the graph if it is popped
+        if (popped_graph := self.popped_graphs.get(id(plot_widget))) is not None:
+            popped_graph.close()
         plot_widget.setParent(None)
         plot_widget.deleteLater()
+        # if there are no more plots, remove the entire tab
+        if len(plot_map) == 0:
+            self.sequence_step_map.pop(plot_index.step_address)  # remove from the map
+            plot_tab_widget.setParent(None)
+            plot_tab_widget.deleteLater()
 
     def add_line(
         self,
@@ -128,19 +141,19 @@ class SequenceDisplayTab(QTabWidget):
         # TODO: figure out if a failure to create the image file is fatal
         self.get_plot(plot_index).view.plot_item.export_to_image(str(file))
 
-    def reset(self):
-        """Destroy all plots."""
-        while self.count() > 0:
-            tab = self.widget(0)
-            self.removeTab(0)
-            if tab is not None:
-                tab.setParent(None)
-                tab.deleteLater()
-        for popped_graph in self.popped_graphs:
-            popped_graph.close_silent()
-            popped_graph.deleteLater()
-        self.plots.clear()
-        self.popped_graphs.clear()
+    # def reset(self):
+    #     """Destroy all plots."""
+    #     while self.count() > 0:
+    #         tab = self.widget(0)
+    #         self.removeTab(0)
+    #         if tab is not None:
+    #             tab.setParent(None)
+    #             tab.deleteLater()
+    #     for popped_graph in self.popped_graphs:
+    #         popped_graph.close_silent()
+    #         popped_graph.deleteLater()
+    #     self.plots.clear()
+    #     self.popped_graphs.clear()
 
     def pop_graph(self):
         """Pop the current graph into a secondary window."""
@@ -152,10 +165,13 @@ class SequenceDisplayTab(QTabWidget):
                 tab_title = step_tab_widget.tabText(step_tab_widget.currentIndex())
                 popped_window = SecondaryWindow(tab_title, plot)
                 Shortcut(popped_window, "Ctrl+G", popped_window.close)
-                self.popped_graphs.append(popped_window)  # TODO: find out if this is necessary
+                plot_address = id(plot)
+                self.popped_graphs[plot_address] = popped_window
                 # closing the popped graph puts it back in its original parent
-                popped_window.closed.connect(lambda: self.popped_graphs.remove(popped_window))
-                popped_window.closed.connect(lambda: step_tab_widget.addTab(plot, tab_title))
+                popped_window.closed.connect(lambda: self.popped_graphs.pop(plot_address))
+                popped_window.closed.connect(
+                    lambda: step_tab_widget.addTab(plot, self.plot_tab_icon, tab_title)
+                )
                 # show and ensure the initial size is correct
                 popped_window.show()
                 popped_window.resize(popped_window.sizeHint())

@@ -71,9 +71,14 @@ class SequenceModel(TreeModel[SequenceItem]):
             logging.getLogger(__name__).exception("Failed to save to file")
             return False
 
+    def set_bold(self, index: QModelIndex, bold: bool):
+        """Set whether the item at **index** is bold."""
+        if (item := self.get_item(index)) is not None:
+            item.set_bold(bold)
+
+    # ----------------------------------------------------------------------------------------------
     def data(self, index: QModelIndex, role: int | None = None) -> Any:  # implementation
-        item = self.get_item(index)
-        if item is not None:
+        if (item := self.get_item(index)) is not None:
             match role:
                 case Qt.ItemDataRole.DisplayRole:
                     return item.display_name()
@@ -90,7 +95,6 @@ class SequenceModel(TreeModel[SequenceItem]):
 
         return None
 
-    # ----------------------------------------------------------------------------------------------
     # overridden
     def removeRows(self, row: int, count: int, parent_index: QModelIndex = QModelIndex()) -> bool:
         if not self.is_enabled():

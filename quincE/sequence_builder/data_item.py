@@ -55,7 +55,8 @@ class DataItem(Deserialize, Serialize, Protocol):
         Parameters
         ----------
         substeps
-            The `SequenceStep`s created from this item's subitems.
+            The `SequenceStep`s created from this item's subitems. For items that do not support
+            subitems, this is always an empty iterable.
 
         Returns
         -------

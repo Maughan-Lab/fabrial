@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from PyQt6.QtWidgets import QApplication, QMenu, QMenuBar
@@ -12,7 +14,7 @@ if TYPE_CHECKING:
 class FileMenu(QMenu):
     """File menu."""
 
-    def __init__(self, parent: QMenuBar, main_window: "MainWindow"):
+    def __init__(self, parent: QMenuBar, main_window: MainWindow):
         QMenu.__init__(self, "&File", parent)
         # silly
         self.addAction(Action(parent, "Honk", lambda: OkCancelDialog("Honk", "Honk").exec()))

@@ -59,7 +59,7 @@ class TextDescription(DescriptionProvider):
     data_recording
         A mapping of `{"Filename": "Description of file contents."}`. This will be rendered to a
         Markdown list for the **Data Recording** section. Optional if your sequence step doesn't
-        extra record data.
+        record extra data.
     visuals
         Text for the **Visuals** section. Optional if your sequence step doesn't have visuals.
     """
@@ -75,7 +75,7 @@ class TextDescription(DescriptionProvider):
             generate_list_description(self.parameters) if len(self.parameters) > 0 else "n/a"
         )
         data_recording_text = (
-            generate_list_description(self.data_recording) if len(self.parameters) > 0 else ""
+            generate_list_description(self.data_recording) if len(self.data_recording) > 0 else ""
         )
         return TEMPLATE.format(
             OVERVIEW=self.overview,

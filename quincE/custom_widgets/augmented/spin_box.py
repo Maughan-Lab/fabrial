@@ -2,8 +2,6 @@ import sys
 
 from PyQt6.QtWidgets import QAbstractSpinBox, QDoubleSpinBox, QPushButton, QSpinBox
 
-from ...instruments import Oven
-
 
 class DoubleSpinBox(QDoubleSpinBox):
     """
@@ -46,22 +44,6 @@ class DoubleSpinBox(QDoubleSpinBox):
             line_edit.returnPressed.connect(
                 lambda: button.pressed.emit() if button.isEnabled() else None
             )
-
-
-class TemperatureSpinBox(DoubleSpinBox):
-    """
-    `DoubleSpinBox` for temperatures.
-
-    Parameters
-    ----------
-    oven
-        The oven to use for setting the maximum/minimum temperatures.
-    """
-
-    def __init__(self, oven: Oven):
-        DoubleSpinBox.__init__(
-            self, oven.num_decimals(), oven.minimum_temperature(), oven.maximum_temperature()
-        )
 
 
 class SpinBox(QSpinBox):

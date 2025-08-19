@@ -1,1 +1,1 @@
-from .status import ConnectionStatus, SequenceStatus, StabilityStatus, StatusStateMachine
+from .sequence import SequenceCommand, SequenceStatus

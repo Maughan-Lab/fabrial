@@ -1,7 +1,6 @@
 import os
 import sys
 from types import ModuleType
-from typing import Iterable
 
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
@@ -10,7 +9,6 @@ from tendo.singleton import SingleInstance, SingleInstanceException
 from .constants import icons
 from .constants.paths import FOLDERS_TO_CREATE
 from .gamry_integration import GAMRY
-from .instruments import INSTRUMENTS
 from .main_window import MainWindow
 from .utility import errors, plugins
 
@@ -58,15 +56,6 @@ def load_plugins() -> list[ModuleType]:
     return plugin_modules
 
 
-def make_app(plugin_modules: Iterable[ModuleType]) -> tuple[QApplication, MainWindow]:
-    """Make the application."""
-    app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(str(icons.MAIN_ICON)))
-    main_window = MainWindow(plugin_modules)
-    main_window.showMaximized()
-    return (app, main_window)
-
-
 def main():
     me = check_for_other_instances()  # noqa
     errors.set_up_logging()
@@ -75,13 +64,20 @@ def main():
     make_application_folders()
     # suppress Qt warnings (there is a bug that generates warnings when the window is resized)
     errors.suppress_warnings()
+    # make the app first
+    app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(str(icons.MAIN_ICON)))
+    # then load plugins
     plugin_modules = load_plugins()
-    app, main_window = make_app(plugin_modules)
+    # then make the main window
+    main_window = MainWindow(plugin_modules)
+    main_window.showMaximized()
+
+    # app, main_window = make_app(plugin_modules)
     # run the application
     app.exec()
     # TODO: remove these
     # stop the oven's thread
-    INSTRUMENTS.oven.stop()
     # close GamryCOM
     GAMRY.cleanup()
 

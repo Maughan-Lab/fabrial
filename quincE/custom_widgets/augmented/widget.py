@@ -34,6 +34,7 @@ class Widget(QWidget):
         The layout to initialize with.
     """
 
-    def __init__(self, layout: QLayout):
+    def __init__(self, layout: QLayout | None):
         QWidget.__init__(self)
-        self.setLayout(layout)
+        if layout is not None:
+            self.setLayout(layout)

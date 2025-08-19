@@ -13,13 +13,13 @@ class ParameterDescriptionWidget(Widget):
 
     Parameters
     ----------
-    parameter_widget
-        The widget to use for the parameter tab.
+    parameter_layout
+        The layout to use for the parameter tab.
     parameter_tab_name
         The text used for the parameter tab name.
     """
 
-    def __init__(self, parameter_layout: QLayout, parameter_tab_name: str = "Parameters"):
+    def __init__(self, parameter_layout: QLayout | None, parameter_tab_name: str = "Parameters"):
         layout = QVBoxLayout()
         Widget.__init__(self, layout)
         self.param_widget = Widget(parameter_layout)

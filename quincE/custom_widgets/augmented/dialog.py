@@ -157,17 +157,3 @@ class DontShowAgainDialog(Dialog):
             self.save_state()
             return result
         return True
-
-
-class YesCancelDontShowDialog(DontShowAgainDialog):
-    """Yes and Cancel buttons."""
-
-    def __init__(self, title: str, message: str, dont_show_again_filepath: PathLike[str] | str):
-        DontShowAgainDialog.__init__(
-            self,
-            title,
-            message,
-            Dialog.StandardButton.Yes | Dialog.StandardButton.Cancel,
-            Dialog.StandardButton.Yes,
-            dont_show_again_filepath,
-        )

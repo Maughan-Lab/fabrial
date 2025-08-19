@@ -6,7 +6,7 @@ from typing import Iterable, Mapping, Self
 from PyQt6.QtGui import QIcon
 
 from ...classes import SequenceStep
-from ...utility import images, serde
+from ...utility import serde
 from ...utility.serde import Json
 from ..data_item import DataItem
 from . import tree_item
@@ -113,29 +113,3 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
             f"item: {self.item!r}, "
             f"subitems: {self.subitems!r} }}"
         )
-
-
-# TODO: remove
-class TestDataItem(DataItem):
-    def __init__(self, number: int):
-        self.number = number
-        self.item_icon = images.make_icon("battery-charge.png")
-
-    @classmethod
-    def deserialize(cls, serialized_obj):
-        return cls(serialized_obj["number"])
-
-    def serialize(self):
-        return {"number": self.number}
-
-    def display_name(self):
-        return "dsfklds"
-
-    def icon(self):
-        return self.item_icon
-
-    def open_event(self, editable: bool):
-        return False
-
-    def create_sequence_step(self, substeps: Iterable[SequenceStep]):
-        raise NotImplementedError()
