@@ -6,8 +6,8 @@ from typing import Generator, Mapping, Self
 
 from pytest import fixture
 
-from quincE.utility import serde
-from quincE.utility.serde import TYPE, Deserialize, Json, Serialize
+from fabrial.utility import serde
+from fabrial.utility.serde import TYPE, Deserialize, Json, Serialize
 
 TYPENAME = "tests.utility.serde.serde.MockSerde"
 FILES_DIRECTORY = Path(__file__).parent.joinpath("files")

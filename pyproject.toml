@@ -1,5 +1,5 @@
 [project]
-name = "Quinc-E"
+name = "fabrial"
 dynamic = ["version"]
 authors = [{ name = "Drew Whitney", email = "drewlwhitney@gmail.com" }]
 maintainers = [{ name = "Drew Whitney", email = "drewlwhitney@gmail.com" }]
@@ -16,7 +16,7 @@ dependencies = [
     "pyqtgraph>=0.13.7",
     "pyserial>=3.5",
     "tendo>=0.3.0",
-    "quinc-E-core-plugins",
+    "fabrial-core-plugins",
 ]
 [dependency-groups]
 test = ["pytest", "pytest-qt"]
@@ -24,18 +24,15 @@ test = ["pytest", "pytest-qt"]
 [project.urls]
 Repository = "https://github.com/Maughan-Lab/Quincy-New"
 
-# makes a `quincE`/`quincE.exe` script when installing
+# makes a `fabrial`/`fabrial.exe` script when installing
 [project.scripts]
-quincE = "quincE.main:main"
+fabrial = "fabrial.main:main"
 
 
 # hatch config
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
-
-[tool.hatch.build]
-packages = ["./quincE"]
 
 [tool.hatch.version]
 source = "vcs"
@@ -48,7 +45,7 @@ default-groups = ["test"]
 members = ["core_plugins"]
 
 [tool.uv.sources]
-Quinc-E-core-plugins = { workspace = true }
+fabrial-core-plugins = { workspace = true }
 
 
 # mypy config

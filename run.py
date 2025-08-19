@@ -1,4 +1,4 @@
-from quincE import main
+from fabrial import main
 
 if __name__ == "__main__":
     main.main()

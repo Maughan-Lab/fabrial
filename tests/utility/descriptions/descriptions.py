@@ -3,7 +3,7 @@ from pathlib import Path
 
 from pytest import fixture
 
-from quincE.utility.descriptions import FilesDescription, Substitutions, TextDescription
+from fabrial.utility.descriptions import FilesDescription, Substitutions, TextDescription
 
 
 # helper

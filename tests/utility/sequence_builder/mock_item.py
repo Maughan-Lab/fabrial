@@ -2,7 +2,7 @@ from typing import Iterable, Mapping, Self
 
 from PyQt6.QtGui import QIcon
 
-from quincE import DataItem, Json, SequenceStep
+from fabrial import DataItem, Json, SequenceStep
 
 
 class MockDataItem(DataItem):

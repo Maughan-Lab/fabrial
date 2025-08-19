@@ -1,1 +1,0 @@
-INCREMENT = "Setpoint Increment"

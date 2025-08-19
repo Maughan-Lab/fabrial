@@ -1,0 +1,6 @@
+{
+    "type": "BACKGROUND_TEMPERATURE",
+    "linked-widget-data": {
+        "Measurement Interval (ms)": 5000
+    }
+}

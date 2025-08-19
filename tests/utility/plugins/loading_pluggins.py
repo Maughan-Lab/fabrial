@@ -1,4 +1,4 @@
-from quincE.utility import plugins
+from fabrial.utility import plugins
 
 from .test_modules import bad_module, good_module
 
