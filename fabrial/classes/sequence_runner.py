@@ -42,12 +42,15 @@ class SequenceRunner:
     def run_sequence(
         self, sequence_tab: SequenceBuilderTab, model: SequenceModel, data_directory: Path
     ):
-        """Run the sequence. Creates the data directory if it doesn't exist. Logs errors."""
+        """
+        Run the sequence. Creates the data directory if it doesn't exist. Logs errors. Returns
+        whether the sequence was successfully started.
+        """
         if not model.root().subitem_count() > 0:  # do nothing if there are no items
-            return
+            return False
         # make the data directory
         if not self.create_files(model, data_directory):
-            return
+            return False
         # create the `SequenceStep`s
         try:
             sequence_steps, step_item_map = self.create_sequence_steps(model)
@@ -60,13 +63,14 @@ class SequenceRunner:
                 "Unable to generate sequence steps, likely due to a faulty plugin. "
                 "See the error log for details.",
             )
-            return
+            return False
         # create the thread
         self.thread = SequenceThread(sequence_steps, data_directory, self.command_queue)
         # connect signals so the application responds to changes in the sequence
         self.connect_signals(self.thread, sequence_tab, model, step_item_map)
         # start
         self.thread.start()
+        return True
 
     def create_files(self, model: SequenceModel, data_directory: Path) -> bool:
         """Create the sequence's root data directory and generate a sequence autosave."""
@@ -166,8 +170,7 @@ class SequenceRunner:
         sequence_thread.plotCommandRequested.connect(
             lambda command: command(sequence_tab.visuals_tab)
         )
-        # notify start and stop
-        sequence_thread.started.connect(lambda: sequence_tab.handle_sequence_state_change(True))
+        # notify finish
         sequence_thread.finished.connect(lambda: sequence_tab.handle_sequence_state_change(False))
 
     def show_prompt(

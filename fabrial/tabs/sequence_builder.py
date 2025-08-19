@@ -139,15 +139,14 @@ class SequenceBuilderTab(Widget):
     # ----------------------------------------------------------------------------------------------
     # sequence
     def start_sequence(self):
-        self.sequence_runner = SequenceRunner()
+        self.sequence_runner = SequenceRunner()  # store a reference
         self.pause_button.clicked.connect(self.sequence_runner.pause)
         self.unpause_button.clicked.connect(self.sequence_runner.unpause)
         self.menu.cancel.triggered.connect(self.sequence_runner.cancel)
-        # make sure we start in the active state so the user can't spam the start button
-        self.handle_sequence_status_change(SequenceStatus.Active)
-        self.sequence_runner.run_sequence(
+        if self.sequence_runner.run_sequence(
             self, self.sequence_tree.view.model(), Path(self.data_directory())
-        )
+        ):
+            self.handle_sequence_state_change(True)
 
     def handle_sequence_status_change(self, status: SequenceStatus):
         """Handle the sequence's status changing."""
@@ -193,6 +192,7 @@ class SequenceBuilderTab(Widget):
         """Handle the sequence starting/stopping."""
         self.menu.cancel.setEnabled(running)
         self.directory_button.setEnabled(not running)
+        self.start_button.setEnabled(not running)  # make sure the user can't spam the start button
         if not running:
             self.sequence_runner = None  # delete the runner
 

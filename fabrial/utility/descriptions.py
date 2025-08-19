@@ -118,10 +118,10 @@ class FilesDescription(DescriptionProvider):
 
     Parameters
     ----------
-    folder
+    description_folder
         The folder to read description files from. The folder should have the following structure:
     ```
-    folder
+    description_folder
     ├── data_recording.toml
     ├── overview.md
     ├── parameters.toml
@@ -136,12 +136,14 @@ class FilesDescription(DescriptionProvider):
         Substitutions dictionaries used by `jinja2` when rendering the description files.
     """
 
-    folder: PathLike[str] | str
+    description_folder: PathLike[str] | str
     data_directory_name: str
     substitutions: Substitutions = field(default_factory=Substitutions)
 
     def render(self) -> str:  # implementation
-        environment = Environment(loader=FileSystemLoader(self.folder), undefined=StrictUndefined)
+        environment = Environment(
+            loader=FileSystemLoader(self.description_folder), undefined=StrictUndefined
+        )
         final_substitutions: dict[str, str] = {}
 
         # helper function to render a Markdown file

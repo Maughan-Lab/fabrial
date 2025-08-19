@@ -9,7 +9,7 @@ from .item_widget import ItemWidget
 
 
 class DataItem(Deserialize, Serialize, Protocol):
-    """An inner item used by a `TreeItem`."""
+    """An inner item used by a `SequenceItem`."""
 
     # visuals
     @abstractmethod
@@ -35,7 +35,7 @@ class DataItem(Deserialize, Serialize, Protocol):
         ...
 
     def supports_subitems(self) -> bool:
-        """Whether the item supports subitems. By default, `Item`s do not support subitems."""
+        """Whether the item supports subitems. By default, items do not support subitems."""
         return False
 
     def expand_event(self):

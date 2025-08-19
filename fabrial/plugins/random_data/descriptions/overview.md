@@ -1,0 +1,1 @@
+Records random data on an interval.
