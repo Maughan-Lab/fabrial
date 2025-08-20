@@ -1,0 +1,60 @@
+# made this using https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/#workflow-definition
+
+name: Publish to PyPi
+
+# only publish on pushes with tags
+on:
+    push:
+        tags:
+            - "*"
+
+jobs:
+  build:
+    name: Build Distribution
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+
+    - name: Install Hatch
+      run: >-
+        python3 -m
+        pip install
+        hatch
+        --user
+
+    - name: Build the Distribution Files
+      run: python3 -m hatch
+
+    - name: Store the Distribution Packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+
+  publish-to-pypi:
+    name: Publish Python Distribution to PyPI
+    needs:
+    - build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/fabrial
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+    - name: Download all the Distribution Files
+      uses: actions/download-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+    - name: Publish Distribution to PyPi
+      uses: pypa/gh-action-pypi-publish@release/v1
