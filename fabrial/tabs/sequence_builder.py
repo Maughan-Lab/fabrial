@@ -197,3 +197,12 @@ class SequenceBuilderTab(Widget):
             self.sequence_runner = None  # delete the runner
 
         # TODO: enable/disable the model
+
+    def is_running_sequence(self) -> bool:
+        """Whether a sequence is currently being run."""
+        return self.sequence_runner is not None
+
+    def cancel_sequence(self):
+        """Cancel the sequence."""
+        if self.sequence_runner is not None:
+            self.sequence_runner.cancel()

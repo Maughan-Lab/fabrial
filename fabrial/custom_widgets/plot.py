@@ -6,7 +6,8 @@ from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QApplication, QFileDialog, QHBoxLayout, QVBoxLayout
 from pyqtgraph.exporters import ImageExporter
 
-from ..classes import LineData, Shortcut
+from ..classes import Shortcut
+from ..plotting import LineData, LineParams, SymbolParams
 from ..utility import errors, layout as layout_util
 from .augmented import Button, Widget
 
@@ -76,12 +77,9 @@ class PlotItem(pg.PlotItem):
         self,
         x_data: list[float],
         y_data: list[float],
-        legend_label: str,
-        line_color: str | None,
-        line_width: float | None,
-        symbol: str,
-        symbol_color: str,
-        symbol_size: int,
+        legend_label: str | None,
+        line_params: LineParams | None,
+        symbol_params: SymbolParams | None,
     ) -> LineData:
         """
         Plot a new line on top of the current lines. Stores the plotted item internally.
@@ -93,37 +91,35 @@ class PlotItem(pg.PlotItem):
         y_data
             The y-data.
         legend_label
-            The label for this line in the legend.
-        line_color
-            The color of the line. If set to `None`, there will be no line.
-        line_width
-            The width of the line. If set to `None`, there will be no line.
-        symbol
-            The symbol to use, i.e. "o" for a dot.
-        symbol_size
-            The point size.
-        symbol_color
-            The color of the points.
+            The label for this line in the legend. Can be `None` for no legend entry.
+        line_params
+            How the line should look. If `None` there will be no line.
+        symbol_params
+            How the symbols should look. If `None` there will be no symbols.
 
         Returns
         -------
-        A reference to the plotted line.
+        A reference to the plotted data.
         """
-        if line_color is None or line_width is None:
+        if line_params is None:
             line_pen = None
         else:
-            line_pen = pg.mkPen(line_color, width=line_width)
-        line = pg.PlotItem.plot(
-            self,
-            x_data,
-            y_data,
-            name=legend_label,
-            pen=line_pen,
-            symbol=symbol,
-            symbolSize=symbol_size,
-            symbolBrush=symbol_color,
-            symbolPen=pg.mkPen(color=symbol_color),
-        )
+            line_pen = pg.mkPen(line_params.color, width=line_params.width)
+        if symbol_params is not None:  # if there should be symbols, plot with symbols
+            line = pg.PlotItem.plot(
+                self,
+                x_data,
+                y_data,
+                name=legend_label,
+                pen=line_pen,
+                symbol=symbol_params.symbol,
+                symbolSize=symbol_params.size,
+                symbolBrush=symbol_params.color,
+                symbolPen=pg.mkPen(color=symbol_params.color),
+            )
+        else:  # otherwise plot without symbols
+            line = pg.PlotItem.plot(self, x_data, y_data, name=legend_label, pen=line_pen)
+
         line_data = LineData(line, x_data, y_data)
         self.lines.append(line_data)
         return line_data

@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QVBoxLayout
 
 from fabrial import MainWindow
 from fabrial.custom_widgets import GroupBox, TemperatureSpinBox
-from fabrial.instruments import INSTRUMENTS, ConnectionStatus, Oven
+from fabrial.legacy.instruments import INSTRUMENTS, ConnectionStatus, Oven
 from fabrial.main import main
 from fabrial.utility import layout as layout_util
 

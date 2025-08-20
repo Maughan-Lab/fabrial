@@ -7,6 +7,9 @@ build/
 dist/
 FabrialInstaller.exe
 
+/fabrial/plugins/*
+!/fabrial/plugins/__init__.py
+
 # random folder I saw once
 /share/
 

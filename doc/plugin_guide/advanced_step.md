@@ -2,11 +2,16 @@
 
 ### Communicating With the GUI
 
-Let's modify our step's `run()` method to interact with the GUI. Using the `StepRunner` that gets passed to `run()`, we can plot data in real time and send prompts to the user.
+Let's add some import sand modify our step's `run()` method to interact with the GUI. Using the `StepRunner` that gets passed to `run()`, we can plot data in real time and send prompts to the user.
 
 <sub>Filename: random_data/random_step.py</sub>
 ```python
-    # --snip--
+# --snip--
+
+# fabrial's plotting module stores classes used for plotting
+from fabrial.plotting import LineParams, PlotSettings, SymbolParams
+
+# --snip--
 
     async def run(self, runner: StepRunner, data_directory: Path):
         # `create_plot()` is an asynchronous context manager,
@@ -67,7 +72,7 @@ The `SequenceStep`'s `metadata()` method can be overridden to record extra metad
         return {"Selected Data Interval": self.data_interval}
 ```
 
-If you run a sequence with this change, our step's **`metadata.json`** file will have an entry called `Selected Data Interval`.
+If you run a sequence with this change, our step's metadata file will have an entry called `Selected Data Interval`.
 
 ___
 
@@ -83,7 +88,8 @@ from contextlib import AsyncExitStack
 from pathlib import Path
 from typing import Any
 
-from fabrial import LineSettings, PlotSettings, SequenceStep, StepRunner
+from fabrial import SequenceStep, StepRunner
+from fabrial.plotting import LineParams, PlotSettings, SymbolParams
 
 from .random_widget import NAME
 
@@ -104,7 +110,7 @@ class RandomDataStep(SequenceStep):
                 )
             )
             line_handle = await plot_handle.add_line(
-                LineSettings("The Data", "red", 3, "o", "blue", 5)
+                "The Data", LineParams("red", 3), SymbolParams("o", "blue", 5)
             )
             start_time = time.time()
             f = exit_stack.enter_context(open(data_directory.joinpath("random_data.txt"), "w"))
@@ -131,4 +137,5 @@ class RandomDataStep(SequenceStep):
 
     def metadata(self) -> dict[str, Any]:
         return {"Selected Data Interval": self.data_interval}
+
 ```

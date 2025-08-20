@@ -5,7 +5,10 @@ from pathlib import Path
 from typing import Any
 
 # the `StepRunner` class is how you interact with the GUI
-from fabrial import LineSettings, PlotSettings, SequenceStep, StepRunner
+from fabrial import SequenceStep, StepRunner
+
+# fabrial's plotting module stores classes used for plotting
+from fabrial.plotting import LineParams, PlotSettings, SymbolParams
 
 # we import `NAME` so we always use the same "Random Data" string
 from .random_widget import NAME
@@ -33,7 +36,7 @@ class RandomDataStep(SequenceStep):
             # creating a plot does not automatically create a line
             # `add_line()` is asynchronous
             line_handle = await plot_handle.add_line(
-                LineSettings("The Data", "red", 3, "o", "blue", 5)
+                "The Data", LineParams("red", 3), SymbolParams("o", "blue", 5)
             )
             # we record the start time for plotting
             start_time = time.time()

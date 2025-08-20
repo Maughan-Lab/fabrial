@@ -2,14 +2,14 @@ from types import ModuleType
 from typing import Mapping
 
 from PyQt6.QtGui import QCloseEvent
-from PyQt6.QtWidgets import QMainWindow, QWidget
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
 
 from .constants import APP_NAME
 from .custom_widgets import TabWidget, YesCancelDialog
 from .menu import MenuBar
 from .secondary_window import SecondaryWindow
 from .tabs import SequenceBuilderTab, SequenceDisplayTab
-from .utility import events, images
+from .utility import images
 
 
 class MainWindow(QMainWindow):
@@ -88,18 +88,18 @@ class MainWindow(QMainWindow):
 
     def allowed_to_close(self) -> bool:
         """Determine if the window should close."""
-        # only close if a sequence is not running
-        return True  # TODO
-        process_widget = self.sequence_tab.sequence_tree
-        if process_widget.is_running():
+        # only close if a sequence is not running, otherwise ask to cancel the sequence
+        if self.sequence_tab.is_running_sequence():
             if YesCancelDialog(
                 "Are you sure you want to exit?", "A sequence is currently running."
             ).run():
-                process_widget.cancelCommand.emit()
-                while process_widget.is_running():
-                    events.PROCESS_EVENTS()
+                self.sequence_tab.cancel_sequence()
+                while self.sequence_tab.is_running_sequence():
+                    QApplication.processEvents()
+                return True
             else:
                 return False
+
         return True
 
     def save_on_close(self):

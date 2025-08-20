@@ -1,11 +1,13 @@
+import logging
 import typing
 from os import PathLike
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QTabWidget
 
-from ..classes import DataLock, LineIndex, LineSettings, PlotIndex, PlotSettings, Shortcut
+from ..classes import DataLock, Shortcut
 from ..custom_widgets import Button, PlotWidget
+from ..plotting import LineIndex, LineParams, PlotIndex, PlotSettings, SymbolParams
 from ..secondary_window import SecondaryWindow
 from ..utility import images
 
@@ -101,7 +103,9 @@ class SequenceDisplayTab(QTabWidget):
     def add_line(
         self,
         plot_index: PlotIndex,
-        line_settings: LineSettings,
+        legend_label: str | None,
+        line_params: LineParams | None,
+        symbol_params: SymbolParams | None,
         receiver: DataLock[LineIndex | None],
     ):
         """
@@ -112,16 +116,7 @@ class SequenceDisplayTab(QTabWidget):
         plot_item = self.get_plot(plot_index).view.plot_item
         # we can use the line count as an index because you can't remove lines
         line_number = plot_item.line_count()  # store this before adding the new line
-        plot_item.plot(
-            [],
-            [],
-            line_settings.legend_label,
-            line_settings.line_color,
-            line_settings.line_width,
-            line_settings.symbol,
-            line_settings.symbol_color,
-            line_settings.symbol_size,
-        )
+        plot_item.plot([], [], legend_label, line_params, symbol_params)
         receiver.set(LineIndex(plot_index, line_number))  # send the index to the receiver
 
     def add_point(self, line_index: LineIndex, x: float, y: float):
@@ -134,8 +129,10 @@ class SequenceDisplayTab(QTabWidget):
 
     def save_plot(self, plot_index: PlotIndex, file: PathLike[str] | str):
         """Save the plot at **plot_index** to **file**."""
-        # TODO: figure out if a failure to create the image file is fatal
-        self.get_plot(plot_index).view.plot_item.export_to_image(str(file))
+        try:
+            self.get_plot(plot_index).view.plot_item.export_to_image(str(file))
+        except Exception:  # silently ignore the error and log it
+            logging.getLogger(__name__).exception("Failed to save plot as image")
 
     def pop_graph(self):
         """Pop the current graph into a secondary window."""

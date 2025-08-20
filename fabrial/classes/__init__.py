@@ -2,15 +2,6 @@ from .actions import Action, Shortcut
 from .exceptions import FatalSequenceError, PluginError
 from .lock import DataLock
 from .metaclasses import QABC, ABCQObjectMeta, QABCMeta, QProtocol, QProtocolMeta
-from .plotting import (
-    LineData,
-    LineHandle,
-    LineIndex,
-    LineSettings,
-    PlotHandle,
-    PlotIndex,
-    PlotSettings,
-)
 from .sequence_runner import SequenceRunner
 from .sequence_step import SequenceStep
 from .sequence_thread import SequenceThread

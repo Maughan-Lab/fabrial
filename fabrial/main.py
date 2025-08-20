@@ -4,7 +4,7 @@ from types import ModuleType
 
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
-from tendo.singleton import SingleInstance, SingleInstanceException 
+from tendo.singleton import SingleInstance, SingleInstanceException
 
 from .constants import PACKAGE_NAME, icons
 from .constants.paths import FOLDERS_TO_CREATE

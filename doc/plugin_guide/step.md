@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 # the `StepRunner` class is how you interact with the GUI
-from fabrial import LineSettings, PlotSettings, SequenceStep, StepRunner
+from fabrial import SequenceStep, StepRunner
 
 # we import `NAME` so we always use the same "Random Data" string
 from .random_widget import NAME

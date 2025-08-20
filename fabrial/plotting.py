@@ -8,10 +8,10 @@ from typing import TYPE_CHECKING
 
 from pyqtgraph import PlotDataItem
 
-from .lock import DataLock
+from .classes.lock import DataLock
 
 if TYPE_CHECKING:
-    from .step_runner import StepRunner
+    from .classes.step_runner import StepRunner
 
 
 class LineData:
@@ -49,47 +49,51 @@ class PlotSettings:
     y_label: str
 
     def __copy__(self) -> PlotSettings:
-        return PlotSettings(self.title, self.x_label, self.y_label)
+        return PlotSettings(copy.copy(self.title), copy.copy(self.x_label), copy.copy(self.y_label))
 
 
 @dataclass
-class LineSettings:
+class LineParams:
     """
-    Container for line settings (i.e. the line width, color, etc.).
+    Describes a line should look.
 
     Parameters
     ----------
-    legend_label
-        The label to use for this line in the legend.
-    line_color
-        The line's color (for example, "red", or "#112233" for an exact color). If `None`, there
-        will only be markers.
-    line_width
-        The line's width. If `None`, there will only be markers.
-    symbol
-        The marker symbol, i.e. "o" for a dot.
-    symbol_size
-        The point size.
-    symbol_color
-        The color of the points. Same style as **line_color**.
+    color
+        The line's color (i.e. "red" or "#112233").
+    width
+        The line's width.
     """
 
-    legend_label: str
-    line_color: str | None
-    line_width: float | None
-    symbol: str
-    symbol_color: str
-    symbol_size: int
+    color: str
+    width: float
 
-    def __copy__(self) -> LineSettings:
-        return LineSettings(
-            self.legend_label,
-            self.line_color,
-            self.line_width,
-            self.symbol,
-            self.symbol_color,
-            self.symbol_size,
-        )
+    def __copy__(self) -> LineParams:
+        return LineParams(copy.copy(self.color), self.width)
+
+
+@dataclass
+class SymbolParams:
+    """
+    Describes how symbols on a line should look.
+
+    Parameters
+    ----------
+    symbol
+        The symbol to use, (i.e. "o" for a dot) See
+        [`pyqtgraph`](https://pyqtgraph.readthedocs.io/en/latest/)'s documentation for more info.
+    color
+        The symbol's color.
+    size
+        The symbol's point size.
+    """
+
+    symbol: str
+    color: str
+    size: int
+
+    def __copy__(self) -> SymbolParams:
+        return SymbolParams(copy.copy(self.symbol), copy.copy(self.color), self.size)
 
 
 @dataclass
@@ -163,13 +167,34 @@ class PlotHandle:
         plot_index = copy.copy(self.plot_index)
         self.runner.submit_plot_command(lambda plot_tab: plot_tab.save_plot(plot_index, file))
 
-    async def add_line(self, line_settings: LineSettings) -> LineHandle:
-        """Add an empty line to the plot."""
+    async def add_line(
+        self,
+        legend_label: str | None,
+        line_params: LineParams | None,
+        symbol_params: SymbolParams | None,
+    ) -> LineHandle:
+        """
+        Add an empty line to the plot.
+
+        Parameters
+        ----------
+        legend_label
+            The label to use for the legend. If `None` there will be no legend label.
+        line_params
+            How the line should look. If `None` there will be no line.
+        symbol_params
+            How the symbols (aka markers) should look. If `None` there will be no symbols.
+        """
         receiver: DataLock[LineIndex | None] = DataLock(None)
-        # we make copies of the plot index because sending the original is not thread-safe
+        # we make copies because sending the originals is not thread-safe
         plot_index = copy.copy(self.plot_index)
+        legend_label = copy.copy(legend_label)
+        line_params = copy.copy(line_params)
+        symbol_params = copy.copy(symbol_params)
         self.runner.submit_plot_command(
-            lambda plot_tab: plot_tab.add_line(plot_index, line_settings, receiver)
+            lambda plot_tab: plot_tab.add_line(
+                plot_index, legend_label, line_params, symbol_params, receiver
+            )
         )
         while True:
             await asyncio.sleep(0)

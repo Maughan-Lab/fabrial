@@ -14,9 +14,9 @@ from typing import TYPE_CHECKING, AsyncGenerator, Callable, Iterable
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from ..constants.paths.sequence import METADATA_FILENAME
+from ..plotting import PlotHandle, PlotIndex, PlotSettings
 from .exceptions import FatalSequenceError
 from .lock import DataLock
-from .plotting import PlotHandle, PlotIndex, PlotSettings
 from .sequence_step import SequenceStep
 
 if TYPE_CHECKING:
@@ -158,6 +158,34 @@ class StepRunner(QObject):
         return await self.send_prompt_and_wait(
             f"Sequence: Message From {step.name()}", message, options
         )
+
+    async def prompt_retry_cancel(self, step: SequenceStep, message: str) -> bool:
+        """
+        Ask the user whether the **step** should retry something or cancel. This can be called by
+        `SequenceStep`s.
+
+        Parameters
+        ----------
+        step
+            The `SequenceStep` requesting the prompt.
+        message
+            The prompt's text, excluding the part about retrying or canceling.
+
+        Returns
+        -------
+        `True` if the operation should be retried, `False` if the step should cancel.
+        """
+        match (
+            response := await self.prompt_user(
+                step, f"{message}\n\nRetry or cancel the step?", {0: "Retry", 1: "Cancel Step"}
+            )
+        ):
+            case 0:  # retry
+                return True
+            case 1:  # cancel step
+                return False
+            case _:
+                raise FatalSequenceError(f"Got {response} but expected 0 or 1")
 
     @contextlib.asynccontextmanager
     async def create_plot(
