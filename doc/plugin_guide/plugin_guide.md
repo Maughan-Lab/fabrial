@@ -38,7 +38,11 @@ my_plugin
 
 > #### Testing as You Go
 >
-> If you want to test your plugin as you write it, you'll need to "install" it. The easiest way is to place the plugin folder (**`random_data`** for this tutorial) in Fabrial's **`plugins`** folder (i.e. move it out of **`my_plugin`**). In your virtual environment, you can find this in **`site_packages/fabrial/plugins`**. If you run
+> If you want to test your plugin as you write it, you'll need to "install" it. The simplest way is to place the plugin folder (**`random_data`** for this tutorial) in Fabrial's **`plugins`** folder (i.e. move it out of **`my_plugin`**). In your virtual environment, you can find this in **`site_packages/fabrial/plugins`**.
+>
+>> Alternatively, you can install Fabrial in a virtual environment and install your plugin in [editable mode](https://setuptools.pypa.io/en/latest/userguide/development_mode.html). This requires a **`pyproject.toml`** file, see [Converting to a Global Plugin](#converting-to-a-global-plugin).
+>
+>If you run
 >
 > ```
 > fabrial

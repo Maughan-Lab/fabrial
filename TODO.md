@@ -18,7 +18,6 @@ Do it :D
 - The oven stabilization algorithm needs to be rewritten to use the 
 
 ## The Sequence
-- Implement a "simultaneous" step that uses `asyncio` to run two things concurrently.
 - Figure out how to record the oven setpoint in every process, even without a global oven instance.
     - The solution to this is just to add a `Record Temperature` sequence step. Users will have to manage the rest.
 
