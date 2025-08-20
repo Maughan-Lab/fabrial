@@ -126,7 +126,7 @@ class DontShowAgainDialog(Dialog):
         self.file = file
         try:
             with open(self.file, "r") as f:
-                if json.load(f):
+                if not json.load(f):
                     self.check_box.setChecked(True)
         except OSError:
             pass

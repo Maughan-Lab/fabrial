@@ -78,7 +78,7 @@ class SequenceRunner:
         os.makedirs(data_directory, exist_ok=True)
         # check if the directory is empty
         try:
-            empty = len(list(os.scandir(data_directory))) > 0
+            empty = len(list(os.scandir(data_directory))) == 0
         except OSError:
             logging.getLogger(__name__).exception("Failed to check if data directory is empty")
             errors.show_error(
