@@ -4,11 +4,10 @@ from types import ModuleType
 
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
-from tendo.singleton import SingleInstance, SingleInstanceException
+from tendo.singleton import SingleInstance, SingleInstanceException 
 
 from .constants import PACKAGE_NAME, icons
 from .constants.paths import FOLDERS_TO_CREATE
-from .gamry_integration import GAMRY
 from .main_window import MainWindow
 from .utility import errors, plugins
 
@@ -72,14 +71,8 @@ def main():
     # then make the main window
     main_window = MainWindow(plugin_modules)
     main_window.showMaximized()
-
-    # app, main_window = make_app(plugin_modules)
     # run the application
     app.exec()
-    # TODO: remove these
-    # stop the oven's thread
-    # close GamryCOM
-    GAMRY.cleanup()
 
     # check to relaunch
     if main_window.should_relaunch():
