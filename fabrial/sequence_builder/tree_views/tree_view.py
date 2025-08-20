@@ -67,7 +67,7 @@ class TreeView[Model: TreeModel](QTreeView):  # type: ignore
             recursively_init_state(self.rootIndex(), view_states)
             return True
         except Exception:
-            logging.getLogger(__name__).warning(
+            logging.getLogger(__name__).info(
                 "Failed to initialize view state from file", exc_info=True
             )
             self.expandAll()  # just expand everything if we can't load from a file

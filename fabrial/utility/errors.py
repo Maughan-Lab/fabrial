@@ -61,6 +61,6 @@ def set_up_logging():
         datefmt="%Y-%m-%d %H:%M:%S",  # datetime format
         # show datetime, error level, logger name, the calling function's name, and the log message
         format="{asctime}.{msecs:.0f} {levelname} {message} - {name}:{funcName}()",
-        # send to both `lastrun.log` (wiped between runs) and the console
-        handlers=[logging.FileHandler("lastrun.log", "w"), logging.StreamHandler()],
+        filename="lastrun.log",  # send to `lastrun.log`
+        filemode="w",  # wipe the file between runs
     )
