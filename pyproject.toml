@@ -37,6 +37,9 @@ build-backend = "hatchling.build"
 [tool.hatch.version]
 source = "vcs"
 
+[tool.hatch.version.raw-options]
+version_scheme = "no-guess-dev"
+
 # uv config
 [tool.uv]
 default-groups = ["test"]

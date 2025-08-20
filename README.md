@@ -19,8 +19,6 @@ in a terminal.
 
 Fabrial plugins on [PyPi](https://pypi.org/) are generally prefixed with `fabrial-`. If no plugin exists for your use case, you can also [write your own](./doc/plugin_guide/plugin_guide.md)!
 
-TODO: convert to global plugin
-
 ## Notes for Developers
 
 - This program uses [PyInstaller](https://pyinstaller.org/en/stable/) to compile and [InstallForge](https://installforge.net/) to create an installer.
