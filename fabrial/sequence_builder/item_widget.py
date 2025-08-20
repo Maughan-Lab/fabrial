@@ -47,5 +47,6 @@ class ItemWidget(ParameterDescriptionWidget):
 
     def show_editable(self, editable: bool):
         """Show the widget. If **editable** is `True`, the parameter tab can be edited."""
-        self.parameter_widget().setEnabled(editable)
+        if (widget := self.parameter_widget()) is not None:
+            widget.setEnabled(editable)
         self.show()

@@ -22,20 +22,25 @@ class ParameterDescriptionWidget(Widget):
     def __init__(self, parameter_layout: QLayout | None, parameter_tab_name: str = "Parameters"):
         layout = QVBoxLayout()
         Widget.__init__(self, layout)
-        self.param_widget = Widget(parameter_layout)
-        parameter_scroll_area = QScrollArea()
-        parameter_scroll_area.setWidget(self.param_widget)
-        parameter_scroll_area.setWidgetResizable(True)
-        parameter_scroll_area.setFrameShape(QFrame.Shape.NoFrame)
-
         self.description_widget = MarkdownView()
 
         tab_widget = QTabWidget()
         layout.addWidget(tab_widget)
-        tab_widget.addTab(parameter_scroll_area, parameter_tab_name)
+
+        if parameter_layout is not None:
+            self.param_widget: QWidget | None = Widget(parameter_layout)
+            parameter_scroll_area = QScrollArea()
+            parameter_scroll_area.setWidget(self.param_widget)
+            parameter_scroll_area.setWidgetResizable(True)
+            parameter_scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+
+            tab_widget.addTab(parameter_scroll_area, parameter_tab_name)
+        else:
+            self.param_widget = None
+
         tab_widget.addTab(self.description_widget, "Description")
 
-    def parameter_widget(self) -> QWidget:
+    def parameter_widget(self) -> QWidget | None:
         """Get the parameter widget (the first tab)."""
         return self.param_widget
 
