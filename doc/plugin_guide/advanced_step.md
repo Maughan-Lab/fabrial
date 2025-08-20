@@ -53,6 +53,8 @@ from fabrial.plotting import LineParams, PlotSettings, SymbolParams
 
 If you run a sequence with these changes, you should see real-time plotting in the visuals tab. When the sequence step completes, it should show you a Happy/Sad prompt. Selecting an option will print a message to the terminal.
 
+> Since it's such a common case, the `StepRunner` also provides the `prompt_retry_cancel()` method. It will prompt the user to retry something or cancel the calling step. If the user chooses the cancel option, `prompt_retry_cancel()` will raise a `StepCancellation` exception.
+
 > #### Note
 > 
 > For plotting, plot handles and line handles are only valid inside the `async with` block. Using them after the block ends is a fatal error.
