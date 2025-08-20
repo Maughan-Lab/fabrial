@@ -88,7 +88,7 @@ from .random_step import RandomDataStep
         return RandomDataStep(self.random_data_widget.interval_spinbox.value())
 ```
 
-Technically, our sequence action is now finished. If you copy **`random_data`** to Fabrial's **`plugins`** folder, our item will show up and using it in a sequence will record random data. However, there are a number of ways to make it better.
+Technically, our sequence action is now finished. If you copy **`random_data`** to Fabrial's **`plugins`** folder, our item will show up, and using it in a sequence will record random data. However, there are a number of ways to make it better.
 
 Follow the [expanding our sequence step](./advanced_step.md) guide, then we'll get into the last part of the tutorial—adding a tab to the settings menu.
 
