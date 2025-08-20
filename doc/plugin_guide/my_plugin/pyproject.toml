@@ -1,0 +1,13 @@
+[project]
+name = "random_data"
+version = "0.1.0"
+
+dependencies = ["fabrial", "PyQt6"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# "fabrial.plugins" is the entry point for Fabrial
+[project.entry-points."fabrial.plugins"]
+random-data = "random_data"

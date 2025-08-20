@@ -17,3 +17,4 @@ class SequenceCommand(Enum):
     Pause = auto()
     Unpause = auto()
     Cancel = auto()
+    RaiseFatal = auto()

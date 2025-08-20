@@ -62,7 +62,7 @@ class LineSettings:
     legend_label
         The label to use for this line in the legend.
     line_color
-        The line's color (for example, "red" or "#112233" for an exact color). If `None`, there
+        The line's color (for example, "red", or "#112233" for an exact color). If `None`, there
         will only be markers.
     line_width
         The line's width. If `None`, there will only be markers.
@@ -148,47 +148,33 @@ class PlotHandle:
         self.runner = runner
         self.plot_index = plot_index
 
-    def clear_lines(self):
-        """Clear all lines from the plot. This does not affect the labels."""
-        self.runner.submit_plot_command(
-            lambda plot_tab: plot_tab.clear_lines(copy.copy(self.plot_index))
-        )
-
     def set_log_scale(self, x_log: bool | None, y_log: bool | None):
         """
         Set whether the x- and/or y-axis use a logarithmic scale. A value of `None` for **x_log** or
         **y_log** will leave the corresponding axis unchanged.
         """
+        plot_index = copy.copy(self.plot_index)
         self.runner.submit_plot_command(
-            lambda plot_tab: plot_tab.set_log_scale(copy.copy(self.plot_index), x_log, y_log)
+            lambda plot_tab: plot_tab.set_log_scale(plot_index, x_log, y_log)
         )
 
     def save_plot(self, file: PathLike[str] | str):
         """Save the plot to **file**."""
-        self.runner.submit_plot_command(
-            lambda plot_tab: plot_tab.save_plot(copy.copy(self.plot_index), file)
-        )
+        plot_index = copy.copy(self.plot_index)
+        self.runner.submit_plot_command(lambda plot_tab: plot_tab.save_plot(plot_index, file))
 
     async def add_line(self, line_settings: LineSettings) -> LineHandle:
         """Add an empty line to the plot."""
         receiver: DataLock[LineIndex | None] = DataLock(None)
-        # we make copies of the plot index and line settings because sending the originals is not
-        # thread-safe
+        # we make copies of the plot index because sending the original is not thread-safe
+        plot_index = copy.copy(self.plot_index)
         self.runner.submit_plot_command(
-            lambda plot_tab: plot_tab.add_line(
-                copy.copy(self.plot_index), copy.copy(line_settings), receiver
-            )
+            lambda plot_tab: plot_tab.add_line(plot_index, line_settings, receiver)
         )
         while True:
             await asyncio.sleep(0)
             if (line_index := receiver.get()) is not None:
                 return LineHandle(self, line_index)
-
-    def __del__(self):
-        # remove the plot from the visuals tab when this handle goes out of scope
-        self.runner.submit_plot_command(
-            lambda plot_tab: plot_tab.remove_plot(copy.copy(self.plot_index))
-        )
 
 
 class LineHandle:
@@ -209,6 +195,7 @@ class LineHandle:
 
     def add_point(self, x: float, y: float):
         """Add a point to the line."""
+        line_index = copy.copy(self.line_index)
         self.parent.runner.submit_plot_command(
-            lambda plot_tab: plot_tab.add_point(copy.copy(self.line_index), x, y)
+            lambda plot_tab: plot_tab.add_point(line_index, x, y)
         )

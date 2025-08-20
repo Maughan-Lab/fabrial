@@ -128,10 +128,6 @@ class SequenceDisplayTab(QTabWidget):
         """Add a point to the line at **line_index**."""
         self.get_plot(line_index.plot_index).view.plot_item.add_point(x, y, line_index.line_number)
 
-    def clear_lines(self, plot_index: PlotIndex):
-        """Clear the lines of the plot at **plot_index**."""
-        self.get_plot(plot_index).view.plot_item.clear()  # TODO: see if this works
-
     def set_log_scale(self, plot_index: PlotIndex, x_log: bool | None, y_log: bool | None):
         """Set the whether the plot at **plot_index** uses a log scale."""
         self.get_plot(plot_index).view.plot_item.setLogMode(x_log, y_log)
@@ -140,20 +136,6 @@ class SequenceDisplayTab(QTabWidget):
         """Save the plot at **plot_index** to **file**."""
         # TODO: figure out if a failure to create the image file is fatal
         self.get_plot(plot_index).view.plot_item.export_to_image(str(file))
-
-    # def reset(self):
-    #     """Destroy all plots."""
-    #     while self.count() > 0:
-    #         tab = self.widget(0)
-    #         self.removeTab(0)
-    #         if tab is not None:
-    #             tab.setParent(None)
-    #             tab.deleteLater()
-    #     for popped_graph in self.popped_graphs:
-    #         popped_graph.close_silent()
-    #         popped_graph.deleteLater()
-    #     self.plots.clear()
-    #     self.popped_graphs.clear()
 
     def pop_graph(self):
         """Pop the current graph into a secondary window."""

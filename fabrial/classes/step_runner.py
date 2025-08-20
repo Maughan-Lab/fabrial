@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import copy
 import json
 import logging
 import os
 from asyncio import CancelledError
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Iterable
+from typing import TYPE_CHECKING, AsyncGenerator, Callable, Iterable
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
@@ -55,6 +57,8 @@ class StepRunner(QObject):
     - `True` if the step was started, `False` if it was finished (`bool`).
     """
 
+    # ----------------------------------------------------------------------------------------------
+    # public
     def __init__(self):
         QObject.__init__(self)
 
@@ -134,6 +138,72 @@ class StepRunner(QObject):
             step_data_directory, step, start_datetime, cancelled, error_occurred
         )
 
+    async def prompt_user(self, step: SequenceStep, message: str, options: dict[int, str]) -> int:
+        """
+        Show a popup prompt to the user and wait for a response. This can be called by
+        `SequenceStep`s.
+
+        Parameters
+        ----------
+        step
+            The `SequenceStep` requesting the prompt.
+        message
+            The prompt's text.
+        options
+            A mapping of values to options in the prompt. For example,
+            `{1: "First Option", 2: "Second Option}` will show a prompt with options "First Option"
+            and "Second Option". If the user selects "First Option", this function will return `1`.
+            If the user selects "Second Option", this function will return `2`.
+        """
+        return await self.send_prompt_and_wait(
+            f"Sequence: Message From {step.name()}", message, options
+        )
+
+    @contextlib.asynccontextmanager
+    async def create_plot(
+        self, step: SequenceStep, tab_text: str, plot_settings: PlotSettings
+    ) -> AsyncGenerator[PlotHandle]:
+        """
+        Create a new plot on the visuals tab and return a handle to it. This waits until the plot
+        is created. This can be called by `SequenceStep`s.
+
+        Parameters
+        ----------
+        step
+            The step creating the plot (generally just pass `self`).
+        tab_text
+            The text of the plot's tab.
+        plot_settings
+            The `PlotSettings` to configure the new plot with.
+
+        Returns
+        -------
+        A thread-safe handle for the plot that can be used to modify it from your `SequenceStep`.
+        """
+        receiver: DataLock[PlotIndex | None] = DataLock(None)
+        step_address = id(step)  # copy
+        step_name = step.name()  # copy
+        # notify that we want to create a new plot
+        self.submit_plot_command(
+            lambda plot_tab: plot_tab.add_plot(
+                step_address, step_name, tab_text, plot_settings, receiver
+            )
+        )
+        # wait for a response
+        while True:
+            await asyncio.sleep(0)
+            if (plot_index := receiver.get()) is not None:
+                plot_handle = PlotHandle(self, plot_index)
+                try:
+                    yield plot_handle  # return the plot handle
+                finally:  # this runs at the end of the context manager
+                    self.submit_plot_command(  # remove the plot
+                        lambda plot_tab: plot_tab.remove_plot(copy.copy(plot_index))
+                    )
+                return  # exit
+
+    # ----------------------------------------------------------------------------------------------
+    # private
     async def make_step_directory(
         self, data_directory: Path, step: SequenceStep, number: int
     ) -> Path:
@@ -156,27 +226,6 @@ class StepRunner(QObject):
             ):
                 raise CancelledError
         return step_data_directory
-
-    async def prompt_user(self, step: SequenceStep, message: str, options: dict[int, str]) -> int:
-        """
-        Show a popup prompt to the user and wait for a response. This can be called by
-        `SequenceStep`s.
-
-        Parameters
-        ----------
-        step
-            The `SequenceStep` requesting the prompt.
-        message
-            The prompt's text.
-        options
-            A mapping of values to options in the prompt. For example,
-            `{1: "First Option", 2: "Second Option}` will show a prompt with options "First Option"
-            and "Second Option". If the user selects "First Option", this function will return `1`.
-            If the user selects "Second Option", this function will return `2`.
-        """
-        return await self.send_prompt_and_wait(
-            f"Sequence: Message From {step.name()}", message, options
-        )
 
     async def prompt_handle_error(self, step: SequenceStep, error_message: str):
         """
@@ -246,7 +295,8 @@ class StepRunner(QObject):
                     }
                 )
                 with open(file, "w") as f:
-                    json.dump(data, f, indent=4)
+                    # any non-JSON types are converted to strings
+                    json.dump(data, f, indent=4, default=str)
                 break  # exit the loop
             except Exception:
                 logging.getLogger(__name__).exception("Failed to write metadata")
@@ -265,41 +315,6 @@ class StepRunner(QObject):
                         raise FatalSequenceError(
                             f"Reponse was {response} when it should have been 0 or 1"
                         )
-
-    async def create_plot(
-        self, step: SequenceStep, tab_text: str, plot_settings: PlotSettings
-    ) -> PlotHandle:
-        """
-        Create a new plot on the visuals tab and return a handle to it. This waits until the plot
-        is created. This can be called by `SequenceStep`s.
-
-        Parameters
-        ----------
-        step
-            The step creating the plot (generally just pass `self`).
-        tab_text
-            The text of the plot's tab.
-        plot_settings
-            The `PlotSettings` to configure the new plot with.
-
-        Returns
-        -------
-        A thread-safe handle for the plot that can be used to modify it from your `SequenceStep`.
-        """
-        receiver: DataLock[PlotIndex | None] = DataLock(None)
-        step_address = id(step)  # copy
-        step_name = step.name()  # copy
-        # notify that we want to create a new plot
-        self.submit_plot_command(
-            lambda plot_tab: plot_tab.add_plot(
-                step_address, step_name, tab_text, plot_settings, receiver
-            )
-        )
-        # wait for a response
-        while True:
-            await asyncio.sleep(0)
-            if (plot_index := receiver.get()) is not None:
-                return PlotHandle(self, plot_index)  # return the plot handle
 
     # used externally
     def submit_plot_command(self, command: Callable[[SequenceDisplayTab], None]):

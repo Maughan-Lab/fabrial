@@ -54,7 +54,7 @@ class SequenceModel(TreeModel[SequenceItem]):
             self.insert_rows(0, QModelIndex(), items)
             return True
         except Exception:
-            logging.getLogger(__name__).warning("Failed to initialize from file", exc_info=True)
+            logging.getLogger(__name__).info("Failed to initialize from file", exc_info=True)
             return False
 
     def to_json(self, file: PathLike[str] | str) -> bool:

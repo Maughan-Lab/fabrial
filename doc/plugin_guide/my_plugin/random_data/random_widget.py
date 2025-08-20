@@ -30,6 +30,8 @@ class RandomDataWidget(ItemWidget):
                 DIRECTORY.joinpath("descriptions"),
                 NAME,
                 Substitutions(
+                    # notice how the dictionary keys correspond to the
+                    # substitutions in the files
                     parameters={"DATA_INTERVAL": "Data Interval"},
                     data_recording={"DATA_FILE": "random_data.txt"},
                 ),

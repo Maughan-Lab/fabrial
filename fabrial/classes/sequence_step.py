@@ -38,7 +38,7 @@ class SequenceStep(Protocol):
     def directory_name(self) -> str:
         """
         Get the name (i.e. not full path) of the directory where data should be recorded. By default
-        this returns `name()`.
+        this just returns the result of `name()`.
         """
         return self.name()
 
@@ -50,10 +50,16 @@ class SequenceStep(Protocol):
         """
         Sleep this sequence step for **delay** seconds. This is *not* equivalent to `time.sleep()`
         and should be used *instead* of `time.sleep()`.
+
+        Do not override this.
         """
         await asyncio.sleep(delay)
 
     async def sleep_until(self, when: float):
-        """Sleep until **when**, which is a `float` as returned by `time.time()`."""
+        """
+        Sleep until **when**, which is a `float` as returned by `time.time()`.
+
+        Do not override this.
+        """
         await self.sleep(0)  # make sure we sleep at all
         await self.sleep(when - time.time())

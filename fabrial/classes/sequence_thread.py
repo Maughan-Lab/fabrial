@@ -92,6 +92,8 @@ class SequenceThread(QThread):
                         raise ValueError(
                             "Received `SequenceStep.Unpause`, which should be impossible"
                         )
+                    case SequenceCommand.RaiseFatal:
+                        raise FatalSequenceError("The main thread requested a fatal error")
         except Empty:
             pass
 

@@ -1,0 +1,1 @@
+An example Fabrial plugin with a step that records random data.

@@ -5,7 +5,7 @@ import os
 import typing
 from pathlib import Path
 from queue import Queue
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 from PyQt6.QtCore import QModelIndex
 from PyQt6.QtWidgets import QMessageBox, QPushButton
@@ -21,7 +21,7 @@ from .sequence_thread import SequenceThread
 
 if TYPE_CHECKING:
     from ..sequence_builder import SequenceModel
-    from ..tabs import SequenceBuilderTab
+    from ..tabs import SequenceBuilderTab, SequenceDisplayTab
 
 
 class ValueButton(QPushButton):
@@ -168,7 +168,7 @@ class SequenceRunner:
         sequence_thread.promptRequested.connect(self.show_prompt)
         # run the command on the visuals tab
         sequence_thread.plotCommandRequested.connect(
-            lambda command: command(sequence_tab.visuals_tab)
+            lambda command: self.run_plot_command(command, sequence_tab.visuals_tab)
         )
         # notify finish
         sequence_thread.finished.connect(lambda: sequence_tab.handle_sequence_state_change(False))
@@ -186,6 +186,19 @@ class SequenceRunner:
         prompt.exec()  # run the prompt
         selected_value = typing.cast(ValueButton, prompt.clickedButton()).value  # get the result
         receiver.set(selected_value)  # send to the receiver
+
+    def run_plot_command(
+        self, command: Callable[[SequenceDisplayTab], None], visuals_tab: SequenceDisplayTab
+    ):
+        """Run a plot **command**."""
+        try:
+            command(visuals_tab)
+        except Exception:
+            logging.getLogger(__name__).exception(
+                "Error while running a plot command. This usually indicates that a plugin used an "
+                "invalid `PlotHandle` or `LineHandle`"
+            )
+            self.command_queue.put_nowait(SequenceCommand.RaiseFatal)
 
     def pause(self):
         """Pause the sequence."""
