@@ -1,8 +1,9 @@
 from pathlib import Path
 
-from fabrial import FilesDescription, ItemWidget, Substitutions
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QDoubleSpinBox, QFormLayout
+from PyQt6.QtWidgets import QDoubleSpinBox, QFormLayout, QWidget
+
+from fabrial import FilesDescription, ItemWidget, Substitutions
 
 # we'll refer to these constants a few times
 NAME = "Random Data"
@@ -18,11 +19,15 @@ class RandomDataWidget(ItemWidget):
     def __init__(self, data_interval: float):
         # this is a layout for other widgets
         layout = QFormLayout()
+        # this widget holds the layout
+        parameter_widget = QWidget()
+        parameter_widget.setLayout(layout)
+
         # you must call the base `__init__()` method
         # for now, we're not supplying a description
         ItemWidget.__init__(
             self,
-            layout,
+            parameter_widget,
             NAME,
             ICON,
             FilesDescription(

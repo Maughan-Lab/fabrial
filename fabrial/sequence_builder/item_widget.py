@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QLayout
+from PyQt6.QtWidgets import QWidget
 
 from ..custom_widgets import ParameterDescriptionWidget
 from ..utility.descriptions import NO_DESCRIPTION_PROVIDED, DescriptionProvider
@@ -27,12 +27,12 @@ class ItemWidget(ParameterDescriptionWidget):
 
     def __init__(
         self,
-        parameter_layout: QLayout | None,
+        parameter_widget: QWidget | None,
         title: str,
         icon: QIcon,
         description_provider: DescriptionProvider | None,
     ):
-        ParameterDescriptionWidget.__init__(self, parameter_layout)
+        ParameterDescriptionWidget.__init__(self, parameter_widget)
         self.setWindowTitle(title)
         self.setWindowIcon(icon)
         description = (

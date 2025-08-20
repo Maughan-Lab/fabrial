@@ -8,7 +8,7 @@ from pathlib import Path
 
 from fabrial import FilesDescription, ItemWidget, Substitutions, TextDescription
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QDoubleSpinBox, QFormLayout
+from PyQt6.QtWidgets import QApplication, QDoubleSpinBox, QFormLayout, QWidget
 ```
 
 Next, let's create our widget class, `RandomDataWidget`.
@@ -42,9 +42,13 @@ class RandomDataWidget(ItemWidget):
     def __init__(self, data_interval: float):
         # this is a layout for other widgets
         layout = QFormLayout()
+        # this widget holds the layout
+        parameter_widget = QWidget()
+        parameter_widget.setLayout(layout)
+
         # you must call the base `__init__()` method
         # for now, we're not supplying a description
-        ItemWidget.__init__(self, layout, NAME, ICON, None)
+        ItemWidget.__init__(self, parameter_widget, NAME, ICON, None)
 
         # let's create the widgets!
         self.interval_spinbox = QDoubleSpinBox()
@@ -81,7 +85,7 @@ Descriptions stored in Python source code use the [`TextDescription`](../../fabr
 
         ItemWidget.__init__(
             self,
-            layout,
+            parameter_widget,
             NAME,
             ICON,
             TextDescription(
@@ -172,7 +176,7 @@ You may notice the weird `{{ DATA_INTERVAL }}` and `{{ DATA_FILE }}` text where 
 
         ItemWidget.__init__(
             self,
-            layout,
+            parameter_widget,
             NAME,
             ICON,
             FilesDescription(
@@ -219,9 +223,12 @@ class RandomDataWidget(ItemWidget):
 
     def __init__(self, data_interval: float):
         layout = QFormLayout()
+        parameter_widget = QWidget()
+        parameter_widget.setLayout(layout)
+
         ItemWidget.__init__(
             self,
-            layout,
+            parameter_widget,
             NAME,
             ICON,
             FilesDescription(

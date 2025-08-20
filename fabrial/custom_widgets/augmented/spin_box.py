@@ -26,7 +26,7 @@ class DoubleSpinBox(QDoubleSpinBox):
         number_of_decimals: int = 1,
         minimum: float = 0,
         maximum: float = LARGEST_FLOAT,
-        initial_value: int = 0,
+        initial_value: float = 0,
     ):
         QDoubleSpinBox.__init__(self)
         self.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)

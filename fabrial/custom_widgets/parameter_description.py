@@ -19,7 +19,7 @@ class ParameterDescriptionWidget(Widget):
         The text used for the parameter tab name.
     """
 
-    def __init__(self, parameter_layout: QLayout | None, parameter_tab_name: str = "Parameters"):
+    def __init__(self, parameter_widget: QWidget | None, parameter_tab_name: str = "Parameters"):
         layout = QVBoxLayout()
         Widget.__init__(self, layout)
         self.description_widget = MarkdownView()
@@ -27,8 +27,8 @@ class ParameterDescriptionWidget(Widget):
         tab_widget = QTabWidget()
         layout.addWidget(tab_widget)
 
-        if parameter_layout is not None:
-            self.param_widget: QWidget | None = Widget(parameter_layout)
+        if parameter_widget is not None:
+            self.param_widget: QWidget | None = parameter_widget
             parameter_scroll_area = QScrollArea()
             parameter_scroll_area.setWidget(self.param_widget)
             parameter_scroll_area.setWidgetResizable(True)

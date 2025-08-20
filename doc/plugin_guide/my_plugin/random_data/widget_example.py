@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QApplication, QDoubleSpinBox, QFormLayout
+from PyQt6.QtWidgets import QApplication, QDoubleSpinBox, QFormLayout, QWidget
 
 from fabrial import ItemWidget
 
@@ -18,7 +18,10 @@ class RandomDataWidget(ItemWidget):
 
     def __init__(self, data_interval: float):
         layout = QFormLayout()
-        ItemWidget.__init__(self, layout, NAME, ICON, None)
+        parameter_widget = QWidget()
+        parameter_widget.setLayout(layout)
+
+        ItemWidget.__init__(self, parameter_widget, NAME, ICON, None)
 
         self.interval_spinbox = QDoubleSpinBox()
         self.interval_spinbox.setMinimum(0.1)
