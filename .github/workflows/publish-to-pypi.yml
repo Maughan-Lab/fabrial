@@ -31,7 +31,7 @@ jobs:
         --user
 
     - name: Build the Distribution Files
-      run: python3 -m hatch
+      run: python3 -m hatch build
 
     - name: Store the Distribution Packages
       uses: actions/upload-artifact@v4
