@@ -15,7 +15,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 
 from ..constants.paths.sequence import METADATA_FILENAME
 from ..plotting import PlotHandle, PlotIndex, PlotSettings
-from .exceptions import FatalSequenceError
+from .exceptions import FatalSequenceError, StepCancellation
 from .lock import DataLock
 from .sequence_step import SequenceStep
 
@@ -117,13 +117,17 @@ class StepRunner(QObject):
                 # intentionally putting this code here far clarity
                 # we don't log metadata for fatal errors
                 raise
+            except StepCancellation:
+                # update the cancelled variable
+                cancelled = True
             except Exception:  # recoverable error; log and ask the user what to do
                 logging.getLogger(__name__).exception("Sequence step error")
 
                 error_occurred = True
-                # update the cancelled variable
                 await self.prompt_handle_error(
-                    step, f"The current step, {step.name()}, encountered an error."
+                    step,
+                    f"The current step, {step.name()}, encountered an unexpected error "
+                    "and was terminated.",
                 )
         except CancelledError:  # log cancellation then cancel
             cancelled = True
@@ -133,7 +137,7 @@ class StepRunner(QObject):
             raise
         finally:
             self.stepStateChanged.emit(step_address, False)  # notify finish
-        # this runs if there wasn't a fatal error and the sequence wasn't cancelled
+        # this runs if there wasn't a fatal error and the *sequence* wasn't cancelled
         await self.record_metadata(
             step_data_directory, step, start_datetime, cancelled, error_occurred
         )
@@ -159,10 +163,10 @@ class StepRunner(QObject):
             f"Sequence: Message From {step.name()}", message, options
         )
 
-    async def prompt_retry_cancel(self, step: SequenceStep, message: str) -> bool:
+    async def prompt_retry_cancel(self, step: SequenceStep, message: str):
         """
         Ask the user whether the **step** should retry something or cancel. This can be called by
-        `SequenceStep`s.
+        `SequenceStep`s. If this does not raise `StepCancellation`, the user chose to retry.
 
         Parameters
         ----------
@@ -171,19 +175,22 @@ class StepRunner(QObject):
         message
             The prompt's text, excluding the part about retrying or canceling.
 
-        Returns
-        -------
-        `True` if the operation should be retried, `False` if the step should cancel.
+        Raises
+        ------
+        StepCancellation
+            The user chose to cancel the step.
+        FatalSequenceError
+            The sequence encountered a fatal error. Do not suppress this.
         """
         match (
             response := await self.prompt_user(
-                step, f"{message}\n\nRetry or cancel the step?", {0: "Retry", 1: "Cancel Step"}
+                step, f"{message}\n\nRetry, or cancel the step?", {0: "Retry", 1: "Cancel Step"}
             )
         ):
             case 0:  # retry
-                return True
+                return
             case 1:  # cancel step
-                return False
+                raise StepCancellation
             case _:
                 raise FatalSequenceError(f"Got {response} but expected 0 or 1")
 
@@ -240,20 +247,20 @@ class StepRunner(QObject):
 
         Raises
         ------
-        CancelledError
-            The sequence was cancelled.
+        StepCancellation
+            The step was cancelled.
         FatalSequenceError
             The sequence encountered a fatal error.
         """
         step_data_directory = data_directory.joinpath(f"{number} {step.directory_name()}")
-        try:
-            os.makedirs(step_data_directory, exist_ok=True)
-        except OSError:
-            if not await self.prompt_handle_error(
-                step, f"Failed to create data directory {step_data_directory}"
-            ):
-                raise CancelledError
-        return step_data_directory
+        while True:
+            try:
+                os.makedirs(step_data_directory, exist_ok=True)
+                return step_data_directory
+            except OSError:
+                await self.prompt_retry_cancel(
+                    step, f"Failed to create data directory, {step_data_directory}"
+                )
 
     async def prompt_handle_error(self, step: SequenceStep, error_message: str):
         """
@@ -267,14 +274,14 @@ class StepRunner(QObject):
             An invalid response was sent (this indicates an issue with the core codebase).
         """
         response = await self.send_prompt_and_wait(
-            f"Sequence: Error in {step.name()}",
-            f"{error_message}\n\nSkip current step or cancel the sequence?",
-            {0: "Skip Current", 1: "Cancel"},
+            f"Sequence: Unexpected error in {step.name()}",
+            f"{error_message}\n\nContinue or cancel the sequence?",
+            {0: "Continue", 1: "Cancel Sequence"},
         )
         match response:
-            case 0:  # skip current
+            case 0:  # continue
                 return
-            case 1:  # cancel
+            case 1:  # cancel the sequence
                 raise CancelledError
             case _:  # this should never run
                 raise FatalSequenceError(f"Reponse was {response} when it should have been 0 or 1")
@@ -328,21 +335,7 @@ class StepRunner(QObject):
                 break  # exit the loop
             except Exception:
                 logging.getLogger(__name__).exception("Failed to write metadata")
-
-                response = await self.prompt_user(
-                    step,
-                    "Failed to record metadata.\n\nRetry or cancel sequence?",
-                    {0: "Retry", 1: "Cancel"},
-                )
-                match response:
-                    case 0:  # retry
-                        continue
-                    case 1:  # cancel
-                        raise CancelledError
-                    case _:  # this should never run
-                        raise FatalSequenceError(
-                            f"Reponse was {response} when it should have been 0 or 1"
-                        )
+                await self.prompt_retry_cancel(step, "Failed to record metadata.")
 
     # used externally
     def submit_plot_command(self, command: Callable[[SequenceDisplayTab], None]):

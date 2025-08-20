@@ -1,5 +1,5 @@
 from .actions import Action, Shortcut
-from .exceptions import FatalSequenceError, PluginError
+from .exceptions import FatalSequenceError, PluginError, StepCancellation
 from .lock import DataLock
 from .metaclasses import QABC, QABCMeta
 from .sequence_runner import SequenceRunner

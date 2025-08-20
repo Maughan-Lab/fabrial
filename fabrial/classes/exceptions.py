@@ -6,5 +6,12 @@ class FatalSequenceError(BaseException):
         self.error_message = error_message
 
 
+class StepCancellation(Exception):
+    """
+    An exception used to cancel a step. This does not cancel the whole sequence, so it is safe for
+    use in a `SequenceStep`.
+    """
+
+
 class PluginError(Exception):
     """An error caused by a faulty plugin."""
