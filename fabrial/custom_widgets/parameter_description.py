@@ -1,7 +1,7 @@
 from typing import Self
 
 from PyQt6.QtCore import QSize
-from PyQt6.QtWidgets import QFrame, QLayout, QScrollArea, QTabWidget, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QFrame, QScrollArea, QTabWidget, QVBoxLayout, QWidget
 
 from .augmented import Widget
 from .markdown_view import MarkdownView

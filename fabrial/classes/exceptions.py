@@ -6,7 +6,7 @@ class FatalSequenceError(BaseException):
         self.error_message = error_message
 
 
-class StepCancellation(Exception):
+class StepCancellation(BaseException):
     """
     An exception used to cancel a step. This does not cancel the whole sequence, so it is safe for
     use in a `SequenceStep`.
