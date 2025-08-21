@@ -102,11 +102,14 @@ class StepRunner(QObject):
 
         Do not suppress these errors.
         """
-        step_address = id(step)  # get the address
         # create the data directory first
-        step_data_directory = await self.make_step_directory(data_directory, step, step_number)
-        self.stepStateChanged.emit(step_address, True)  # notify start
+        try:
+            step_data_directory = await self.make_step_directory(data_directory, step, step_number)
+        except StepCancellation:
+            return
 
+        step_address = id(step)  # get the address
+        self.stepStateChanged.emit(step_address, True)  # notify start
         cancelled = False
         error_occurred = False
         start_datetime = datetime.now()  # record step start time

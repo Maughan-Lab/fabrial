@@ -139,14 +139,16 @@ class SequenceBuilderTab(Widget):
     # ----------------------------------------------------------------------------------------------
     # sequence
     def start_sequence(self):
-        self.sequence_runner = SequenceRunner()  # store a reference
-        self.pause_button.clicked.connect(self.sequence_runner.pause)
-        self.unpause_button.clicked.connect(self.sequence_runner.unpause)
-        self.menu.cancel.triggered.connect(self.sequence_runner.cancel)
-        if self.sequence_runner.run_sequence(
+        sequence_runner = SequenceRunner()  # store a reference
+        self.pause_button.clicked.connect(sequence_runner.pause)
+        self.unpause_button.clicked.connect(sequence_runner.unpause)
+        self.menu.cancel.triggered.connect(sequence_runner.cancel)
+        if sequence_runner.run_sequence(
             self, self.sequence_tree.view.model(), Path(self.data_directory())
         ):
             self.handle_sequence_state_change(True)
+            # store a reference to the sequence runner
+            self.sequence_runner = sequence_runner
 
     def handle_sequence_status_change(self, status: SequenceStatus):
         """Handle the sequence's status changing."""

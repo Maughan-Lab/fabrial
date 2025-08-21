@@ -70,6 +70,7 @@ class SequenceThread(QThread):
             # if either task ends, cancel the other
             monitor_task.add_done_callback(lambda _: sequence_task.cancel())
             sequence_task.add_done_callback(lambda _: monitor_task.cancel())
+
         return not sequence_task.cancelled()
 
     async def monitor(self) -> None:
