@@ -65,5 +65,3 @@ def set_up_logging():
         filename=SAVED_DATA_FOLDER.joinpath("lastrun.log"),  # send to `lastrun.log`
         filemode="w+",  # wipe the file between runs
     )
-
-    logging.getLogger(__name__).info(sys.executable)
