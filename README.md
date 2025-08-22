@@ -38,7 +38,9 @@ Drag and drop sequence actions from the left into the sequence builder on the ri
 
 Fabrial does very little on its own, but it can be extended through plugins that add new sequence actions.
 
-Fabrial plugins on [PyPi](https://pypi.org/) are generally prefixed with `fabrial-`. If you install a plugin with `pip`, Fabrial will recognize it automatically. Local plugins can also be installed through the settings menu.
+Fabrial plugins on [PyPi](https://pypi.org/) are generally prefixed with `fabrial-`. If you install a plugin with `pip`, Fabrial will recognize it automatically. Plugins can be also be installed 
+
+Local plugins can be installed through the settings menu. Note that if a plugin is installed in both the current environment and in the **`plugins`** 
 
 If no plugin exists for your use case, you can also [write your own](./doc/plugin_guide/plugin_guide.md)!
 

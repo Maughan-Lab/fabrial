@@ -8,13 +8,13 @@ This guide is geared towards inexperienced programmers. If you've written a lot 
 
 A plugin is just a bunch of Python code that adheres to some requirements. Fabrial plugins have pre-defined *entry points*, which are functions Fabrial calls to access the plugin's code. Fabrial has a few entry point functions; we'll talk about them later on.
 
-### Local or Global?
+### Global or Local?
 
-You can write either a *local plugin* or a *global plugin*. Local plugins go in the **`plugins`** folder (which is stored at **`HOME/.fabrial/plugins`**) and can be installed/uninstalled from the settings. In contrast, global plugins are installed into your Python environment just like any other Python package.
+You can write either a *global plugin* or a *local plugin*. Global plugins go in the **`plugins`** folder (which is stored at **`HOME/.fabrial/plugins`**) and can be installed/uninstalled from the settings. In contrast, local plugins are installed into your Python environment just like any other Python package.
 
-Global plugins require slightly more setup, but they also double as local plugins. Local plugins are more restricted, but they are simpler to write and can be converted to global plugins later.
+Local plugins require slightly more setup, but they also double as global plugins. Global plugins are more restricted, but they are simpler to write and can be converted to local plugins later.
 
-We'll start by creating a local plugin, then we'll convert it to a global plugin.
+We'll start by creating a global plugin, then we'll convert it to a local plugin.
 
 ## Getting Started
 
@@ -22,7 +22,7 @@ We'll start by creating a local plugin, then we'll convert it to a global plugin
 
 > This tutorial uses [type annotations](https://docs.python.org/3/library/typing.html). I highly recommended you set up [`mypy`](https://mypy.readthedocs.io/en/stable/getting_started.html) or some other type checker. Type checkers can catch common errors before you even run your plugin, and they encourage readable and maintainable code. If you are using [VS Code](https://code.visualstudio.com/), there are two `mypy` extensions available: [Mypy](https://marketplace.visualstudio.com/items?itemName=matangover.mypy) and [Mypy Type Checker](https://marketplace.visualstudio.com/items?itemName=ms-python.mypy-type-checker).
 
-To start, we need to set up a development environment (i.e. a place to write our plugin code). Choose a folder to put everything in, for example **`my_plugin`**. Then, [create and activate a virtual environment](https://docs.python.org/3/tutorial/venv.html#creating-virtual-environments). We may need to install a few Python packages—virtual environments let us do so without cluttering up our global Python installation. Install Fabrial and its dependencies with
+To start, we need to set up a development environment (i.e. a place to write our plugin code). Choose a folder to put everything in, for example **`my_plugin`**. Then, [create and activate a virtual environment](https://docs.python.org/3/tutorial/venv.html#creating-virtual-environments). We may need to install a few Python packages—virtual environments let us do so without cluttering up our system Python installation. Install Fabrial and its dependencies with
 ```
 pip install fabrial
 ```
@@ -40,7 +40,7 @@ my_plugin
 >
 > If you want to test your plugin as you write it, you'll need to "install" it. The simplest way is to place the plugin folder (**`random_data`** for this tutorial) in Fabrial's **`plugins`** folder (i.e. move it out of **`my_plugin`**). In your virtual environment, you can find this in **`site_packages/fabrial/plugins`**.
 >
->> Alternatively, you can install Fabrial in a virtual environment and install your plugin in [editable mode](https://setuptools.pypa.io/en/latest/userguide/development_mode.html). This requires a **`pyproject.toml`** file, see [Converting to a Global Plugin](#converting-to-a-global-plugin).
+>> Alternatively, you can install Fabrial in a virtual environment and install your plugin in [editable mode](https://setuptools.pypa.io/en/latest/userguide/development_mode.html). This requires a **`pyproject.toml`** file, see [Converting to a Local Plugin](#converting-to-a-local-plugin).
 >
 >If you run
 >
@@ -100,11 +100,11 @@ Follow the [expanding our sequence step](./advanced_step.md) guide, then we'll g
 
 TODO; ignore this for now
 
-## Converting to a Global Plugin
+## Converting to a Local Plugin
 
-> This section is optional if you only want a local plugin.
+> This section is optional if you only want a global plugin.
 
-To convert a local plugin to a global plugin, we just need to make it buildable. We'll use [`hatch`](https://hatch.pypa.io/latest/) to build our plugin.
+To convert a global plugin to a local plugin, we just need to make it buildable. We'll use [`hatch`](https://hatch.pypa.io/latest/) to build our plugin.
 
 Move your plugin module back into **`my_plugin`**, then create a **`README.md`** file and a **`pyproject.toml`** file. We'll set up a basic **`pyproject.toml`**, but additional information about this file can be found [here](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/). The project folder should look like this:
 

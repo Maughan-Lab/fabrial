@@ -9,7 +9,3 @@
 - You should have a general `Plugins` tab.
     - It will have a section for `Global Plugins` and `Local Plugins`. The user can enable/disable items for a plugin. In the `Local Plugins` section, they can also remove the plugin (which just deletes the folder).
 - You also need a tab for the `Sequence` settings, which is just the Don't Show Again Dialog
-
-## Documentation
-- Write some guides:
-    - Installation guide.

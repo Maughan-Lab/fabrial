@@ -27,44 +27,31 @@ class PluginCategory:
 
 # the main function
 def items_from_plugins(
-    local_plugins: Mapping[str, ModuleType], global_plugins: Mapping[str, ModuleType]
-) -> tuple[list[CategoryItem], list[str], list[str]]:
+    plugins: Mapping[str, ModuleType],
+) -> tuple[list[CategoryItem], list[str]]:
     """
-    Load `PluginCategory`s from local and global plugins, then combine them all into a sorted
-    list of `CategoryItem`s. Logs errors.
+    Load `PluginCategory`s from **plugins**, then combine them all into a sorted list of
+    `CategoryItem`s. Logs errors.
 
     Returns
     -------
-    A tuple of (the loaded items, local plugins items could not be loaded from, global plugins items
-    could not be loaded from).
+    A tuple of (the loaded items, plugins items could not be loaded from).
     """
-    failed_local_plugins: list[str] = []
-    failed_global_plugins: list[str] = []
+    failed_plugins: list[str] = []
     category_info_map: dict[str, CategoryInfo] = {}
-    # local
-    for plugin_name, plugin_module in local_plugins.items():
+    # extract the `PluginCategory`s from the plugins, then parse them into `CategoryInfo`s
+    for plugin_name, plugin_module in plugins.items():
         try:
             plugin_categories: Iterable[PluginCategory] = plugin_module.categories()
             parse_plugin_categories(plugin_categories, category_info_map)
         except Exception:  # if we fail, log the error and skip this plugin
             logging.getLogger(__name__).exception(
-                f"Error while loading items from local plugin {plugin_name}"
+                f"Error while loading items from plugin {plugin_name}"
             )
-            failed_local_plugins.append(plugin_name)
+            failed_plugins.append(plugin_name)
             continue  # skip
-    # global
-    for plugin_name, plugin_module in global_plugins.items():
-        try:
-            plugin_categories = plugin_module.categories()
-            parse_plugin_categories(plugin_categories, category_info_map)
-        except Exception:
-            logging.getLogger(__name__).exception(
-                f"Error while loading items from global plugin {plugin_name}"
-            )
-            failed_global_plugins.append(plugin_name)
-            continue
-
-    return (parse_into_items(category_info_map), failed_local_plugins, failed_global_plugins)
+    # finally, parse the `CategoryInfo`s into `CategoryItem`s
+    return (parse_into_items(category_info_map), failed_plugins)
 
 
 def parse_plugin_categories(

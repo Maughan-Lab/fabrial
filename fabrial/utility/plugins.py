@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import QWidget
 
 from ..constants import PLUGIN_ENTRY_POINT, SAVED_DATA_FOLDER
 from ..constants.paths.settings.plugins import GLOBAL_PLUGINS_FILE, LOCAL_PLUGINS_FILE
-from . import errors, sequence_builder
+from . import errors, sequence_builder, settings
 from .sequence_builder import CategoryItem
 
 
@@ -25,8 +25,8 @@ from .sequence_builder import CategoryItem
 class PluginSettings:
     """Local and global plugin settings."""
 
-    local_settings: dict[str, bool]
     global_settings: dict[str, bool]
+    local_settings: dict[str, bool]
 
 
 def discover_plugins_from_module(module: ModuleType) -> dict[str, Callable[[], ModuleType]]:
@@ -53,9 +53,9 @@ def discover_plugins_from_module(module: ModuleType) -> dict[str, Callable[[], M
     }
 
 
-def discover_local_plugins() -> dict[str, Callable[[], ModuleType]]:
+def discover_global_plugins() -> dict[str, Callable[[], ModuleType]]:
     """
-    Discover local plugins from the `plugins` folder.
+    Discover global plugins from the **`plugins`** folder.
 
     Returns
     -------
@@ -71,13 +71,13 @@ def discover_local_plugins() -> dict[str, Callable[[], ModuleType]]:
         return {}
 
 
-def discover_global_plugins() -> dict[str, Callable[[], ModuleType]]:
+def discover_local_plugins() -> dict[str, Callable[[], ModuleType]]:
     """
-    Discover global plugins (i.e. plugins installed via `pip`).
+    Discover local plugins (i.e. plugins installed via `pip`).
 
     Returns
     -------
-    A `Set` containing the plugin names.
+    A mapping of plugin names to a function that will import the plugin.
     """
 
     def load_function_factory(entry_point: EntryPoint) -> Callable[[], ModuleType]:
@@ -97,7 +97,7 @@ def discover_plugins() -> (
 
     Returns
     -------
-    A tuple of (local plugins, global plugins). Each entry in the tuple is a mapping of plugin
+    A tuple of (global plugins, local plugins). Each entry in the tuple is a mapping of plugin
     names to a function that will import the plugin.
     """
     local_plugins = discover_local_plugins()
@@ -108,7 +108,7 @@ def discover_plugins() -> (
         # not using a default because the keys must be in the dictionary
         global_plugins.pop(plugin_name)
 
-    return (local_plugins, global_plugins)
+    return (global_plugins, local_plugins)
 
 
 def load_plugin_settings(file: PathLike[str] | str, plugins: Iterable[str]) -> dict[str, bool]:
@@ -189,36 +189,42 @@ def load_all_plugins() -> tuple[list[CategoryItem], list[QWidget], PluginSetting
     A tuple of (the loaded `CategoryItem`s, the loaded settings menu widgets, the plugin settings).
     """
     # discover plugins
-    local_names, global_names = discover_plugins()
+    global_names, local_names = discover_plugins()
     # load plugin settings (i.e. if plugins are enabled or disabled)
-    local_settings = load_plugin_settings(LOCAL_PLUGINS_FILE, local_names.keys())
     global_settings = load_plugin_settings(GLOBAL_PLUGINS_FILE, global_names.keys())
+    local_settings = load_plugin_settings(LOCAL_PLUGINS_FILE, local_names.keys())
     # load the plugins
-    local_plugins, failed_locals = load_plugins(local_names, local_settings)
     global_plugins, failed_globals = load_plugins(global_names, global_settings)
+    local_plugins, failed_locals = load_plugins(local_names, local_settings)
+    # combine plugins (no more separation between global and local)
+    plugins = global_plugins | local_plugins
+    failed_plugins = failed_locals + failed_globals
     # possibly report an error to the user
-    message = ""
-    if len(failed_locals) > 0:
-        message += f"Failed to load local plugins:\n\n{", ".join(failed_locals)}\n\n"
-    if len(failed_globals) > 0:
-        message += f"Failed to load global plugins:\n\n{", ".join(failed_globals)}\n\n"
-    if message != "":
-        message += "See the error log for details."
-        errors.show_error_delayed("Plugin Error", message)
+    if len(failed_plugins) > 0:
+        errors.show_error_delayed(
+            "Plugin Error",
+            f"Failed to load plugins:\n\n{", ".join(failed_plugins)}\n\n"
+            "See the error log for details.",
+        )
 
     # load items from plugins
-    items, failed_locals, failed_globals = sequence_builder.items_from_plugins(
-        local_plugins, global_plugins
-    )
+    items, failed_plugins = sequence_builder.items_from_plugins(plugins)
     # possibly report an error to the user
-    message = ""
-    if len(failed_locals) > 0:
-        message += f"Failed to load items from local plugins:\n\n{", ".join(failed_locals)}\n\n"
-    if len(failed_globals) > 0:
-        message += f"Failed to load items from global plugins:\n\n{", ".join(failed_globals)}\n\n"
-    if message != "":
-        message += "See the error log for details."
-        errors.show_error_delayed("Plugin Items Error", message)
+    if len(failed_plugins) > 0:
+        errors.show_error_delayed(
+            "Plugin Items Error",
+            f"Failed to load items from plugins:\n\n{", ".join(failed_plugins)}\n\n"
+            "See the error log for details.",
+        )
 
-    # TODO: load settings widgets
-    return (items, [], PluginSettings(local_settings, global_settings))
+    # load settings widgets from plugins
+    settings_widgets, failed_plugins = settings.load_settings_widgets(plugins)
+    # possibly report an error to the user
+    if len(failed_plugins) > 0:
+        errors.show_error_delayed(
+            "Plugin Settings Error",
+            f"Invalid settings widget from plugins:\n\n{", ".join(failed_plugins)}\n\n"
+            "See the error log for details.",
+        )
+
+    return (items, settings_widgets, PluginSettings(local_settings, global_settings))
