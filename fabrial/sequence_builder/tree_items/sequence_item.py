@@ -7,13 +7,13 @@ from typing import Self
 from PyQt6.QtGui import QIcon
 
 from ...classes import SequenceStep
+from ...constants.sequence_builder import SUBITEMS
 from ...utility import serde
 from ...utility.serde import Json
 from ..data_item import DataItem
 from . import tree_item
 from .tree_item import MutableTreeItem, TreeItem
 
-SUBITEMS = "subitems"
 ITEM = "item"
 
 
@@ -23,7 +23,7 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
     def __init__(self, parent: TreeItem | None, data_item: DataItem):
         self.parent_item = parent
         self.item = data_item
-        self.bold = False
+        self.emphasized = False
         self.subitems: list[SequenceItem] = []
 
     @classmethod
@@ -94,13 +94,13 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
     def collapse_event(self):
         self.item.collapse_event()
 
-    def set_bold(self, bold: bool):
-        """Set whether the item is bolded."""
-        self.bold = bold
+    def set_emphasized(self, emphasized: bool):
+        """Set whether the item is emphasized."""
+        self.emphasized = emphasized
 
-    def is_bold(self) -> bool:
-        """Whether the item is bolded."""
-        return self.bold
+    def is_emphasized(self) -> bool:
+        """Whether the item is emphasized."""
+        return self.emphasized
 
     def create_sequence_step(self, substeps: Iterable[SequenceStep]) -> SequenceStep:
         """Create the `SequenceStep` this item represents."""
@@ -110,7 +110,7 @@ class SequenceItem(MutableTreeItem["SequenceItem"]):
     def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__} {{ "
-            f"bold: {self.is_bold()!r}, "
+            f"emphasized: {self.is_emphasized()!r}, "
             f"item: {self.item!r}, "
             f"subitems: {self.subitems!r} }}"
         )

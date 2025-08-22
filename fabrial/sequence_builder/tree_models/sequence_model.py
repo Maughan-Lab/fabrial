@@ -14,6 +14,7 @@ from PyQt6.QtCore import (
     Qt,
     pyqtSignal,
 )
+from PyQt6.QtGui import QBrush
 from PyQt6.QtWidgets import QApplication
 
 from ...utility.serde import Json
@@ -72,10 +73,11 @@ class SequenceModel(TreeModel[SequenceItem]):
             logging.getLogger(__name__).exception("Failed to save to file")
             return False
 
-    def set_bold(self, index: QModelIndex, bold: bool):
-        """Set whether the item at **index** is bold."""
+    def set_emphasized(self, index: QModelIndex, emphasized: bool):
+        """Set whether the item at **index** is emphasized."""
         if (item := self.get_item(index)) is not None:
-            item.set_bold(bold)
+            item.set_emphasized(emphasized)
+            self.dataChanged.emit(index, index)  # notify the view
 
     # ----------------------------------------------------------------------------------------------
     def data(self, index: QModelIndex, role: int | None = None) -> Any:  # implementation
@@ -86,9 +88,14 @@ class SequenceModel(TreeModel[SequenceItem]):
                 case Qt.ItemDataRole.FontRole:
                     font = QApplication.font()
                     # items that are running are shown in bold
-                    if item.is_bold():
+                    if item.is_emphasized():
                         font.setBold(True)
                     return font
+                case Qt.ItemDataRole.BackgroundRole:
+                    if item.is_emphasized():
+                        color = QApplication.palette().accent().color()
+                        color.setAlpha(100)
+                        return QBrush(color)
                 case Qt.ItemDataRole.DecorationRole:
                     return item.icon()
                 case Qt.ItemDataRole.SizeHintRole:

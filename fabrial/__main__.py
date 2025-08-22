@@ -52,7 +52,7 @@ def main():
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(str(icons.MAIN_ICON)))
     # then load plugins
-    category_items, _ = plugin_util.load_all_plugins()
+    category_items, _, plugin_settings = plugin_util.load_all_plugins()
     # then make the main window
     main_window = MainWindow(category_items)
     main_window.showMaximized()

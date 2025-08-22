@@ -11,12 +11,11 @@ from PyQt6.QtCore import QModelIndex, Qt
 from PyQt6.QtWidgets import QAbstractItemView, QTreeView
 
 from ...classes import Shortcut
+from ...constants.sequence_builder import SUBITEMS
 from ...utility.serde import Json
 from ..tree_models.tree_model import TreeModel
 
 EXPANDED = "expanded"
-SUBITEMS = "subitems"
-# TODO: move SUBITEMS to a constant
 
 
 class TreeView[Model: TreeModel](QTreeView):  # type: ignore

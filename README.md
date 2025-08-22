@@ -4,8 +4,6 @@ Fabrial runs user-built sequences. It was originally designed to control lab ins
 
 ## Installation
 
-TODO: determine if we are supporting the compiled version
-
 ```
 pip install fabrial
 ```

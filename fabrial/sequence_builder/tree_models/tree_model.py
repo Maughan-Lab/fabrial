@@ -68,6 +68,7 @@ class TreeModel[Item: TreeItem](QAbstractItemModel, QABC):
         flags = self.base_flag
         item = self.get_item(index)
         if item is None:
+            # probably unnecessary, but just in case
             if self.root_item.supports_subitems():
                 flags |= Qt.ItemFlag.ItemIsDropEnabled
             return flags

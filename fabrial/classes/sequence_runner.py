@@ -163,7 +163,7 @@ class SequenceRunner:
         sequence_thread.statusChanged.connect(sequence_tab.handle_sequence_status_change)
         # make the corresponding step bold/not bold in the model
         sequence_thread.stepStateChanged.connect(
-            lambda step_address, running: model.set_bold(step_item_map[step_address], running)
+            lambda step_address, running: model.set_emphasized(step_item_map[step_address], running)
         )
         # show the prompt and send the response
         sequence_thread.promptRequested.connect(self.show_prompt)

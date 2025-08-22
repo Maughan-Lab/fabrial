@@ -100,7 +100,15 @@ class SequenceTreeView(TreeView[SequenceModel]):
         )
 
     def items_editable(self) -> bool:  # overridden
-        return True  # TODO: make this depend on whether the widget is enabled
+        return self.model().is_enabled()
+
+    def set_readonly(self, readonly: bool):
+        """Set whether the view is read-only."""
+        self.model().set_enabled(not readonly)
+        self.setAcceptDrops(not readonly)
+        self.setDragEnabled(not readonly)
+        if readonly:
+            self.clearSelection()
 
     def handle_new_item(self, index: QModelIndex):
         """Handle an item being added to the model."""
@@ -212,6 +220,11 @@ class SequenceTreeWidget(Container):
                 if not index.isValid():
                     enabled = False
         self.delete_button.setEnabled(enabled)
+
+    def set_readonly(self, readonly: bool):
+        """Set whether the widget is read-only."""
+        self.view.set_readonly(readonly)
+        self.load_button.setDisabled(readonly)
 
     def save_on_close(self):
         """Call this when closing the application to save settings."""

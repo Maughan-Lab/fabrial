@@ -45,8 +45,8 @@ class SequenceBuilderTab(Widget):
         self.visuals_tab = visuals_tab  # another tab
         self.menu = menu
 
-        self.options_tree = OptionsTreeWidget.from_items(category_items)
-        self.sequence_tree = SequenceTreeWidget.from_autosave()
+        self.options_tree_widget = OptionsTreeWidget.from_items(category_items)
+        self.sequence_tree_widget = SequenceTreeWidget.from_autosave()
 
         self.directory_button = Button("Choose Data Directory", self.choose_directory)
         self.directory_label = IconLabel(
@@ -63,8 +63,8 @@ class SequenceBuilderTab(Widget):
 
     def arrange_widgets(self, layout: QGridLayout):
         """Arrange widgets at construction."""
-        layout.addWidget(self.options_tree, 0, 0)
-        layout.addWidget(self.sequence_tree, 0, 1)
+        layout.addWidget(self.options_tree_widget, 0, 0)
+        layout.addWidget(self.sequence_tree_widget, 0, 1)
         layout.setRowStretch(0, 1)
 
         BUTTON_SIZE = QSize(250, 50)
@@ -125,8 +125,8 @@ class SequenceBuilderTab(Widget):
 
     def save_on_close(self):
         """Call this when closing the application to save settings."""
-        self.options_tree.save_on_close()
-        self.sequence_tree.save_on_close()
+        self.options_tree_widget.save_on_close()
+        self.sequence_tree_widget.save_on_close()
 
         directory = self.data_directory()
         try:
@@ -138,12 +138,12 @@ class SequenceBuilderTab(Widget):
     # ----------------------------------------------------------------------------------------------
     # sequence
     def start_sequence(self):
-        sequence_runner = SequenceRunner()  # store a reference
+        sequence_runner = SequenceRunner()
         self.pause_button.clicked.connect(sequence_runner.pause)
         self.unpause_button.clicked.connect(sequence_runner.unpause)
         self.menu.cancel.triggered.connect(sequence_runner.cancel)
         if sequence_runner.run_sequence(
-            self, self.sequence_tree.view.model(), Path(self.data_directory())
+            self, self.sequence_tree_widget.view.model(), Path(self.data_directory())
         ):
             self.handle_sequence_state_change(True)
             # store a reference to the sequence runner
@@ -194,10 +194,9 @@ class SequenceBuilderTab(Widget):
         self.menu.cancel.setEnabled(running)
         self.directory_button.setEnabled(not running)
         self.start_button.setEnabled(not running)  # make sure the user can't spam the start button
+        self.sequence_tree_widget.set_readonly(running)  # disable editing the items
         if not running:
             self.sequence_runner = None  # delete the runner
-
-        # TODO: enable/disable the model
 
     def is_running_sequence(self) -> bool:
         """Whether a sequence is currently being run."""

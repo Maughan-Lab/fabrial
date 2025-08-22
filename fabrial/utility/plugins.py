@@ -7,6 +7,7 @@ import pkgutil
 import sys
 import typing
 from collections.abc import Callable, Iterable, MutableMapping
+from dataclasses import dataclass
 from importlib import metadata
 from os import PathLike
 from types import ModuleType
@@ -17,6 +18,14 @@ from ..constants import PLUGIN_ENTRY_POINT, SAVED_DATA_FOLDER
 from ..constants.paths.settings.plugins import GLOBAL_PLUGINS_FILE, LOCAL_PLUGINS_FILE
 from . import errors, sequence_builder
 from .sequence_builder import CategoryItem
+
+
+@dataclass
+class PluginSettings:
+    """Local and global plugin settings."""
+
+    local_settings: dict[str, bool]
+    global_settings: dict[str, bool]
 
 
 def discover_plugins_from_module(module: ModuleType) -> dict[str, Callable[[], ModuleType]]:
@@ -162,13 +171,13 @@ def load_plugins(
     return (loaded_plugins, failed_plugins)
 
 
-def load_all_plugins() -> tuple[list[CategoryItem], list[QWidget]]:
+def load_all_plugins() -> tuple[list[CategoryItem], list[QWidget], PluginSettings]:
     """
     Load all plugins.
 
     Returns
     -------
-    The `CategoryItem`s and settings menu widgets loaded from plugins.
+    A tuple of (the loaded `CategoryItem`s, the loaded settings menu widgets, the plugin settings).
     """
     # discover plugins
     local_names, global_names = discover_plugins()
@@ -203,4 +212,4 @@ def load_all_plugins() -> tuple[list[CategoryItem], list[QWidget]]:
         errors.show_error_delayed("Plugin Items Error", message)
 
     # TODO: load settings widgets
-    return (items, [])
+    return (items, [], PluginSettings(local_settings, global_settings))
