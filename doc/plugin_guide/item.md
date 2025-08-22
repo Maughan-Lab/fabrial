@@ -5,7 +5,8 @@ Items with widgets use the [`WidgetDataItem`](../../fabrial/sequence_builder/dat
 <sub>Filename: random_data/random_item.py</sub>
 ```python
 import typing
-from typing import Iterable, Mapping, Self
+from collections.abc import Iterable, Mapping
+from typing import Self
 
 from fabrial import Json, SequenceStep, WidgetDataItem
 
@@ -122,7 +123,8 @@ The complete item code is shown below.
 <sub>Filename: random_data/random_item.py</sub>
 ```python
 import typing
-from typing import Iterable, Mapping, Self
+from collections.abc import Iterable, Mapping
+from typing import Self
 
 from fabrial import Json, SequenceStep, WidgetDataItem
 

@@ -1,4 +1,5 @@
-from typing import Iterable, Mapping, Self
+from collections.abc import Iterable, Mapping
+from typing import Self
 
 from PyQt6.QtGui import QIcon
 

@@ -1,8 +1,9 @@
 import json
 import logging
 import typing
+from collections.abc import Iterable, Mapping, Sequence
 from os import PathLike
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
 from PyQt6.QtCore import (
     QDataStream,

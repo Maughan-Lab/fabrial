@@ -1,5 +1,6 @@
 from abc import abstractmethod
-from typing import Iterable, Protocol
+from collections.abc import Iterable
+from typing import Protocol
 
 from PyQt6.QtGui import QIcon
 

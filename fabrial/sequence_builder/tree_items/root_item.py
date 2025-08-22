@@ -1,4 +1,4 @@
-from typing import Iterable
+from collections.abc import Iterable
 
 from ...utility.serde import Json
 from . import tree_item

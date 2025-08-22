@@ -6,6 +6,7 @@ from PyQt6 import QtCore
 from PyQt6.QtCore import QMessageLogContext, QtMsgType
 
 from ..constants import APP_NAME
+from ..constants.paths import SAVED_DATA_FOLDER
 from ..custom_widgets import OkDialog
 from . import events
 
@@ -61,6 +62,6 @@ def set_up_logging():
         datefmt="%Y-%m-%d %H:%M:%S",  # datetime format
         # show datetime, error level, logger name, the calling function's name, and the log message
         format="{asctime}.{msecs:.0f} {levelname} {message} - {name}:{funcName}()",
-        filename="lastrun.log",  # send to `lastrun.log`
-        filemode="w",  # wipe the file between runs
+        filename=SAVED_DATA_FOLDER.joinpath("lastrun.log"),  # send to `lastrun.log`
+        filemode="w+",  # wipe the file between runs
     )

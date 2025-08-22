@@ -43,7 +43,10 @@ class SequenceStep(Protocol):
         return self.name()
 
     def metadata(self) -> dict[str, Any]:
-        """Get metadata for this sequence step to be recorded in a JSON file."""
+        """
+        Get metadata for this sequence step to be recorded in a JSON file. This is called after
+        `run()` completes.
+        """
         return {}
 
     async def sleep(self, delay: float):

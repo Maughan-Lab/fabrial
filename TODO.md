@@ -7,6 +7,8 @@
 ## Disable plugins when they fail to load.
 Do it :D
 
+## Update plugin guide about local plugin location
+
 ## The Oven
 - The oven should not be a constant part of the application. My current idea is to put manual control of the oven in a separate application that shares source code with the rest of Fabrial.
     - The oven should not be monitoring its own temperature, that should be the responsibility of some widget/task.

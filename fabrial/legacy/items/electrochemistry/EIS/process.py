@@ -2,10 +2,11 @@ import csv
 import math
 import os
 import time
+from collections.abc import Iterable
 from contextlib import ExitStack
 from dataclasses import dataclass
 from io import TextIOWrapper
-from typing import Any, Iterable
+from typing import Any
 
 from PyQt6.QtWidgets import QMessageBox
 

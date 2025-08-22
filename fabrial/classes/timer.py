@@ -1,4 +1,5 @@
-from typing import Any, Callable, Self
+from collections.abc import Callable
+from typing import Any, Self
 
 from PyQt6.QtCore import QObject, QTimer
 

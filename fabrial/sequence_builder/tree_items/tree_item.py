@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Iterable, MutableSequence, Protocol, Sequence
+from collections.abc import Iterable, MutableSequence, Sequence
+from typing import Protocol
 
 from PyQt6.QtGui import QIcon
 

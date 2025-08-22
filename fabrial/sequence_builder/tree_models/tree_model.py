@@ -1,6 +1,7 @@
 import json
 from abc import abstractmethod
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 from PyQt6.QtCore import (
     QAbstractItemModel,

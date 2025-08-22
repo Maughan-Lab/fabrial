@@ -7,9 +7,10 @@ import json
 import logging
 import os
 from asyncio import CancelledError
+from collections.abc import AsyncGenerator, Callable, Iterable
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, AsyncGenerator, Callable, Iterable
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QObject, pyqtSignal
 

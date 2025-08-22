@@ -1,9 +1,8 @@
 import json
 import os
 import typing
+from collections.abc import Iterable
 from pathlib import Path
-from types import ModuleType
-from typing import Mapping
 
 from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import QFileDialog, QGridLayout, QHBoxLayout, QSizePolicy, QStackedWidget
@@ -13,7 +12,7 @@ from ..constants.paths.settings import sequence as sequence_paths
 from ..custom_widgets import Button, IconLabel, Label, Widget
 from ..enums import SequenceStatus
 from ..menu import SequenceMenu
-from ..sequence_builder import OptionsTreeWidget, SequenceTreeWidget
+from ..sequence_builder import CategoryItem, OptionsTreeWidget, SequenceTreeWidget
 from ..utility import errors, images
 from .sequence_display import SequenceDisplayTab
 
@@ -36,7 +35,7 @@ class SequenceBuilderTab(Widget):
         self,
         visuals_tab: SequenceDisplayTab,
         menu: SequenceMenu,
-        plugin_modules: Mapping[str, ModuleType],
+        category_items: Iterable[CategoryItem],
     ):
         layout = QGridLayout()
         Widget.__init__(self, layout)
@@ -46,7 +45,7 @@ class SequenceBuilderTab(Widget):
         self.visuals_tab = visuals_tab  # another tab
         self.menu = menu
 
-        self.options_tree = OptionsTreeWidget.from_plugins(plugin_modules)
+        self.options_tree = OptionsTreeWidget.from_items(category_items)
         self.sequence_tree = SequenceTreeWidget.from_autosave()
 
         self.directory_button = Button("Choose Data Directory", self.choose_directory)

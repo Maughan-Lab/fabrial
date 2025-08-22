@@ -1,5 +1,4 @@
-from types import ModuleType
-from typing import Mapping
+from collections.abc import Iterable
 
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
@@ -8,12 +7,13 @@ from .constants import APP_NAME
 from .custom_widgets import TabWidget, YesCancelDialog
 from .menu import MenuBar
 from .secondary_window import SecondaryWindow
+from .sequence_builder import CategoryItem
 from .tabs import SequenceBuilderTab, SequenceDisplayTab
 from .utility import images
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, plugin_modules: Mapping[str, ModuleType]):
+    def __init__(self, category_items: Iterable[CategoryItem]):
         self.relaunch = False
         QMainWindow.__init__(self)
         self.setWindowTitle(APP_NAME)
@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
         # tabs
         self.sequence_visuals_tab = SequenceDisplayTab()
         self.sequence_tab = SequenceBuilderTab(
-            self.sequence_visuals_tab, self.menu_bar.sequence, plugin_modules
+            self.sequence_visuals_tab, self.menu_bar.sequence, category_items
         )
         self.tab_widget = TabWidget(
             [

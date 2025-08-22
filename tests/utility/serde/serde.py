@@ -1,8 +1,9 @@
 import json
 import os
 import typing
+from collections.abc import Generator, Mapping
 from pathlib import Path
-from typing import Generator, Mapping, Self
+from typing import Self
 
 from pytest import fixture
 

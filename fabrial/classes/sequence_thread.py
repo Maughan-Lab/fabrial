@@ -2,9 +2,9 @@ import asyncio
 import logging
 import time
 from asyncio import CancelledError, TaskGroup
+from collections.abc import Iterable
 from pathlib import Path
 from queue import Empty, Queue
-from typing import Iterable
 
 from PyQt6.QtCore import QThread, pyqtSignal
 

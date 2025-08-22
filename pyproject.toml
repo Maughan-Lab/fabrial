@@ -14,6 +14,10 @@ dependencies = [
     "tendo>=0.3.0",
     "fabrial-core-plugins",
 ]
+
+[project.optional-dependencies]
+shortcut = ["pyshortcuts"]
+
 [dependency-groups]
 test = ["pytest", "pytest-qt"]
 
@@ -22,8 +26,10 @@ Repository = "https://github.com/Maughan-Lab/fabrial"
 
 # makes a `fabrial`/`fabrial.exe` script when installing
 [project.scripts]
-fabrial = "fabrial.main:main"
+fabrial = "fabrial.__main__:main"
 
+[project.gui-scripts]
+fabrial-gui = "fabrial.__main__:main"
 
 # hatch config
 [build-system]

@@ -1,4 +1,5 @@
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import QPushButton, QSizePolicy

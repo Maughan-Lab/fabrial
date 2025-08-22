@@ -1,5 +1,6 @@
 import typing
-from typing import Iterable, Mapping, Self
+from collections.abc import Iterable, Mapping
+from typing import Self
 
 from fabrial import Json, SequenceStep, WidgetDataItem
 

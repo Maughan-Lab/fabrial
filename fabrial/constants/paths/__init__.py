@@ -2,10 +2,9 @@
 
 from . import descriptions, icons, settings
 from .base import ASSETS, PLUGINS
+from .settings.saved_data import SAVED_DATA_FOLDER
 
 FOLDERS_TO_CREATE = [
-    settings.saved.SAVED_SETTINGS,
-    settings.oven.SAVED_SETTINGS_FOLDER,
-    settings.sequence.SAVED_SETTINGS_FOLDER,
-    settings.gamry.SAVED_SETTINGS_FOLDER,
+    SAVED_DATA_FOLDER,
+    settings.sequence.SEQUENCE_SETTINGS_FOLDER,
 ]

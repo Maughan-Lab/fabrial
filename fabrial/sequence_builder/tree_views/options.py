@@ -1,5 +1,5 @@
-from types import ModuleType
-from typing import Mapping, Self
+from collections.abc import Iterable
+from typing import Self
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QKeyEvent
@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QSizePolicy, QVBoxLayout
 from ...constants.paths.settings import sequence as sequence_paths
 from ...custom_widgets import Container, FixedButton
 from ...utility import layout as layout_util
+from ..tree_items import CategoryItem
 from ..tree_models import OptionsModel
 from .tree_view import TreeView
 
@@ -16,9 +17,9 @@ class OptionsTreeView(TreeView[OptionsModel]):
     """`TreeView` containing item options for the sequence."""
 
     @classmethod
-    def from_plugins(cls, plugin_modules: Mapping[str, ModuleType]) -> Self:
+    def from_items(cls, items: Iterable[CategoryItem]) -> Self:
         """Create from the application's available plugins."""
-        view = cls(OptionsModel.from_plugins(plugin_modules))
+        view = cls(OptionsModel(items))
         view.init_view_state_from_json(sequence_paths.OPTIONS_STATE_FILE)
         return view
 
@@ -51,9 +52,9 @@ class OptionsTreeWidget(Container):
         self.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
 
     @classmethod
-    def from_plugins(cls, plugin_modules: Mapping[str, ModuleType]) -> Self:
+    def from_items(cls, items: Iterable[CategoryItem]) -> Self:
         """Create from the application's available plugins."""
-        return cls(OptionsTreeView.from_plugins(plugin_modules))
+        return cls(OptionsTreeView.from_items(items))
 
     def save_on_close(self):
         """Call this when closing the application to save settings."""

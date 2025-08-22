@@ -9,8 +9,9 @@ import json
 import tomllib
 import typing
 from abc import abstractmethod
+from collections.abc import Mapping, Sequence
 from os import PathLike
-from typing import Any, Mapping, Protocol, Self, Sequence
+from typing import Any, Protocol, Self
 
 TYPE = "type"
 DESERIALIZABLE_CLASSES: dict[str, type[Deserialize]] = {}

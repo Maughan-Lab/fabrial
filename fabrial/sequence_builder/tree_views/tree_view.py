@@ -3,8 +3,9 @@ from __future__ import annotations
 import json
 import logging
 import typing
+from collections.abc import Iterable, Mapping, Sequence
 from os import PathLike
-from typing import Iterable, Mapping, Self, Sequence
+from typing import Self
 
 from PyQt6.QtCore import QModelIndex, Qt
 from PyQt6.QtWidgets import QAbstractItemView, QTreeView

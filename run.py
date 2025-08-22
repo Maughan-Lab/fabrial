@@ -1,4 +1,4 @@
-from fabrial import main
+from fabrial import __main__
 
 if __name__ == "__main__":
-    main.main()
+    __main__.main()
