@@ -4,18 +4,31 @@ Fabrial runs user-built sequences. It was originally designed to control lab ins
 
 ## Installation
 
+> The easiest way to install and manage Python executables is with [`uv tool`](https://docs.astral.sh/uv/guides/tools/). See [`uv`](https://docs.astral.sh/uv/)'s documentation for using this command. Otherwise, I highly recommend using a [virtual environment](https://docs.python.org/3/library/venv.html).
+
+Install fabrial with
 ```
 pip install fabrial
 ```
-Then run
+and run it with
 ```
 fabrial
 ```
-in a terminal.
 
-### Packaged Application (Windows Only)
+### Application Shortcut
 
-Fabrial is also packaged using PyInstaller. Head over to the [latest release](https://github.com/Maughan-Lab/fabrial/releases/latest), then download and run `FabrialInstaller.exe`. This installation method does not require Python.
+If you'd like Fabrial to have an application shortcut (i.e. the Start Menu on Windows or a `.desktop` file on Linux), run
+
+```
+pip install fabrial[shortcut]
+```
+
+instead. Then, inside virtual environment Fabrial is installed in, enter the Python shell and run
+
+```
+>>> import fabrial
+>>> fabrial.create_application_shortcut()
+```
 
 ## Usage
 
@@ -29,11 +42,8 @@ Fabrial plugins on [PyPi](https://pypi.org/) are generally prefixed with `fabria
 
 If no plugin exists for your use case, you can also [write your own](./doc/plugin_guide/plugin_guide.md)!
 
-## Notes for Maintainers
-
-This program uses [PyInstaller](https://pyinstaller.org/en/stable/) to compile and [InstallForge](https://installforge.net/) to create an installer.
-
->An awesome reference for both programs can be found [here](https://www.pythonguis.com/tutorials/packaging-pyqt6-applications-windows-pyinstaller/).
+## Error Log
+Fabrial logs any errors it encounters in **`HOME/.fabrial/lastrun.log`**. This error log is wiped at startup, so if Fabrial encounters an error, please consider reporting before starting restarting the application!
 
 ## Icons Attribution
 

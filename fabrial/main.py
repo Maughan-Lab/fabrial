@@ -5,10 +5,10 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 from tendo.singleton import SingleInstance, SingleInstanceException
 
-from .constants import PACKAGE_NAME, icons
-from .constants.paths import FOLDERS_TO_CREATE
-from .main_window import MainWindow
-from .utility import errors, plugins as plugin_util
+from fabrial.constants import PACKAGE_NAME, icons
+from fabrial.constants.paths import FOLDERS_TO_CREATE
+from fabrial.main_window import MainWindow
+from fabrial.utility import errors, plugins as plugin_util
 
 
 def make_application_folders():
@@ -50,7 +50,7 @@ def main():
     errors.suppress_warnings()
     # make the app first
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(str(icons.MAIN_ICON)))
+    app.setWindowIcon(QIcon(str(icons.MAIN_ICON_FILE)))
     # then load plugins
     category_items, _, plugin_settings = plugin_util.load_all_plugins()
     # then make the main window
@@ -60,7 +60,7 @@ def main():
     app.exec()
 
     # check to relaunch
-    if main_window.should_relaunch():
+    if main_window.relaunch:
         del me  # make sure the singleton is cleared
         # replace the current process with a new version of this one
         os.execl(sys.executable, sys.executable, *sys.argv)

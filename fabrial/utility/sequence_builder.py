@@ -12,8 +12,8 @@ from ..sequence_builder import CategoryItem, DataItem, SequenceItem, TreeItem
 class CategoryInfo:
     """Container used internally by the application. This is not for plugins."""
 
-    items: dict[str, SequenceItem]  # display name, item
-    subcategories: dict[str, CategoryInfo]  # category name, category info
+    items: list[tuple[str, SequenceItem]]  # [(display name, item)]
+    subcategories: dict[str, CategoryInfo]  # {category name: category info}
 
 
 @dataclass
@@ -80,15 +80,15 @@ def parse_plugin_categories(
         try:
             category_info = category_info_map[plugin_category.name]
         except KeyError:
-            category_info = CategoryInfo({}, {})
+            category_info = CategoryInfo([], {})
             category_info_map[plugin_category.name] = category_info
         # add the plugin's items (after building them into `SequenceItem`s)
-        category_info.items.update(
-            {
+        category_info.items.extend(
+            [
                 # we get the display name here so we can detect faulty plugin items early
-                data_item.display_name(): SequenceItem(None, data_item)
+                (str(data_item.display_name()), SequenceItem(None, data_item))
                 for data_item in plugin_category.items
-            }
+            ]
         )
         # parse subcategories (recursive)
         parse_plugin_categories(plugin_category.subcategories, category_info.subcategories)
@@ -102,7 +102,8 @@ def parse_into_items(category_info_map: dict[str, CategoryInfo]) -> list[Categor
         # get the subcategory items (they will already be sorted)
         sub_category_items = parse_into_items(category_info.subcategories)  # recurse
         # sort the sequence items and discard the names
-        sequence_items = [item for _, item in sorted(category_info.items.items())]
+        category_info.items.sort(key=lambda name_and_item: name_and_item[0])  # [0] is the name
+        sequence_items = [item for _, item in category_info.items]
         # combine the subcategory items and sequence items
         items: list[TreeItem] = []
         items.extend(sub_category_items)

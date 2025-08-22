@@ -10,7 +10,7 @@ A plugin is just a bunch of Python code that adheres to some requirements. Fabri
 
 ### Local or Global?
 
-You can write either a *local plugin* or a *global plugin*. Local plugins go in the **`plugins`** folder (which is stored at HOME/.fabrial/plugins) and can be installed/uninstalled from the settings. In contrast, global plugins are installed into your Python environment just like any other Python package.
+You can write either a *local plugin* or a *global plugin*. Local plugins go in the **`plugins`** folder (which is stored at **`HOME/.fabrial/plugins`**) and can be installed/uninstalled from the settings. In contrast, global plugins are installed into your Python environment just like any other Python package.
 
 Global plugins require slightly more setup, but they also double as local plugins. Local plugins are more restricted, but they are simpler to write and can be converted to global plugins later.
 

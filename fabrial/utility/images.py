@@ -2,12 +2,12 @@ import os
 
 from PyQt6.QtGui import QIcon, QPixmap
 
-from ..constants.paths.icons import INTERNAL_ICONS
+from ..constants.paths.icons import INTERNAL_ICONS_FOLDER
 
 
 def get_image_file(icon_filename: str) -> str:
     """Get the full filepath to an icon in the application's internal icon folder."""
-    return os.path.join(INTERNAL_ICONS, icon_filename)
+    return os.path.join(INTERNAL_ICONS_FOLDER, icon_filename)
 
 
 def make_icon(icon_filename: str) -> QIcon:

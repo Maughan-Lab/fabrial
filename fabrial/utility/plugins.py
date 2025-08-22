@@ -9,6 +9,7 @@ import typing
 from collections.abc import Callable, Iterable, MutableMapping
 from dataclasses import dataclass
 from importlib import metadata
+from importlib.metadata import EntryPoint
 from os import PathLike
 from types import ModuleType
 
@@ -41,8 +42,12 @@ def discover_plugins_from_module(module: ModuleType) -> dict[str, Callable[[], M
     -------
     A mapping of plugin names to a function that will import the plugin.
     """
+
+    def load_function_factory(module_name: str) -> Callable[[], ModuleType]:
+        return lambda: importlib.import_module(module_name)
+
     return {
-        name: lambda: importlib.import_module(f"{module.__name__}.{name}")
+        name: load_function_factory(f"{module.__name__}.{name}")
         for _, name, is_package in pkgutil.iter_modules(module.__path__)
         if is_package
     }
@@ -74,8 +79,12 @@ def discover_global_plugins() -> dict[str, Callable[[], ModuleType]]:
     -------
     A `Set` containing the plugin names.
     """
+
+    def load_function_factory(entry_point: EntryPoint) -> Callable[[], ModuleType]:
+        return lambda: entry_point.load()
+
     return {
-        entry_point.module: lambda: entry_point.load()
+        entry_point.module: load_function_factory(entry_point)
         for entry_point in metadata.entry_points(group=PLUGIN_ENTRY_POINT)
     }
 

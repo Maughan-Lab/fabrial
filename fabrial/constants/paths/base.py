@@ -1,17 +1,16 @@
 """The base directory."""
 
-import sys
 from importlib import resources
-from pathlib import Path
 
 from ..name import PACKAGE_NAME
 
 with resources.path(PACKAGE_NAME) as path:
-    if not path.exists():  # this happens if we're frozen (packaged)
-        # the path to the folder containing the executable
-        FOLDER = Path(sys._MEIPASS)  # type: ignore
-    else:
-        FOLDER = path
+    BASE_FOLDER = path
+    # TODO: remove
+    # if not path.exists():  # this happens if we're frozen (packaged)
+    #     # the path to the folder containing the executable
+    #     BASE_FOLDER = Path(sys._MEIPASS)  # type: ignore
+    # else:
+    #     BASE_FOLDER = path
 
-ASSETS = FOLDER.joinpath("assets")
-PLUGINS = FOLDER.joinpath("plugins")
+ASSETS_FOLDER = BASE_FOLDER.joinpath("assets")

@@ -106,14 +106,6 @@ class MainWindow(QMainWindow):
         """Save all data that gets saved on closing. Call this when closing the application."""
         self.sequence_tab.save_on_close()
 
-    def should_relaunch(self) -> bool:
-        """Whether the application should relaunch."""
-        return self.relaunch
-
-    def set_relaunch(self, should_relaunch: bool):
-        """Set whether the application should relaunch."""
-        self.relaunch = should_relaunch
-
     # ----------------------------------------------------------------------------------------------
     # settings
     def show_settings(self):
