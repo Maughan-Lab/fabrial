@@ -5,22 +5,25 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
 
 from .constants import APP_NAME
 from .custom_widgets import TabWidget, YesCancelDialog
+from .custom_widgets.settings import ApplicationSettingsWindow
 from .menu import MenuBar
 from .secondary_window import SecondaryWindow
 from .sequence_builder import CategoryItem
-from .tabs import SequenceBuilderTab, SequenceDisplayTab
+from .tabs import SequenceBuilderTab, SequenceDisplayTab, sequence_builder, sequence_display
 from .utility import images
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, category_items: Iterable[CategoryItem]):
+    def __init__(
+        self, category_items: Iterable[CategoryItem], plugin_settings_widgets: Iterable[QWidget]
+    ):
         self.relaunch = False
         QMainWindow.__init__(self)
         self.setWindowTitle(APP_NAME)
         # create menu bar
         self.menu_bar = MenuBar(self)
         self.setMenuBar(self.menu_bar)
-        # self.settings_window = ApplicationSettingsWindow(self) # TODO: fix
+        self.settings_window = ApplicationSettingsWindow(self)
         # tabs
         self.sequence_visuals_tab = SequenceDisplayTab()
         self.sequence_tab = SequenceBuilderTab(
@@ -28,8 +31,16 @@ class MainWindow(QMainWindow):
         )
         self.tab_widget = TabWidget(
             [
-                (self.sequence_tab, "Sequence Builder", images.make_icon("script-block.png")),
-                (self.sequence_visuals_tab, "Sequence Visuals", images.make_icon("chart.png")),
+                (
+                    self.sequence_tab,
+                    "Sequence Builder",
+                    images.make_icon(sequence_builder.ICON_FILENAME),
+                ),
+                (
+                    self.sequence_visuals_tab,
+                    "Sequence Visuals",
+                    images.make_icon(sequence_display.ICON_FILENAME),
+                ),
             ]
         )
         self.setCentralWidget(self.tab_widget)
@@ -110,5 +121,4 @@ class MainWindow(QMainWindow):
     # settings
     def show_settings(self):
         """Show the application settings. These settings are saved when the window closes."""
-        return
-        # self.settings_window.show()
+        self.settings_window.show()

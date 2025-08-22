@@ -16,6 +16,8 @@ from ..sequence_builder import CategoryItem, OptionsTreeWidget, SequenceTreeWidg
 from ..utility import errors, images
 from .sequence_display import SequenceDisplayTab
 
+ICON_FILENAME = "script-block.png"
+
 
 class SequenceBuilderTab(Widget):
     """

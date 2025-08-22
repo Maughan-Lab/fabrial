@@ -11,6 +11,8 @@ from ..plotting import LineIndex, LineParams, PlotIndex, PlotSettings, SymbolPar
 from ..secondary_window import SecondaryWindow
 from ..utility import images
 
+ICON_FILENAME = "chart.png"
+
 
 class SequenceDisplayTab(QTabWidget):
     """Tab for displaying graphing widgets during the sequence."""

@@ -52,9 +52,9 @@ def main():
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(str(icons.MAIN_ICON_FILE)))
     # then load plugins
-    category_items, _, plugin_settings = plugin_util.load_all_plugins()
+    category_items, settings_widgets, plugin_settings = plugin_util.load_all_plugins()
     # then make the main window
-    main_window = MainWindow(category_items)
+    main_window = MainWindow(category_items, [])
     main_window.showMaximized()
     # run the application
     app.exec()
@@ -63,7 +63,12 @@ def main():
     if main_window.relaunch:
         del me  # make sure the singleton is cleared
         # replace the current process with a new version of this one
-        os.execl(sys.executable, sys.executable, *sys.argv)
+        # first two arguments are both the python interpreter path
+        # the third argument is this file
+        # the remaining arguments are command line arguments except for the file name
+        # this is all necessary so this function works with both when launching via fabrial.exe
+        # and via python run.py/main.py
+        os.execl(sys.executable, sys.executable, __file__, *sys.argv[1:])
 
 
 if __name__ == "__main__":
