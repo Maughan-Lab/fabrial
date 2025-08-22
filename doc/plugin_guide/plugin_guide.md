@@ -10,7 +10,7 @@ A plugin is just a bunch of Python code that adheres to some requirements. Fabri
 
 ### Local or Global?
 
-You can write either a *local plugin* or a *global plugin*. Local plugins go in the [**`plugins`**](../../fabrial/plugins/) folder and can be installed/uninstalled from the settings. In contrast, global plugins are installed into your Python environment just like any other Python package.
+You can write either a *local plugin* or a *global plugin*. Local plugins go in the **`plugins`** folder (which is stored at HOME/.fabrial/plugins) and can be installed/uninstalled from the settings. In contrast, global plugins are installed into your Python environment just like any other Python package.
 
 Global plugins require slightly more setup, but they also double as local plugins. Local plugins are more restricted, but they are simpler to write and can be converted to global plugins later.
 
@@ -158,4 +158,4 @@ ___
 
 Congratulations! You've written a fully-functional plugin for Fabrial. Although the plugin we wrote during this tutorial is not very useful, you've learned the principles behind all Fabrial plugins. If you have any questions or ideas for improving this tutorial, feel free to start a [discussion on GitHub](https://github.com/Maughan-Lab/fabrial/discussions).
 
-If you want to make your plugin available for other people, consider publishing on [PyPi](https://pypi.org/). The publication process is outside the scope of this tutorial, but a great guide can be found [here](https://packaging.python.org/en/latest/tutorials/packaging-projects/).
+If you want to make your plugin available for other users, consider publishing on [PyPi](https://pypi.org/). The publication process is outside the scope of this tutorial, but a great guide can be found [here](https://packaging.python.org/en/latest/tutorials/packaging-projects/).

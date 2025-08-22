@@ -4,9 +4,6 @@
 
 # Fixing Fabrial for Modularization
 
-## Disable plugins when they fail to load.
-Do it :D
-
 ## Update plugin guide about local plugin location
 
 ## The Oven
