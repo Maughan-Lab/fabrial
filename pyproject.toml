@@ -26,10 +26,10 @@ Repository = "https://github.com/Maughan-Lab/fabrial"
 
 # makes a `fabrial`/`fabrial.exe` script when installing
 [project.scripts]
-fabrial = "fabrial.main:main"
+fabrial = "fabrial:main"
 
 [project.gui-scripts]
-fabrial-gui-only = "fabrial.main:main"
+fabrial-gui-only = "fabrial:main"
 
 # hatch config
 [build-system]

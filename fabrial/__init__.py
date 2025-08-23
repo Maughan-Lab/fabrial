@@ -1,3 +1,4 @@
+from .__main__ import main
 from .classes import SequenceStep, StepCancellation, StepRunner
 from .constants.paths import SAVED_DATA_FOLDER
 from .custom_widgets.settings import PluginSettingsWidget
