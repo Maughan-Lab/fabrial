@@ -1,1 +1,2 @@
+from .plugin_settings_widget import PluginSettingsWidget
 from .window import ApplicationSettingsWindow

@@ -13,10 +13,9 @@ from importlib.metadata import EntryPoint
 from os import PathLike
 from types import ModuleType
 
-from PyQt6.QtWidgets import QWidget
-
 from ..constants import PLUGIN_ENTRY_POINT, SAVED_DATA_FOLDER
 from ..constants.paths.settings.plugins import GLOBAL_PLUGINS_FILE, LOCAL_PLUGINS_FILE
+from ..custom_widgets.settings import PluginSettingsWidget
 from . import errors, sequence_builder, settings
 from .sequence_builder import CategoryItem
 
@@ -180,13 +179,16 @@ def load_plugins(
     return (loaded_plugins, failed_plugins)
 
 
-def load_all_plugins() -> tuple[list[CategoryItem], list[QWidget], PluginSettings]:
+def load_all_plugins() -> (
+    tuple[list[CategoryItem], dict[str, PluginSettingsWidget], PluginSettings]
+):
     """
     Load all plugins.
 
     Returns
     -------
-    A tuple of (the loaded `CategoryItem`s, the loaded settings menu widgets, the plugin settings).
+    A tuple of (the loaded `CategoryItem`s, a mapping of plugin names to the loaded settings menu
+    for that plugin, the plugin settings).
     """
     # discover plugins
     global_names, local_names = discover_plugins()
@@ -227,4 +229,4 @@ def load_all_plugins() -> tuple[list[CategoryItem], list[QWidget], PluginSetting
             "See the error log for details.",
         )
 
-    return (items, settings_widgets, PluginSettings(local_settings, global_settings))
+    return (items, settings_widgets, PluginSettings(global_settings, local_settings))

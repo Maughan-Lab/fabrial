@@ -7,6 +7,7 @@ from tendo.singleton import SingleInstance, SingleInstanceException
 
 from fabrial.constants import PACKAGE_NAME, icons
 from fabrial.constants.paths import FOLDERS_TO_CREATE
+from fabrial.custom_widgets.settings import ApplicationSettingsWindow
 from fabrial.main_window import MainWindow
 from fabrial.utility import errors, plugins as plugin_util
 
@@ -54,13 +55,15 @@ def main():
     # then load plugins
     category_items, settings_widgets, plugin_settings = plugin_util.load_all_plugins()
     # then make the main window
-    main_window = MainWindow(category_items, [])
+    main_window = MainWindow(
+        category_items, ApplicationSettingsWindow(plugin_settings, settings_widgets)
+    )
     main_window.showMaximized()
     # run the application
     app.exec()
 
     # check to relaunch
-    if main_window.relaunch:
+    if main_window.should_relaunch:
         del me  # make sure the singleton is cleared
         # replace the current process with a new version of this one
         # first two arguments are both the python interpreter path

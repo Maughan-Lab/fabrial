@@ -1,10 +1,10 @@
 from collections.abc import Iterable
 
 from PyQt6.QtGui import QCloseEvent
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
+from PyQt6.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget
 
 from .constants import APP_NAME
-from .custom_widgets import TabWidget, YesCancelDialog
+from .custom_widgets import YesCancelDialog
 from .custom_widgets.settings import ApplicationSettingsWindow
 from .menu import MenuBar
 from .secondary_window import SecondaryWindow
@@ -15,33 +15,33 @@ from .utility import images
 
 class MainWindow(QMainWindow):
     def __init__(
-        self, category_items: Iterable[CategoryItem], plugin_settings_widgets: Iterable[QWidget]
+        self,
+        category_items: Iterable[CategoryItem],
+        settings_menu_widget: ApplicationSettingsWindow,
     ):
-        self.relaunch = False
+        self.should_relaunch = False
         QMainWindow.__init__(self)
         self.setWindowTitle(APP_NAME)
         # create menu bar
         self.menu_bar = MenuBar(self)
         self.setMenuBar(self.menu_bar)
-        self.settings_window = ApplicationSettingsWindow(self)
+        # settings menu
+        self.settings_window = settings_menu_widget
+        self.settings_window.relaunchRequested.connect(self.relaunch)
         # tabs
         self.sequence_visuals_tab = SequenceDisplayTab()
         self.sequence_tab = SequenceBuilderTab(
             self.sequence_visuals_tab, self.menu_bar.sequence, category_items
         )
-        self.tab_widget = TabWidget(
-            [
-                (
-                    self.sequence_tab,
-                    "Sequence Builder",
-                    images.make_icon(sequence_builder.ICON_FILENAME),
-                ),
-                (
-                    self.sequence_visuals_tab,
-                    "Sequence Visuals",
-                    images.make_icon(sequence_display.ICON_FILENAME),
-                ),
-            ]
+        self.tab_widget = QTabWidget()
+        self.tab_widget.setDocumentMode(True)  # looks better
+        self.tab_widget.addTab(
+            self.sequence_tab, images.make_icon(sequence_builder.ICON_FILENAME), "Sequence Builder"
+        )
+        self.tab_widget.addTab(
+            self.sequence_visuals_tab,
+            images.make_icon(sequence_display.ICON_FILENAME),
+            "Sequence Visuals",
         )
         self.setCentralWidget(self.tab_widget)
 
@@ -85,6 +85,13 @@ class MainWindow(QMainWindow):
         window.closed.connect(lambda: self.secondary_windows.remove(window))
         window.show()
         return window
+
+    # ----------------------------------------------------------------------------------------------
+    # relaunching
+    def relaunch(self):
+        """Relaunch the application."""
+        self.should_relaunch = True
+        QApplication.quit()
 
     # ----------------------------------------------------------------------------------------------
     # closing the window
