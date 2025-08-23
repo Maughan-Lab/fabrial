@@ -1,7 +1,7 @@
 from typing import Iterable
 
 from PyQt6.QtWidgets import QApplication
-from pytest import FixtureRequest, fixture
+from pytest import FixtureRequest, fixture, mark
 
 from fabrial.sequence_builder.tree_items import CategoryItem, SequenceItem, TreeItem
 from fabrial.utility import sequence_builder
@@ -79,17 +79,6 @@ def expected(request: FixtureRequest):
         ),
     ]
 
-    wrong_types = [
-        CategoryItem(
-            None,
-            "Right Types",
-            [
-                SequenceItem(None, MockDataItem("RightTypes1", 1)),
-                SequenceItem(None, MockDataItem("RightTypes2", 2)),
-            ],
-        ),
-    ]
-
     same_category = [
         CategoryItem(
             None,
@@ -111,13 +100,11 @@ def expected(request: FixtureRequest):
         )
     ]
 
-    everything = normal + same_category + wrong_types
+    everything = normal + same_category
 
     function = request.function
     if function is test_normal:
         return normal
-    elif function is test_wrong_types:
-        return wrong_types
     elif function is test_same_category:
         return same_category
     elif function is test_everything:
@@ -129,64 +116,52 @@ def expected(request: FixtureRequest):
 # tests start here
 def test_normal(qapp: QApplication, expected: Iterable[CategoryItem]):
     """Tests a normal, functioning plugin."""
-    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
-        {normal.__name__: normal}
-    )
-    assert len(failure_plugins) == 0 and len(failure_categories) == 0  # no failures expected
+    items, failure_plugins = sequence_builder.items_from_plugins({normal.__name__: normal})
+    assert len(failure_plugins) == 0  # no failures expected
     compare_items(items, expected)
 
 
 def test_empty():
     """Tests a plugin that returns an empty list of categories."""
-    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
+    items, failure_plugins = sequence_builder.items_from_plugins(
         {empty_categories.__name__: empty_categories}
     )
-    assert len(failure_plugins) == 0 and len(failure_categories) == 0  # no failures expected
+    assert len(failure_plugins) == 0  # no failures expected
     assert len(items) == 0  # should just be an empty list
 
 
 def test_no_entry_point():
     """Tests a plugin that is missing the `categories()` entry point."""
-    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
+    items, failure_plugins = sequence_builder.items_from_plugins(
         {no_entry_point.__name__: no_entry_point}
     )
-    assert len(items) == 0 and len(failure_plugins) == 1 and len(failure_categories) == 0
+    assert len(items) == 0 and len(failure_plugins) == 1
     assert no_entry_point.__name__ in failure_plugins
 
 
 def test_wrong_entry_point_type():
     """Tests a plugin that returns the wrong type from its entry point."""
-    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
+    items, failure_plugins = sequence_builder.items_from_plugins(
         {wrong_entry_point_type.__name__: wrong_entry_point_type}
     )
-    assert len(items) == 0 and len(failure_plugins) == 1 and len(failure_categories) == 0
+    assert len(items) == 0 and len(failure_plugins) == 1
     assert wrong_entry_point_type.__name__ in failure_plugins
-
-
-def test_wrong_types(qapp: QApplication, expected: Iterable[CategoryItem]):
-    """Tests a plugin that returns the correct entry point type, but an item has the wrong type."""
-    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
-        {wrong_types.__name__: wrong_types}
-    )
-    assert len(failure_plugins) == 0 and len(failure_categories) == 1
-    assert "Wrong Types" in failure_categories
-    compare_items(items, expected)
 
 
 def test_same_category(qapp: QApplication, expected: Iterable[CategoryItem]):
     """
     Tests a plugin with nested categories that share names (so they should all be grouped together).
     """
-    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
+    items, failure_plugins = sequence_builder.items_from_plugins(
         {same_category1.__name__: same_category1, same_category2.__name__: same_category2}
     )
-    assert len(failure_plugins) == 0 and len(failure_categories) == 0
+    assert len(failure_plugins) == 0
     compare_items(items, expected)
 
 
 def test_everything(qapp: QApplication, expected: Iterable[CategoryItem]):
     """Tests EVERYTHING! (aka tests the combination of all prior modules)."""
-    items, failure_plugins, failure_categories = sequence_builder.items_from_plugins(
+    items, failure_plugins = sequence_builder.items_from_plugins(
         {
             module.__name__: module
             for module in [
@@ -197,15 +172,20 @@ def test_everything(qapp: QApplication, expected: Iterable[CategoryItem]):
                 same_category1,
                 same_category2,
                 wrong_entry_point_type,
-                wrong_types,
             ]
         }
     )
 
-    assert len(failure_plugins) == 2 and len(failure_categories) == 1
+    assert len(failure_plugins) == 2
     assert (
         no_entry_point.__name__ in failure_plugins
         and wrong_entry_point_type.__name__ in failure_plugins
     )
-    assert "Wrong Types" in failure_categories
     compare_items(items, expected)
+
+
+@mark.xfail(raises=AttributeError)  # expected to fail
+def test_wrong_types(qapp: QApplication):
+    """Tests a plugin that returns the correct entry point type, but an item has the wrong type."""
+    sequence_builder.items_from_plugins({wrong_types.__name__: wrong_types})
+    # we don't check anything because this test should fail

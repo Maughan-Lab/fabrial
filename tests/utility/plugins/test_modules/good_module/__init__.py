@@ -1,1 +1,1 @@
-from . import normal1, normal2
+from . import plugin1, plugin2

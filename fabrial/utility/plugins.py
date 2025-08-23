@@ -110,7 +110,7 @@ def discover_plugins() -> (
     return (global_plugins, local_plugins)
 
 
-def load_plugin_settings(file: PathLike[str] | str, plugins: Iterable[str]) -> dict[str, bool]:
+def load_plugin_settings(file: PathLike[str] | str, plugin_names: Iterable[str]) -> dict[str, bool]:
     """
     Load plugin settings, removing entries for non-installed plugins and adding entries for newly
     installed plugins.
@@ -119,7 +119,7 @@ def load_plugin_settings(file: PathLike[str] | str, plugins: Iterable[str]) -> d
     ----------
     file
         The JSON file containing the plugin settings.
-    plugins
+    plugin_names
         The discovered plugin names.
 
     Returns
@@ -130,12 +130,12 @@ def load_plugin_settings(file: PathLike[str] | str, plugins: Iterable[str]) -> d
             plugin_settings = typing.cast(dict[str, bool], json.load(f))
         # only include plugins from **plugins**. If the file did not contain an entry for a plugin,
         # assume the plugin is enabled
-        return {name: plugin_settings.pop(name, True) for name in plugins}
+        return {name: plugin_settings.pop(name, True) for name in plugin_names}
     except Exception:  # if the file couldn't be loaded, all plugins are enabled
         logging.getLogger(__name__).info(
             f"Failed to read plugin settings file: {file}", exc_info=True
         )
-        return {name: True for name in plugins}
+        return {name: True for name in plugin_names}
 
 
 def load_plugins(
@@ -167,6 +167,7 @@ def load_plugins(
     while len(plugins) > 0:
         # remove an item from **plugins**
         plugin_name, loader_command = plugins.popitem()
+        # if the entry isn't present the application should crash
         should_load = plugin_settings[plugin_name]
         if not should_load:
             continue  # don't load the plugin
