@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
-from ..constants.paths.sequence import METADATA_FILENAME
+from ..constants.sequence import METADATA_FILENAME
 from ..plotting import PlotHandle, PlotIndex, PlotSettings
 from .exceptions import FatalSequenceError, StepCancellation
 from .lock import DataLock

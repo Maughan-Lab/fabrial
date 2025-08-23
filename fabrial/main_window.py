@@ -96,7 +96,7 @@ class MainWindow(QMainWindow):
     # ----------------------------------------------------------------------------------------------
     # closing the window
     def closeEvent(self, event: QCloseEvent | None):  # overridden method
-        """Prevent the window from closing if a sequence or stability check are running."""
+        """Prevent the window from closing if a sequence is running."""
         if event is not None:
             if self.allowed_to_close():
                 self.save_on_close()
@@ -109,7 +109,7 @@ class MainWindow(QMainWindow):
         # only close if a sequence is not running, otherwise ask to cancel the sequence
         if self.sequence_tab.is_running_sequence():
             if YesCancelDialog(
-                "Are you sure you want to exit?", "A sequence is currently running."
+                "Close?", "A sequence is currently running. Cancel sequence and close?"
             ).run():
                 self.sequence_tab.cancel_sequence()
                 while self.sequence_tab.is_running_sequence():

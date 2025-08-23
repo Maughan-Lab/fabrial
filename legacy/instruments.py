@@ -13,7 +13,7 @@ from ..constants.paths import settings
 from ..enums import ConnectionStatus
 
 if TYPE_CHECKING:
-    from developer import DeveloperOven
+    from legacy.developer import DeveloperOven
 
 
 class Instrument(QObject, metaclass=ABCQObjectMeta):

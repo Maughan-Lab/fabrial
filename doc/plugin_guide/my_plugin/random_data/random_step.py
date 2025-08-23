@@ -12,6 +12,7 @@ from fabrial.plotting import LineParams, PlotSettings, SymbolParams
 
 # we import `NAME` so we always use the same "Random Data" string
 from .random_widget import NAME
+from .settings import PRINT_DATA_KEY, SETTINGS
 
 
 class RandomDataStep(SequenceStep):
@@ -47,6 +48,9 @@ class RandomDataStep(SequenceStep):
                 f.write(f"{data}\n")
                 # use the `add_point()` to plot new points
                 line_handle.add_point(time.time() - start_time, data)
+                # print the data to the terminal if printing is enabled
+                if SETTINGS[PRINT_DATA_KEY]:
+                    print(f"Random data! {data}")
                 # `self.sleep()` pauses our step and lets the sequence
                 # do something else. Notice the `await` keyword.
                 # `self.sleep()` is also asynchronous, so this is the

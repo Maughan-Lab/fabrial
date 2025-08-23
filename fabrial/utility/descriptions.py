@@ -13,7 +13,7 @@ from ..constants.paths.descriptions import (
     PARAMETERS_FILENAME,
     VISUALS_FILENAME,
 )
-from ..constants.paths.process.filenames import METADATA_FILENAME
+from ..constants.sequence import METADATA_FILENAME
 
 NO_DESCRIPTION_PROVIDED = "No description provided."
 ERROR_TEXT = "Error loading description."

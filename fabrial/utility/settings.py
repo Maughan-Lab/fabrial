@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable, Mapping
 from types import ModuleType
 
@@ -8,7 +9,7 @@ def load_settings_widgets(
     plugins: Mapping[str, ModuleType],
 ) -> tuple[dict[str, PluginSettingsWidget], list[str]]:
     """
-    Load settings widgets from **plugins**.
+    Load settings widgets from **plugins**. Logs errors.
 
     Returns
     -------
@@ -25,9 +26,7 @@ def load_settings_widgets(
 
     for plugin_name, plugin_module in plugins.items():
         try:
-            settings_entry_point: Callable[[], PluginSettingsWidget] = (
-                plugin_module.settings_widget()
-            )
+            settings_entry_point: Callable[[], PluginSettingsWidget] = plugin_module.settings_widget
         except AttributeError:  # the plugin doesn't provide a settings widget, skip
             continue
         try:
@@ -36,6 +35,9 @@ def load_settings_widgets(
             assert isinstance(settings_widget, PluginSettingsWidget)
             settings_widgets[plugin_name] = settings_widget
         except Exception:
+            logging.getLogger(__name__).exception(
+                f"Failed to load settings widget from plugin {plugin_name}"
+            )
             failed_plugins.append(plugin_name)
 
     return (settings_widgets, failed_plugins)

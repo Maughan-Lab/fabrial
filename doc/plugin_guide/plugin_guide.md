@@ -98,7 +98,211 @@ Follow the [expanding our sequence step](./advanced_step.md) guide, then we'll g
 
 ## Plugin Settings
 
-TODO; ignore this for now
+Let's add a new file for our plugin settings, **`settings.py`**. **`random_data`** should now look like this:
+
+```
+random_data
+├── example_icon.png
+├── __init__.py
+├── random_item.py
+├── random_step.py
+├── random_widget.py
+└── settings.py
+```
+
+We'll need a setting that affects our plugin. Let's make it possible for our sequence action to also print the random data it records. The user will love it! We'll want store this setting in a file between runs. Fabrial settings are stored in **`HOME/.fabrial`**, but you don't have to remember that! Fabrial provides the [`SAVED_DATA_FOLDER`](../../fabrial/constants/paths/settings/saved_data.py) constant to point to this directory. We'll put our settings file at **`HOME/.fabrial/random_data/settings.json`**.
+
+<sub>Filename: random_data/settings.py</sub>
+```python
+import json
+import os
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QCheckBox, QVBoxLayout
+
+from fabrial import SAVED_DATA_FOLDER, PluginSettingsWidget
+
+# create constants for where the settings are stored
+SETTINGS_FOLDER = SAVED_DATA_FOLDER.joinpath("random_data")
+SETTINGS_FILE = SETTINGS_FOLDER.joinpath("settings.json")
+# create a constant for the name of the setting
+PRINT_DATA_KEY = "print_data"
+
+# this is a mutable global variable, so it should be behind a `Lock`. For the purposes of this
+# example, we'll neglect that
+SETTINGS: dict[str, bool] = {}
+
+
+# we'll use this function later
+def load_settings():
+    """Loads the plugin's settings."""
+    # try to load the settings
+    try:
+        with open(SETTINGS_FILE, "r") as f:
+            # modify the global variable
+            settings = json.load(f)
+            SETTINGS[PRINT_DATA_KEY] = settings[PRINT_DATA_KEY]
+    except OSError:  # runs if the file doesn't exist; we'll assume we don't print data in this case
+        pass
+```
+
+Next, we'll need a widget. Plugin settings widgets inherit from [`PluginSettingsWidget`](../../fabrial/custom_widgets/settings/plugin_settings_widget.py).
+
+<sub>Filename: random_data/settings.py</sub>
+```python
+# --snip--
+
+class RandomDataSettingsWidget(PluginSettingsWidget):
+    """Settings widget for `random_data`."""
+
+    pass
+```
+
+We want the user to be able to change our setting, so we'll add a checkbox with some logic.
+
+<sub>Filename: random_data/settings.py</sub>
+```python
+# --snip --
+
+class RandomDataSettingsWidget(PluginSettingsWidget):
+    """Settings widget for `random_data`."""
+
+    def __init__(self):
+        # don't forget to call the base `__init__()` method!
+        PluginSettingsWidget.__init__(self)
+
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)  # looks better
+        self.setLayout(layout)
+        # we'll use a checkbox to represent the settings
+        self.print_data_checkbox = QCheckBox("Print Random Data")
+        self.print_data_checkbox.setChecked(SETTINGS[PRINT_DATA_KEY])
+        # whenever the checkbutton is checked/unchecked, update the global variable
+        self.print_data_checkbox.toggled.connect(self.update_settings)
+        layout.addWidget(self.print_data_checkbox)
+
+    def update_settings(self, checked: bool):
+        """Update the global settings variable."""
+        SETTINGS[PRINT_DATA_KEY] = checked
+
+    def window_close_event(self):  # overridden
+        # this function gets called by Fabrial when the settings window closes. Here,
+        # we'll use it to save our settings!
+        try:
+            # create the settings folder if it doesn't exist
+            os.makedirs(SETTINGS_FOLDER, exist_ok=True)
+            # save the data
+            with open(SETTINGS_FILE, "w") as f:
+                json.dump(SETTINGS, f)
+        except OSError:
+            pass  # if we fail, just do nothing
+```
+
+We made use of `PluginSettingsWidget`'s `window_close_event()` method, which is called by Fabrial when the main settings window closes.
+
+> There is also `window_open_event()` that gets called when the settings window is opened.
+
+We need to make a quick modification to our sequence step's `run()` method to utilize our new setting.
+
+<sub>Filename: random_data/random_step.py</sub>
+```python
+# --snip--
+
+from .settings import PRINT_DATA_KEY, SETTINGS
+
+    # --snip--
+
+    async def run(self, runner: StepRunner, data_directory: Path):
+            # --snip--
+
+            for _ in range(20):
+                data = random.random()
+                f.write(f"{data}\n")
+                line_handle.add_point(time.time() - start_time, data)
+                # print the data to the terminal if printing is enabled
+                if SETTINGS[PRINT_DATA_KEY]:
+                    print(f"Random data! {data}")
+                await self.sleep(self.data_interval)
+            
+            # --snip--
+
+```
+
+To add a widget to the settings menu, we'll use the optional `settings_widget()` entry point. Once again, this goes in the **`__init__.py`** file.
+
+<sub>Filename: random_data/\_\_init\_\_.py</sub>
+```python
+from fabrial import PluginCategory, PluginSettingsWidget
+
+from .random_item import RandomDataItem
+from .settings import RandomDataSettingsWidget, load_settings
+
+# --snip--
+
+# this is the entry point for settings widgets
+def settings_widget() -> PluginSettingsWidget:
+    load_settings()  # load the settings when the widget is being initialized
+    return RandomDataSettingsWidget()
+```
+
+___
+
+And there we go! Our settings widget should appear under the `Plugins` tab of the settings menu. If you check the checkbox, you'll see random data messages in the terminal.
+
+The complete code for the settings widget is shown below.
+
+<sub>Filename: random_data/settings.py</sub>
+```python
+import json
+import os
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QCheckBox, QVBoxLayout
+
+from fabrial import SAVED_DATA_FOLDER, PluginSettingsWidget
+
+SETTINGS_FOLDER = SAVED_DATA_FOLDER.joinpath("random_data")
+SETTINGS_FILE = SETTINGS_FOLDER.joinpath("settings.json")
+PRINT_DATA_KEY = "print_data"
+SETTINGS: dict[str, bool] = {}
+
+
+def load_settings():
+    """Loads the plugin's settings."""
+    try:
+        with open(SETTINGS_FILE, "r") as f:
+            settings = json.load(f)
+            SETTINGS[PRINT_DATA_KEY] = settings[PRINT_DATA_KEY]
+    except OSError:
+        pass
+
+
+class RandomDataSettingsWidget(PluginSettingsWidget):
+    """Settings widget for `random_data`."""
+
+    def __init__(self):
+        PluginSettingsWidget.__init__(self)
+
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.setLayout(layout)
+        self.print_data_checkbox = QCheckBox("Print Random Data")
+        self.print_data_checkbox.setChecked(SETTINGS[PRINT_DATA_KEY])
+        self.print_data_checkbox.toggled.connect(self.update_settings)
+        layout.addWidget(self.print_data_checkbox)
+
+    def update_settings(self, checked: bool):
+        """Update the global settings variable."""
+        SETTINGS[PRINT_DATA_KEY] = checked
+
+    def window_close_event(self):
+        try:
+            os.makedirs(SETTINGS_FOLDER, exist_ok=True)
+            with open(SETTINGS_FILE, "w") as f:
+                json.dump(SETTINGS, f)
+        except OSError:
+            pass
+```
 
 ## Converting to a Local Plugin
 
@@ -118,7 +322,8 @@ my_plugin
 │   ├── __init__.py
 │   ├── random_item.py
 │   ├── random_step.py
-│   └── random_widget.py
+│   ├── random_widget.py
+│   └── settings.py
 └── README.md
 ```
 
